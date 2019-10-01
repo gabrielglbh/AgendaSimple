@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/export_to_contacts"
+        android:title="@string/export_to_menu"
+        app:showAsAction="never"
+        android:orderInCategory="3"/>
+
+    <item
+        android:id="@+id/export_from_contacts"
+        android:title="@string/export_from_menu"
+        app:showAsAction="never"
+        android:orderInCategory="2"/>
+
+    <item
+        android:id="@+id/search_contact"
+        android:title="@string/search_menu"
+        android:icon="@drawable/ic_search"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:actionViewClass="android.widget.SearchView"
+        android:orderInCategory="1"/>
+</menu>

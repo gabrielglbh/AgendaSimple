@@ -1,3 +1,17 @@
 <resources>
-    <string name="app_name">AgendaSimple</string>
+    <string name="app_name">Contacts</string>
+    <string name="search_menu">Search</string>
+    <string name="export_from_menu">Export from…</string>
+    <string name="export_to_menu">Export to…</string>
+    <string name="search_contact_hint">Search contact…</string>
+    <string name="contact_overview_label">Add Contact</string>
+    <string name="name_contact_overview">Name</string>
+    <string name="number_contact_overview">Phone Number</string>
+    <string name="address_contact_overview">Home Address</string>
+    <string name="email_contact_overview">Email</string>
+    <string name="phone_contact_overview">Phone</string>
+    <string name="title_save_contact_overview">Save Contact</string>
+    <string name="modify_contact_title">Modify Contact</string>
+    <string name="guideline_number">0/12</string>
+    <string name="guideline_name">0/30</string>
 </resources>

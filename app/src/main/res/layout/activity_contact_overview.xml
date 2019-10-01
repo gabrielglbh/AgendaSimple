@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    tools:context=".ContactOverview">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:padding="8dp">
+
+        <EditText
+            android:id="@+id/input_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="16dp"
+            android:imeOptions="actionDone"
+            android:inputType="text|textCapSentences"
+            android:maxLines="1"
+            android:maxLength="30"
+            app:layout_constraintBottom_toBottomOf="@+id/icon_name"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/icon_name"
+            app:layout_constraintTop_toTopOf="@+id/icon_name" />
+
+        <EditText
+            android:id="@+id/input_number"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="16dp"
+            android:imeOptions="actionDone"
+            android:inputType="number|phone"
+            android:maxLength="12"
+            android:maxLines="1"
+            app:layout_constraintBottom_toBottomOf="@+id/icon_number"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/icon_number"
+            app:layout_constraintTop_toTopOf="@+id/icon_number" />
+
+        <EditText
+            android:id="@+id/input_home"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="16dp"
+            android:imeOptions="actionDone"
+            android:inputType="text|textCapSentences"
+            android:maxLines="1"
+            app:layout_constraintBottom_toBottomOf="@+id/icon_home"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/icon_home"
+            app:layout_constraintTop_toTopOf="@+id/icon_home" />
+
+        <EditText
+            android:id="@+id/input_mail"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="16dp"
+            android:imeOptions="actionDone"
+            android:inputType="text|textCapSentences"
+            android:maxLines="1"
+            app:layout_constraintBottom_toBottomOf="@+id/icon_mail"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/icon_mail"
+            app:layout_constraintTop_toTopOf="@+id/icon_mail" />
+
+        <EditText
+            android:id="@+id/input_home_phone"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="16dp"
+            android:imeOptions="actionDone"
+            android:inputType="number|phone"
+            android:maxLines="1"
+            app:layout_constraintBottom_toBottomOf="@+id/icon_home_phone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/icon_home_phone"
+            app:layout_constraintTop_toTopOf="@+id/icon_home_phone" />
+
+    <TextView
+        android:id="@+id/icon_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:background="@drawable/ic_account"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/hint_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/name_contact_overview"
+            android:textSize="18sp"
+            android:textColor="@color/text"
+            app:layout_constraintBottom_toTopOf="@+id/input_name"
+            app:layout_constraintStart_toStartOf="@+id/input_name" />
+
+        <TextView
+            android:id="@+id/guide_count_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="@+id/input_name"
+            app:layout_constraintTop_toBottomOf="@+id/input_name"
+            android:text="@string/guideline_name" />
+
+    <TextView
+        android:id="@+id/icon_number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:background="@drawable/ic_smartphone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/input_name" />
+
+    <TextView
+        android:id="@+id/icon_home_phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:background="@drawable/ic_call"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/input_number" />
+
+        <TextView
+            android:id="@+id/hint_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/number_contact_overview"
+            android:textSize="18sp"
+            android:textColor="@color/text"
+            app:layout_constraintBottom_toTopOf="@+id/input_number"
+            app:layout_constraintStart_toStartOf="@+id/input_number" />
+
+        <TextView
+            android:id="@+id/guide_count_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="@+id/input_number"
+            app:layout_constraintTop_toBottomOf="@+id/input_number"
+            android:text="@string/guideline_number" />
+
+        <TextView
+            android:id="@+id/guide_count_home_phone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="@+id/input_home_phone"
+            app:layout_constraintTop_toBottomOf="@+id/input_home_phone"
+            android:text="@string/guideline_number" />
+
+    <TextView
+        android:id="@+id/icon_home"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:background="@drawable/ic_home"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/input_home_phone" />
+
+        <TextView
+            android:id="@+id/hint_home"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/address_contact_overview"
+            android:textSize="18sp"
+            android:textColor="@color/text"
+            app:layout_constraintBottom_toTopOf="@+id/input_home"
+            app:layout_constraintStart_toStartOf="@+id/input_home" />
+
+        <TextView
+            android:id="@+id/hint_home_phone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/phone_contact_overview"
+            android:textSize="18sp"
+            android:textColor="@color/text"
+            app:layout_constraintBottom_toTopOf="@+id/input_home_phone"
+            app:layout_constraintStart_toStartOf="@+id/input_home_phone" />
+
+    <TextView
+        android:id="@+id/icon_mail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:background="@drawable/ic_email"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/input_home" />
+
+        <TextView
+            android:id="@+id/hint_mail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/email_contact_overview"
+            android:textSize="18sp"
+            android:textColor="@color/text"
+            app:layout_constraintBottom_toTopOf="@+id/input_mail"
+            app:layout_constraintStart_toStartOf="@+id/input_mail" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

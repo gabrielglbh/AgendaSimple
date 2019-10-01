@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="15dp">
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/icon_contact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/background_circle"
+            android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/initial_contact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="G"
+            android:textSize="25sp"
+            android:textColor="@android:color/white"
+            android:layout_gravity="center" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/name_contact"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            tools:text="Gabriel García"
+            android:textSize="18sp"
+            android:textColor="@color/text"
+            android:maxLength="25"
+            android:maxLines="1"
+            android:layout_marginStart="20dp"
+            android:gravity="center|start" />
+
+        <TextView
+            android:id="@+id/number_contact"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            tools:text="661937039"
+            android:textSize="18sp"
+            android:textColor="@color/textSecunadry"
+            android:maxLines="1"
+            android:maxLength="12"
+            android:layout_marginStart="20dp"
+            android:gravity="center|start" />
+
+    </LinearLayout>
+</LinearLayout>
