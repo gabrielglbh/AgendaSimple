@@ -4,13 +4,6 @@
     <color name="colorPrimaryDark">#0547B6</color>
     <color name="colorAccent">#FFC107</color>
 
-    <color name="shape_1">#008577</color>
-    <color name="shape_2">#FF8C00</color>
-    <color name="shape_3">#00D973</color>
-    <color name="shape_4">#D60036</color>
-    <color name="shape_5">#0057BA</color>
-    <color name="shape_6">#FFE600</color>
-
     <color name="text">#242424</color>
     <color name="textSecunadry">#3C3C3C</color>
 </resources>

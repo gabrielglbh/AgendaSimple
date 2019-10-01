@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="color_bubbles">
+        <item name="shape_1">#008577</item>
+        <item name="shape_2">#FF8C00</item>
+        <item name="shape_3">#00D973</item>
+        <item name="shape_4">#D60036</item>
+        <item name="shape_5">#0057BA</item>
+        <item name="shape_6">#FFE600</item>
+    </array>
+</resources>

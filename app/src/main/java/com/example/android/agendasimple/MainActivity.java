@@ -15,7 +15,11 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.SearchView;
 
+import com.example.android.agendasimple.sql.ContactEntity;
+import com.example.android.agendasimple.sql.DatabaseSQL;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener {
 
@@ -23,14 +27,19 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private AgendaAdapter adapter;
     private FloatingActionButton addContact;
     private SearchView searchWidget;
+    public static DatabaseSQL sql;
 
     public static final String OVERVIEW_MODE = "OVERVIEW_MODE";
     public final int MODE = 0;
+
+    private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sql = new DatabaseSQL(this);
 
         addContact = findViewById(R.id.fab_add_contact);
         addContact.setOnClickListener(new View.OnClickListener() {
@@ -44,16 +53,25 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         setRecyclerView();
     }
 
+    @Override
+    protected void onResume() {
+        contacts = sql.getAllContacts();
+        adapter.setContactList(contacts);
+        super.onResume();
+    }
+
     /**
      *
      * setRecyclerView: Configuración del RecyclerView para la lista de contactos, extraída de la
      * base de datos
      *
      * */
-    // TODO: Cargar contactos de DB
     private void setRecyclerView() {
         rv = findViewById(R.id.recycler_view_contacts);
-        adapter = new AgendaAdapter(6, this, getApplicationContext());
+        contacts = sql.getAllContacts();
+
+        adapter = new AgendaAdapter(this, getApplicationContext());
+        adapter.setContactList(contacts);
 
         LinearLayoutManager lm = new LinearLayoutManager(this);
         rv.setLayoutManager(lm);

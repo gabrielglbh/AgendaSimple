@@ -17,12 +17,19 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.android.agendasimple.sql.ContactEntity;
+
+import java.util.Random;
 
 public class ContactOverview extends AppCompatActivity {
 
     private TextView nameHint, numberHint, phoneHint, homeHint, emailHint;
     private EditText editName, editNumber, editPhone, editHome, editEmail;
     private TextView guideName, guideNumber, guidePhone;
+
+    private Toast mToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -287,13 +294,30 @@ public class ContactOverview extends AppCompatActivity {
         return true;
     }
 
-    // TODO: Save on finish the contact and check if it is empty
+    // TODO: Como hacer para guardar la PK?
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
             case R.id.menu_save:
-                finish();
+                String[] colors = getResources().getStringArray(R.array.color_bubbles);
+                Random r = new Random();
+                ContactEntity newContact = new ContactEntity(
+                        0,
+                        editName.getText().toString(),
+                        editNumber.getText().toString(),
+                        editPhone.getText().toString(),
+                        editHome.getText().toString(),
+                        editEmail.getText().toString(),
+                        colors[r.nextInt(colors.length+1)]
+                );
+
+                if (MainActivity.sql.insertContact(newContact)) {
+                    finish();
+                } else {
+                    mToast = Toast.makeText(this, "Something ocurred, insertion failed.", Toast.LENGTH_SHORT);
+                    mToast.show();
+                }
                 break;
         }
         return true;

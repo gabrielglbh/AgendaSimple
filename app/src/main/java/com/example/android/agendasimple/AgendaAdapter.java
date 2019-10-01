@@ -1,6 +1,7 @@
 package com.example.android.agendasimple;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
@@ -8,6 +9,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.android.agendasimple.sql.ContactEntity;
+
+import java.util.ArrayList;
 import java.util.Random;
 
 import androidx.annotation.NonNull;
@@ -17,17 +21,10 @@ import androidx.recyclerview.widget.RecyclerView;
 public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
     private ContactClickListener listener;
-    private int numberOfItems;
     private Context ctx;
-    private int[] colors = { R.color.shape_1, R.color.shape_2, R.color.shape_3, R.color.shape_4,
-            R.color.shape_5, R.color.shape_6 };
-    private String[] names = { "Gabriel García", "Marta Macías", "Raúl García", "Mª Jesús López",
-            "Guillermo Escobero", "Sergio Valdivieso"};
-    private String[] numbers = { "3453455", "56856788", "76754332", "423467586",
-            "9999876", "876543456"};
+    private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
-    public AgendaAdapter(int items, ContactClickListener listener, Context ctx) {
-        numberOfItems = items;
+    public AgendaAdapter(ContactClickListener listener, Context ctx) {
         this.listener = listener;
         this.ctx = ctx;
     }
@@ -44,18 +41,30 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     public void onBindViewHolder(@NonNull Contact holder, int i) {
         int position = holder.getAdapterPosition();
         Drawable icon = ContextCompat.getDrawable(ctx, R.drawable.background_circle);
-        Random rand = new Random();
-        icon.setColorFilter(ContextCompat.getColor(ctx, colors[rand.nextInt(5)]), PorterDuff.Mode.SRC_ATOP);
+        icon.setColorFilter(Color.parseColor(contacts.get(position).getCOLOR_BUBBLE()), PorterDuff.Mode.SRC_ATOP);
         holder.icon_contact.setBackground(icon);
 
-        holder.name_contact.setText(names[position]);
-        holder.number_contact.setText(numbers[position]);
-        holder.initial_contact.setText(names[position].substring(0,1));
+        holder.name_contact.setText(contacts.get(position).getNAME());
+        holder.number_contact.setText(contacts.get(position).getPHONE_NUMBER());
+        holder.initial_contact.setText(contacts.get(position).getNAME().substring(0, 1));
     }
 
     @Override
     public int getItemCount() {
-        return numberOfItems;
+        if (contacts == null) {
+            return 0;
+        } else {
+            return contacts.size();
+        }
+    }
+
+    /**
+     *
+     * setContactList: Método auxiliar para implementar la lista dinámicamente
+     *
+     * */
+    public void setContactList(ArrayList<ContactEntity> contacts) {
+        this.contacts = contacts;
     }
 
     public interface ContactClickListener {
