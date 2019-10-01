@@ -5,14 +5,15 @@ import androidx.core.content.ContextCompat;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -65,6 +66,7 @@ public class ContactOverview extends AppCompatActivity {
 
         setEditHints();
         setGuideCount();
+        setImeOptions();
 
         if (mode == 0) {
             setTitle(getString(R.string.modify_contact_title));
@@ -149,11 +151,13 @@ public class ContactOverview extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (i+1 <= 30) {
-                    String count = (i + 1) + "/30";
+                int curr = editName.getText().toString().length();
+                if (curr != 0) {
+                    String count = curr + "/30";
                     guideName.setText(count);
                 } else {
-                    editName.setText(editName.getText().toString());
+                    String count = getString(R.string.guideline_name);
+                    guideName.setText(count);
                 }
             }
 
@@ -167,11 +171,13 @@ public class ContactOverview extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (i+1 <= 12) {
-                    String count = (i+1) + "/12";
+                int curr = editNumber.getText().toString().length();
+                if (curr != 0) {
+                    String count = curr + "/12";
                     guideNumber.setText(count);
                 } else {
-                    editNumber.setText(editNumber.getText().toString());
+                    String count = getString(R.string.guideline_number);
+                    guideNumber.setText(count);
                 }
             }
 
@@ -185,16 +191,93 @@ public class ContactOverview extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (i+1 <= 12) {
-                    String count = (i+1) + "/12";
+                int curr = editPhone.getText().toString().length();
+                if (curr != 0) {
+                    String count = curr + "/12";
                     guidePhone.setText(count);
                 } else {
-                    editPhone.setText(editPhone.getText().toString());
+                    String count = getString(R.string.guideline_number);
+                    guidePhone.setText(count);
                 }
             }
 
             @Override
             public void afterTextChanged(Editable editable) { }
+        });
+    }
+
+    /**
+     *
+     * setImeOptions: Establece la jerarquía entre los EditText al darle al botón de DONE del
+     * teclado software
+     *
+     * Name -> Phone Number
+     * Phone Number -> Phone
+     * Phone -> Home Address
+     * Home Address -> Email
+     * Email -> El teclado se cierra
+     *
+     * */
+    private void setImeOptions() {
+        editName.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                if (i == EditorInfo.IME_ACTION_DONE) {
+                    editName.clearFocus();
+                    editNumber.requestFocus();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        editNumber.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                if (i == EditorInfo.IME_ACTION_DONE) {
+                    editNumber.clearFocus();
+                    editPhone.requestFocus();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        editPhone.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                if (i == EditorInfo.IME_ACTION_DONE) {
+                    editPhone.clearFocus();
+                    editHome.requestFocus();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        editHome.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                if (i == EditorInfo.IME_ACTION_DONE) {
+                    editHome.clearFocus();
+                    editEmail.requestFocus();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        editEmail.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                if (i == EditorInfo.IME_ACTION_DONE) {
+                    editEmail.clearFocus();
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(editEmail.getWindowToken(), 0);
+                    return true;
+                }
+                return false;
+            }
         });
     }
 
@@ -214,28 +297,5 @@ public class ContactOverview extends AppCompatActivity {
                 break;
         }
         return true;
-    }
-
-    /**
-     *
-     * dispatchTouchEvent: Evento que sirve para quitar focus del EditText al dar a otra parte de la
-     * pantalla
-     *
-     * */
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            View v = getCurrentFocus();
-            if (v instanceof EditText) {
-                Rect outRect = new Rect();
-                v.getGlobalVisibleRect(outRect);
-                if (!outRect.contains((int)event.getRawX(), (int)event.getRawY())) {
-                    v.clearFocus();
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                }
-            }
-        }
-        return super.dispatchTouchEvent(event);
     }
 }
