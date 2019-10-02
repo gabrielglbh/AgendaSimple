@@ -1,5 +1,7 @@
 # AgendaSimple
-Aplicación de una Agenda de contactos para la asignatura de Android en el Máster de Desarrollo de Aplicaciones Móviles de la UPM disponible en Español (ES) e Inglés (EN).
+Aplicación de una Agenda de contactos para la asignatura de Android en el Máster de Desarrollo de Aplicaciones Móviles de la UPM disponible en Español (ES) e Inglés (EN). 
+
+API Mínima = 21.
 
 Esta aplicación es capaz de añadir contactos, eliminarlos y modificarlos cuando se quiera:
 
