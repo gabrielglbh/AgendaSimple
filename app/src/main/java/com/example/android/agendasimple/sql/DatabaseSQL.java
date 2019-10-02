@@ -165,16 +165,18 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_1 + " LIKE ?";
         Cursor c = db.rawQuery(query, new String[] { QUERY + "%" });
 
-        if (c.getCount() > 0 && c.moveToNext()) {
+        if (c.getCount() > 0) {
             ArrayList<ContactEntity> contacts = new ArrayList<>();
-            contacts.add(new ContactEntity(
-                    c.getString(c.getColumnIndex(coloum_1)),
-                    c.getString(c.getColumnIndex(coloum_2)),
-                    c.getString(c.getColumnIndex(coloum_3)),
-                    c.getString(c.getColumnIndex(coloum_4)),
-                    c.getString(c.getColumnIndex(coloum_5)),
-                    c.getString(c.getColumnIndex(coloum_6))
-            ));
+            while (c.moveToNext()) {
+                contacts.add(new ContactEntity(
+                        c.getString(c.getColumnIndex(coloum_1)),
+                        c.getString(c.getColumnIndex(coloum_2)),
+                        c.getString(c.getColumnIndex(coloum_3)),
+                        c.getString(c.getColumnIndex(coloum_4)),
+                        c.getString(c.getColumnIndex(coloum_5)),
+                        c.getString(c.getColumnIndex(coloum_6))
+                ));
+            }
             c.close();
             return contacts;
         } else {
