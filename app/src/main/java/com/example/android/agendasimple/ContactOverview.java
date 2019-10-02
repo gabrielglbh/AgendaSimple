@@ -1,11 +1,9 @@
 package com.example.android.agendasimple;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -40,9 +38,8 @@ public class ContactOverview extends AppCompatActivity {
     private Toast mToast;
 
     private ContactEntity contact;
-    private int numberOfContacts = 0;
-    private int ID;
     private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
+    private String NUMBER;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,28 +52,14 @@ public class ContactOverview extends AppCompatActivity {
         Intent i = getIntent();
         if (i.hasExtra(MainActivity.OVERVIEW_MODE)) {
             mode = i.getIntExtra(MainActivity.OVERVIEW_MODE, 0);
-            if (i.hasExtra(MainActivity.ID_OF_CONTRACT)) {
-                ID = i.getIntExtra(MainActivity.ID_OF_CONTRACT, 0);
+            if (i.hasExtra(MainActivity.NUMBER_OF_CONTACTS)) {
+                NUMBER = i.getStringExtra(MainActivity.NUMBER_OF_CONTACTS);
             }
             setViews();
         }
         else {
             setViews();
         }
-
-        if (i.hasExtra(MainActivity.NUMBER_CONTACTS)) {
-            numberOfContacts = i.getIntExtra(MainActivity.NUMBER_CONTACTS, 0);
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (mode == 1) {
-            validateAndInsertContact();
-        } else {
-            validateAndUpdateContact();
-        }
-        super.onDestroy();
     }
 
     /**
@@ -119,7 +102,7 @@ public class ContactOverview extends AppCompatActivity {
 
         if (mode == 0) {
             setTitle(getString(R.string.modify_contact_title));
-            contact = MainActivity.sql.getContact(ID);
+            contact = MainActivity.sql.getContact(NUMBER);
             setContact();
         } else {
             setTitle(getString(R.string.contact_overview_label));
@@ -290,7 +273,7 @@ public class ContactOverview extends AppCompatActivity {
         }
         else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
-            if(!MainActivity.sql.deleteContact(ID)) {
+            if(!MainActivity.sql.deleteContact(NUMBER)) {
                 makeToast(getString(R.string.deletion_failed));
             }
             makeToast(getString(R.string.empty_update));
@@ -298,7 +281,6 @@ public class ContactOverview extends AppCompatActivity {
         }
         else {
             ContactEntity newContact = new ContactEntity(
-                    numberOfContacts + 1,
                     editName.getText().toString(),
                     editNumber.getText().toString(),
                     editPhone.getText().toString(),
@@ -328,14 +310,13 @@ public class ContactOverview extends AppCompatActivity {
             finish();
         } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
-            if(!MainActivity.sql.deleteContact(ID)) {
+            if(!MainActivity.sql.deleteContact(NUMBER)) {
                 makeToast(getString(R.string.deletion_failed));
             }
             makeToast(getString(R.string.empty_update));
             finish();
         } else {
             ContactEntity c = new ContactEntity(
-                    ID,
                     name,
                     number,
                     phone,

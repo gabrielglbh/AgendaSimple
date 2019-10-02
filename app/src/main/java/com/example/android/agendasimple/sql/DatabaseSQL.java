@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -13,14 +12,13 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     private static final String DB = "contacts";
     private static final String TABLE_NAME = "contact";
-    private static final int VERSION = 2;
-    private static final String coloum_1 = "ID";
-    private static final String coloum_2 = "NAME";
-    private static final String coloum_3 = "PHONE_NUMBER";
-    private static final String coloum_4 = "PHONE";
-    private static final String coloum_5 = "HOME_ADDRESS";
-    private static final String coloum_6 = "EMAIL";
-    private static final String coloum_7 = "COLOR_BUBBLE";
+    private static final int VERSION = 4;
+    private static final String coloum_1 = "NAME";
+    private static final String coloum_2 = "PHONE_NUMBER";
+    private static final String coloum_3 = "PHONE";
+    private static final String coloum_4 = "HOME_ADDRESS";
+    private static final String coloum_5 = "EMAIL";
+    private static final String coloum_6 = "COLOR_BUBBLE";
 
     public DatabaseSQL(Context context) {
         super(context, DB, null, VERSION);
@@ -28,10 +26,10 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL("CREATE TABLE " + TABLE_NAME + "(" + coloum_1 + " INTEGER PRIMARY KEY " +
-                "AUTOINCREMENT, " + coloum_2 + " TEXT, " + coloum_3 + " TEXT, " + coloum_4 + " TEXT, " +
-                "" + coloum_5 + " TEXT, " + coloum_6 + " TEXT, " +
-                "" + coloum_7 + " INTEGER NOT NULL DEFAULT 0)");
+        sqLiteDatabase.execSQL("CREATE TABLE " + TABLE_NAME + "(" + coloum_1 + " TEXT PRIMARY KEY, " +
+                coloum_2 + " TEXT, " + coloum_3 + " TEXT, " +
+                "" + coloum_4 + " TEXT, " + coloum_5 + " TEXT, " +
+                "" + coloum_6 + " INTEGER NOT NULL DEFAULT 0)");
     }
 
     @Override
@@ -51,13 +49,12 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
-        contentValues.put(coloum_1, e.getID());
-        contentValues.put(coloum_2, e.getNAME());
-        contentValues.put(coloum_3, e.getPHONE_NUMBER());
-        contentValues.put(coloum_4, e.getPHONE());
-        contentValues.put(coloum_5, e.getHOME_ADDRESS());
-        contentValues.put(coloum_6, e.getEMAIL());
-        contentValues.put(coloum_7, e.getCOLOR_BUBBLE());
+        contentValues.put(coloum_1, e.getNAME());
+        contentValues.put(coloum_2, e.getPHONE_NUMBER());
+        contentValues.put(coloum_3, e.getPHONE());
+        contentValues.put(coloum_4, e.getHOME_ADDRESS());
+        contentValues.put(coloum_5, e.getEMAIL());
+        contentValues.put(coloum_6, e.getCOLOR_BUBBLE());
 
         long result = db.insert(TABLE_NAME,null, contentValues);
 
@@ -75,15 +72,14 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
-        contentValues.put(coloum_1, e.getID());
-        contentValues.put(coloum_2, e.getNAME());
-        contentValues.put(coloum_3, e.getPHONE_NUMBER());
-        contentValues.put(coloum_4, e.getPHONE());
-        contentValues.put(coloum_5, e.getHOME_ADDRESS());
-        contentValues.put(coloum_6, e.getEMAIL());
-        contentValues.put(coloum_7, e.getCOLOR_BUBBLE());
+        contentValues.put(coloum_1, e.getNAME());
+        contentValues.put(coloum_2, e.getPHONE_NUMBER());
+        contentValues.put(coloum_3, e.getPHONE());
+        contentValues.put(coloum_4, e.getHOME_ADDRESS());
+        contentValues.put(coloum_5, e.getEMAIL());
+        contentValues.put(coloum_6, e.getCOLOR_BUBBLE());
 
-        long result = db.update(TABLE_NAME, contentValues, "ID=?", new String[] { Integer.toString(e.getID()) });
+        long result = db.update(TABLE_NAME, contentValues, "NAME=? AND PHONE_NUMBER=?", new String[] {coloum_1, coloum_2});
 
         return result != -1;
     }
@@ -95,9 +91,9 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
      *
      * */
-    public boolean deleteContact(int ID){
+    public boolean deleteContact(String NUMBER){
         SQLiteDatabase db = this.getWritableDatabase();
-        long result = db.delete(TABLE_NAME,"ID=?", new String[] { Integer.toString(ID) });
+        long result = db.delete(TABLE_NAME,"PHONE_NUMBER=?", new String[] { NUMBER });
 
         return result != -1;
     }
@@ -111,20 +107,19 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public ArrayList<ContactEntity> getAllContacts(){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + coloum_2 + " ASC";
+        String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + coloum_1 + " ASC";
         Cursor c = db.rawQuery(query, null);
 
         if (c.getCount() > 0) {
             ArrayList<ContactEntity> contacts = new ArrayList<>();
             while (c.moveToNext()) {
                 contacts.add(new ContactEntity(
-                        c.getInt(c.getColumnIndex(coloum_1)),
+                        c.getString(c.getColumnIndex(coloum_1)),
                         c.getString(c.getColumnIndex(coloum_2)),
                         c.getString(c.getColumnIndex(coloum_3)),
                         c.getString(c.getColumnIndex(coloum_4)),
                         c.getString(c.getColumnIndex(coloum_5)),
-                        c.getString(c.getColumnIndex(coloum_6)),
-                        c.getString(c.getColumnIndex(coloum_7)))
+                        c.getString(c.getColumnIndex(coloum_6)))
                 );
             }
             c.close();
@@ -142,20 +137,19 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @return del contacto en cuestión o null si la consulta ha fallado
      *
      * */
-    public ContactEntity getContact(int ID){
+    public ContactEntity getContact(String NUMBER){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_1 + " = ?";
-        Cursor c = db.rawQuery(query, new String[] { String.valueOf(ID) });
+        String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_2 + " = ?";
+        Cursor c = db.rawQuery(query, new String[] { NUMBER });
 
         if (c.getCount() > 0 && c.moveToNext()) {
             ContactEntity contact = new ContactEntity(
-                    c.getInt(c.getColumnIndex(coloum_1)),
+                    c.getString(c.getColumnIndex(coloum_1)),
                     c.getString(c.getColumnIndex(coloum_2)),
                     c.getString(c.getColumnIndex(coloum_3)),
                     c.getString(c.getColumnIndex(coloum_4)),
                     c.getString(c.getColumnIndex(coloum_5)),
-                    c.getString(c.getColumnIndex(coloum_6)),
-                    c.getString(c.getColumnIndex(coloum_7))
+                    c.getString(c.getColumnIndex(coloum_6))
             );
             c.close();
             return contact;

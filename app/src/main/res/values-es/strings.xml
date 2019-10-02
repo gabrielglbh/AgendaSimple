@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_menu">Búsqueda</string>
+    <string name="export_from_menu">Exportar desde…</string>
+    <string name="export_to_menu">Exportar a…</string>
+    <string name="search_contact_hint">Buscar Contacto…</string>
+    <string name="contact_overview_label">Añadir Contacto</string>
+    <string name="name_contact_overview">Nombre*</string>
+    <string name="number_contact_overview">Móvil*</string>
+    <string name="address_contact_overview">Dirección</string>
+    <string name="phone_contact_overview">Teléfono</string>
+    <string name="title_save_contact_overview">Guardar Contacto</string>
+    <string name="modify_contact_title">Modificar Contacto</string>
+    <string name="positive_dialog">Sí</string>
+
+    <string name="invalid_insertion_1">El contacto debe tener un número de móvil y un nombre.</string>
+    <string name="insertion_failed">Algo ha salido mal, inserción fallida.</string>
+    <string name="deletion_failed">Algo ha salido mal, eliminación fallida.</string>
+    <string name="update_failed">Algo ha salido mal, modificación fallida.</string>
+    <string name="update_equal">Cambios descartados.</string>
+    <string name="empty_update">Contacto vacío descartado.</string>
+    <string name="invalid_phone_call">Número de teléfono inválido.</string>
+</resources>

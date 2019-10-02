@@ -2,7 +2,6 @@ package com.example.android.agendasimple.sql;
 
 public class ContactEntity {
 
-    private int ID;
     private String NAME;
     private String PHONE_NUMBER;
     private String PHONE;
@@ -10,19 +9,14 @@ public class ContactEntity {
     private String EMAIL;
     private String COLOR_BUBBLE;
 
-    public ContactEntity(int ID, String NAME, String PHONE_NUMBER, String PHONE, String HOME_ADDRESS,
+    public ContactEntity(String NAME, String PHONE_NUMBER, String PHONE, String HOME_ADDRESS,
                          String EMAIL, String COLOR_BUBBLE) {
-        setID(ID);
         setNAME(NAME);
         setPHONE_NUMBER(PHONE_NUMBER);
         setPHONE(PHONE);
         setHOME_ADDRESS(HOME_ADDRESS);
         setEMAIL(EMAIL);
         setCOLOR_BUBBLE(COLOR_BUBBLE);
-    }
-
-    public int getID() {
-        return ID;
     }
 
     public String getNAME() {
@@ -47,10 +41,6 @@ public class ContactEntity {
 
     public String getCOLOR_BUBBLE() {
         return COLOR_BUBBLE;
-    }
-
-    public void setID(int ID) {
-        this.ID = ID;
     }
 
     public void setNAME(String NAME) {

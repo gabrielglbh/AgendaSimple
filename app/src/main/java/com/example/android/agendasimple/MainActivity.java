@@ -34,12 +34,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
     // ID que se pasa a ContactOverview para saber si se está modificando el contacto o añadiendo uno nuevo
     public static final String OVERVIEW_MODE = "OVERVIEW_MODE";
-    // ID que se pasa a ContactOverview para saber cuantos contactos hay y poner ese número + 1 como ID del
-    // siguiente contacto a añadir
-    public static final String NUMBER_CONTACTS = "NUMBER_OF_CONTACTS";
-    // ID que se pasa a ContactOverview para saber el ID de contacto con el buscar para cargar los campos del
+    // Número de telefono que se pasa a ContactOverview para saber la PK de contacto con el buscar para cargar los campos del
     // contacto seleccionado
-    public static final String ID_OF_CONTRACT = "ID_OF_CONTRACT";
+    public static final String NUMBER_OF_CONTACTS = "NUMBER_CONTACT";
     public final int MODE = 0;
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
@@ -77,13 +74,13 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         adapter = new AgendaAdapter(this, getApplicationContext());
         adapter.setContactList(contacts);
 
-        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter));
-        touchHelper.attachToRecyclerView(rv);
-
         LinearLayoutManager lm = new LinearLayoutManager(this);
         rv.setLayoutManager(lm);
         rv.setHasFixedSize(false);
         rv.setAdapter(adapter);
+
+        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter));
+        touchHelper.attachToRecyclerView(rv);
     }
 
     private void setFAB() {
@@ -92,7 +89,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             @Override
             public void onClick(View view) {
                 Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                goTo.putExtra(NUMBER_CONTACTS, adapter.getItemCount());
                 startActivity(goTo);
             }
         });
@@ -100,13 +96,13 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
     /**
      * onContactClicked: Handler para el click de un contacto para pasar a ContactOverview
-     * @param pos: ID del contacto en la posición clickada del RecyclerView
+     * @param num: PHONE_NUMBER del contacto en la posición clickada del RecyclerView
      * */
     @Override
-    public void onContactClicked(int pos) {
+    public void onContactClicked(String num) {
         Intent goTo = new Intent(this, ContactOverview.class);
         goTo.putExtra(OVERVIEW_MODE, MODE);
-        goTo.putExtra(ID_OF_CONTRACT, pos);
+        goTo.putExtra(NUMBER_OF_CONTACTS, num);
         startActivity(goTo);
     }
 

@@ -1,13 +1,16 @@
 package com.example.android.agendasimple;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
 
@@ -38,7 +41,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
     @Override
     public void onBindViewHolder(@NonNull Contact holder, int i) {
-        int position = holder.getAdapterPosition();
+        final int position = holder.getAdapterPosition();
         Drawable icon = ContextCompat.getDrawable(ctx, R.drawable.background_circle);
         icon.setColorFilter(Color.parseColor(contacts.get(position).getCOLOR_BUBBLE()), PorterDuff.Mode.SRC_ATOP);
         holder.icon_contact.setBackground(icon);
@@ -46,6 +49,19 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         holder.name_contact.setText(contacts.get(position).getNAME());
         holder.number_contact.setText(contacts.get(position).getPHONE_NUMBER());
         holder.initial_contact.setText(contacts.get(position).getNAME().substring(0, 1));
+
+        holder.call_to.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent dialIntent = new Intent(Intent.ACTION_DIAL);
+                dialIntent.setData(Uri.parse(contacts.get(position).getPHONE_NUMBER()));
+                if (dialIntent.resolveActivity(ctx.getPackageManager()) != null) {
+                    ctx.startActivity(dialIntent);
+                } else {
+                    Toast.makeText(ctx, ctx.getString(R.string.invalid_phone_call), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     @Override
@@ -66,12 +82,12 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     }
 
     public interface ContactClickListener {
-        void onContactClicked(int pos);
+        void onContactClicked(String number);
     }
 
     class Contact extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        TextView icon_contact, initial_contact, name_contact, number_contact;
+        TextView icon_contact, initial_contact, name_contact, number_contact, call_to;
 
         public Contact(@NonNull View itemView) {
             super(itemView);
@@ -80,12 +96,13 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             initial_contact = itemView.findViewById(R.id.initial_contact);
             name_contact = itemView.findViewById(R.id.name_contact);
             number_contact = itemView.findViewById(R.id.number_contact);
+            call_to = itemView.findViewById(R.id.call_to);
         }
 
         @Override
         public void onClick(View view) {
-            int pos = contacts.get(getAdapterPosition()).getID();
-            listener.onContactClicked(pos);
+            String num = contacts.get(getAdapterPosition()).getPHONE_NUMBER();
+            listener.onContactClicked(num);
         }
     }
 

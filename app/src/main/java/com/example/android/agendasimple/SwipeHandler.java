@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -49,9 +50,16 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
 
     @Override
     public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-        if(!MainActivity.sql.deleteContact(viewHolder.getAdapterPosition())) {
+        /*
+        if(!MainActivity.sql.deleteContact()) {
             Toast.makeText(ctx, ctx.getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+        } else {
+            Log.d("LOOP", "onSwiped: " + adapter.getItemCount());
+            adapter.notifyItemRemoved(viewHolder.getAdapterPosition());
+            adapter.notifyItemRangeChanged(0, adapter.getItemCount());
+            Log.d("LOOP", "onSwiped: " + adapter.getItemCount());
         }
+        */
     }
 
     /**

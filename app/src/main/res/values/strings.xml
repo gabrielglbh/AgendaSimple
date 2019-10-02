@@ -1,26 +1,27 @@
 <resources>
-    <string name="app_name">Contacts</string>
-    <string name="search_menu">Search</string>
-    <string name="export_from_menu">Export from…</string>
-    <string name="export_to_menu">Export to…</string>
-    <string name="search_contact_hint">Search contact…</string>
-    <string name="contact_overview_label">Add Contact</string>
-    <string name="name_contact_overview">Name*</string>
-    <string name="number_contact_overview">Phone Number*</string>
-    <string name="address_contact_overview">Home Address</string>
-    <string name="email_contact_overview">Email</string>
-    <string name="phone_contact_overview">Phone</string>
-    <string name="title_save_contact_overview">Save Contact</string>
-    <string name="modify_contact_title">Modify Contact</string>
-    <string name="guideline_number">0/12</string>
-    <string name="guideline_name">0/30</string>
-    <string name="positive_dialog">Yes</string>
-    <string name="negative_dialog">No</string>
+    <string name="app_name" translatable="false">Agenda</string>
+    <string name="search_menu" translatable="true">Search</string>
+    <string name="export_from_menu" translatable="true">Export from…</string>
+    <string name="export_to_menu" translatable="true">Export to…</string>
+    <string name="search_contact_hint" translatable="true">Search contact…</string>
+    <string name="contact_overview_label" translatable="true">Add Contact</string>
+    <string name="name_contact_overview" translatable="true">Name*</string>
+    <string name="number_contact_overview" translatable="true">Phone Number*</string>
+    <string name="address_contact_overview" translatable="true">Home Address</string>
+    <string name="email_contact_overview" translatable="false">Email</string>
+    <string name="phone_contact_overview" translatable="true">Phone</string>
+    <string name="title_save_contact_overview" translatable="true">Save Contact</string>
+    <string name="modify_contact_title" translatable="true">Modify Contact</string>
+    <string name="guideline_number" translatable="false">0/12</string>
+    <string name="guideline_name" translatable="false">0/30</string>
+    <string name="positive_dialog" translatable="true">Yes</string>
+    <string name="negative_dialog" translatable="false">No</string>
 
-    <string name="invalid_insertion_1">Contact must have a name and/or a number.</string>
-    <string name="insertion_failed">Something occurred, insertion failed.</string>
-    <string name="deletion_failed">Something occurred, deletion failed.</string>
-    <string name="update_failed">Something occurred, update failed.</string>
-    <string name="update_equal">No changes were made.</string>
-    <string name="empty_update">Empty contact, discarded.</string>
+    <string name="invalid_insertion_1" translatable="true">Contact must have a name and/or a number.</string>
+    <string name="insertion_failed" translatable="true">Something occurred, insertion failed.</string>
+    <string name="deletion_failed" translatable="true">Something occurred, deletion failed.</string>
+    <string name="update_failed" translatable="true">Something occurred, update failed.</string>
+    <string name="update_equal" translatable="true">Changes were discarded.</string>
+    <string name="empty_update" translatable="true">Empty contact discarded.</string>
+    <string name="invalid_phone_call" translatable="true">Invalid phone number</string>
 </resources>
