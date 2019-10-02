@@ -4,10 +4,10 @@ Aplicación de una Agenda de contactos para la asignatura de Android en el Mást
 Esta aplicación es capaz de añadir contactos, eliminarlos y modificarlos cuando se quiera:
 
   - Inserción: Habilitado un FAB que guía al usuario a una nueva actividad para crear el contacto (ContactOverview).
-  - Borrado: En la vista completa de todos los contactos, se debe hacer SWIPE hacia derecha o izquierda para eliminar el contacto.
+  - Borrado: En la vista completa de todos los contactos, se debe hacer SWIPE hacia derecha o izquierda para eliminar el contacto. Implementado con el ItemTouchHelper.Callback.
   - Modificación: Con darle al contacto que se quiera modificar en la lista de contactos, lleva al usuario a ContactOverview pero con los campos rellenados del contacto cuando se insertó.
 
-Se ha utilizado SQLiteOpenHelper para administrar los datos con las operaciones descritas, además de para implementar la búsqueda de contactos.
+Se ha utilizado SQLiteOpenHelper para administrar los datos con las operaciones descritas, además de para implementar la búsqueda de contactos. Para la visualización de los contactos se ha utilizado RecyclerView con un Adapter básico.
 
 Además, la aplicación permite:
 
