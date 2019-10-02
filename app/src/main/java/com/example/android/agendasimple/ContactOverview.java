@@ -41,6 +41,8 @@ public class ContactOverview extends AppCompatActivity {
     private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
     private String NUMBER;
 
+    private boolean alreadyUpdated = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +62,18 @@ public class ContactOverview extends AppCompatActivity {
         else {
             setViews();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (!alreadyUpdated) {
+            if (mode == 1) {
+                validateAndInsertContact();
+            } else {
+                validateAndUpdateContact();
+            }
+        }
+        super.onDestroy();
     }
 
     /**
@@ -243,6 +257,7 @@ public class ContactOverview extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 if (mode == 1) {
+                    alreadyUpdated = true;
                     finish();
                 } else {
                     validateAndUpdateContact();
@@ -276,6 +291,7 @@ public class ContactOverview extends AppCompatActivity {
             if(!MainActivity.sql.deleteContact(NUMBER)) {
                 makeToast(getString(R.string.deletion_failed));
             }
+            alreadyUpdated = true;
             finish();
         }
         else {
@@ -288,6 +304,7 @@ public class ContactOverview extends AppCompatActivity {
                     colors[r.nextInt(7)]
             );
             if (MainActivity.sql.insertContact(newContact)) {
+                alreadyUpdated = true;
                 finish();
             } else {
                 makeToast(getString(R.string.insertion_failed));
@@ -305,12 +322,14 @@ public class ContactOverview extends AppCompatActivity {
         if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
             contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
             contact.getEMAIL().equals(email)) {
+            alreadyUpdated = true;
             finish();
         } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
             if(!MainActivity.sql.deleteContact(NUMBER)) {
                 makeToast(getString(R.string.deletion_failed));
             }
+            alreadyUpdated = true;
             finish();
         } else {
             ContactEntity c = new ContactEntity(
@@ -322,6 +341,7 @@ public class ContactOverview extends AppCompatActivity {
                     contact.getCOLOR_BUBBLE()
             );
             if (MainActivity.sql.updateContact(c)) {
+                alreadyUpdated = true;
                 finish();
             } else {
                 makeToast(getString(R.string.update_failed));

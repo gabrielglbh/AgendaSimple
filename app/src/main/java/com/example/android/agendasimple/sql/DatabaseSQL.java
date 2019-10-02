@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -73,7 +74,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         contentValues.put(coloum_5, e.getEMAIL());
         contentValues.put(coloum_6, e.getCOLOR_BUBBLE());
 
-        long result = db.update(TABLE_NAME, contentValues, "NAME=? AND PHONE_NUMBER=?", new String[] {coloum_1, coloum_2});
+        long result = db.update(TABLE_NAME, contentValues, "PHONE_NUMBER=?", new String[] { e.getPHONE_NUMBER() });
 
         return result != -1;
     }

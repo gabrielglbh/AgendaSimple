@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
 
@@ -56,10 +57,13 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         holder.call_to.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(
-                        Intent.ACTION_DIAL,
-                        Uri.fromParts("tel:", contacts.get(position).getPHONE_NUMBER(), null));
-                view.getContext().startActivity(intent);
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(Uri.parse("tel:" + contacts.get(position).getPHONE_NUMBER()));
+                if (intent.resolveActivity(view.getContext().getPackageManager()) != null) {
+                    view.getContext().startActivity(intent);
+                } else {
+                    Toast.makeText(ctx, ctx.getString(R.string.invalid_phone_call), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
