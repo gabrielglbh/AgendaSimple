@@ -10,11 +10,11 @@
     <string name="address_contact_overview">Dirección</string>
     <string name="phone_contact_overview">Teléfono</string>
     <string name="title_save_contact_overview">Guardar Contacto</string>
-    <string name="modify_contact_title">Modificar Contacto</string>
+    <string name="modify_contact_title">Editar Contacto</string>
     <string name="positive_dialog">Sí</string>
 
     <string name="invalid_insertion_1">El contacto debe tener un número de móvil y un nombre.</string>
-    <string name="insertion_failed">Algo ha salido mal, inserción fallida.</string>
+    <string name="insertion_failed">El número introducido ya está guardado.</string>
     <string name="deletion_failed">Algo ha salido mal, eliminación fallida.</string>
     <string name="update_failed">Algo ha salido mal, modificación fallida.</string>
     <string name="update_equal">Cambios descartados.</string>

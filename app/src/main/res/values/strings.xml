@@ -18,7 +18,7 @@
     <string name="negative_dialog" translatable="false">No</string>
 
     <string name="invalid_insertion_1" translatable="true">Contact must have a name and/or a number.</string>
-    <string name="insertion_failed" translatable="true">Something occurred, insertion failed.</string>
+    <string name="insertion_failed" translatable="true">The phone number is already saved.</string>
     <string name="deletion_failed" translatable="true">Something occurred, deletion failed.</string>
     <string name="update_failed" translatable="true">Something occurred, update failed.</string>
     <string name="update_equal" translatable="true">Changes were discarded.</string>

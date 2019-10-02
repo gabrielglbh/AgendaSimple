@@ -126,18 +126,18 @@ public class ContactOverview extends AppCompatActivity {
 
     private void setContact() {
         int color = Color.parseColor(contact.getCOLOR_BUBBLE());
-        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(color));
 
         if (Build.VERSION.SDK_INT >= 21) {
+            getSupportActionBar().setBackgroundDrawable(new ColorDrawable(color));
             Window w = getWindow();
             w.setStatusBarColor(color);
-        }
 
-        setUIToBubbleColor(nameIcon, R.drawable.ic_account, color);
-        setUIToBubbleColor(numberIcon, R.drawable.ic_smartphone, color);
-        setUIToBubbleColor(phoneIcon, R.drawable.ic_call, color);
-        setUIToBubbleColor(homeIcon, R.drawable.ic_home, color);
-        setUIToBubbleColor(emailIcon, R.drawable.ic_email, color);
+            setUIToBubbleColor(nameIcon, R.drawable.ic_account, color);
+            setUIToBubbleColor(numberIcon, R.drawable.ic_smartphone, color);
+            setUIToBubbleColor(phoneIcon, R.drawable.ic_call, color);
+            setUIToBubbleColor(homeIcon, R.drawable.ic_home, color);
+            setUIToBubbleColor(emailIcon, R.drawable.ic_email, color);
+        }
 
         editName.setText(contact.getNAME());
         editNumber.setText(contact.getPHONE_NUMBER());

@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        sql = new DatabaseSQL(this);
+        sql = DatabaseSQL.getInstance(this);
 
         setRecyclerView();
         setFAB();
@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     /**
      * onCreateOptionsMenu: Se crea e infla el menu de MainActivity junto con la configuración
      * del widget de búsqueda de contacto searchWidget
+     * Cuando se cierra el widget collapsable de búsqueda, se vuelven a cargar todos los contactos
      *
      * @param menu: Variable en la que se guarda el menú creado a partir del xml
      * */
@@ -129,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
             @Override
             public boolean onMenuItemActionCollapse(MenuItem menuItem) {
+                adapter.setContactList(sql.getAllContacts());
                 closeKeyboard();
                 return true;
             }
@@ -141,9 +143,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
     /**
      * setSearchWidget: Se configura el SearchView encargado de la búsqueda de contactos
+     * Si no hay texto que parsear, se cargan todos los contactos
      * */
-    // TODO: Perform Search in DB
-    // TODO: Update RecyclerView with queryText := name
     private void setSearchWidget() {
         searchWidget.setQueryHint(getString(R.string.search_contact_hint));
         searchWidget.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -153,14 +154,20 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
         searchWidget.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public boolean onQueryTextSubmit(String s) {
+            public boolean onQueryTextSubmit(String query) {
                 searchWidget.clearFocus();
+                adapter.setContactList(sql.getSearchedContacts(query));
                 return false;
             }
 
             @Override
-            public boolean onQueryTextChange(String s) {
-                return false;
+            public boolean onQueryTextChange(String newText) {
+                if (!newText.trim().isEmpty()) {
+                    adapter.setContactList(sql.getSearchedContacts(newText));
+                } else {
+                    adapter.setContactList(sql.getAllContacts());
+                }
+                return true;
             }
         });
     }

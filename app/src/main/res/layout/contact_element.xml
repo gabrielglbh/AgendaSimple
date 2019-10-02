@@ -6,7 +6,9 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="15dp">
+    android:paddingEnd="15dp"
+    android:paddingStart="15dp"
+    android:paddingTop="15dp">
 
     <LinearLayout
         android:orientation="horizontal"
@@ -28,7 +30,7 @@
                 android:id="@+id/initial_contact"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:text="G"
+                tools:text="M"
                 android:textSize="25sp"
                 android:textColor="@android:color/white"
                 android:layout_gravity="center" />

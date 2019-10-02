@@ -1,8 +1,6 @@
 # AgendaSimple
 Aplicación de una Agenda de contactos para la asignatura de Android en el Máster de Desarrollo de Aplicaciones Móviles de la UPM disponible en Español (ES) e Inglés (EN). 
 
-API Mínima = 21.
-
 Esta aplicación es capaz de añadir contactos, eliminarlos y modificarlos cuando se quiera:
 
   - Inserción: Habilitado un FAB que guía al usuario a una nueva actividad para crear el contacto (ContactOverview).
@@ -11,8 +9,12 @@ Esta aplicación es capaz de añadir contactos, eliminarlos y modificarlos cuand
 
 Se ha utilizado SQLiteOpenHelper para administrar los datos con las operaciones descritas, además de para implementar la búsqueda de contactos.
 
-Además, la aplcación permite llamar al contacto y exportar desde o a la tarjeta SD del dispositivo, aparte de tener la opción a realizar llamadas de los números del contacto.
+Además, la aplicación permite:
+
+  - Llamar al contacto y exportar desde o a la tarjeta SD del dispositivo.
+  - Realizar llamadas de los números del contacto mediante el intent ACTION_DIAL.
+  - Realizar búsquedas de contactos mediante SearchView con acceso a la BBDD.
 
 Para mejorar la UI, se ha decidido que, al crear un usuario, se guarde un color aleatorio entre 7 propuestos. Este color se pintará en la lista en cada contacto junto con un texto que representa la inicial del nombre del contacto. Esto se ha denominado Bubble.
 
-También, al modificar un contacto, el ActionBar y la StatusBar (API > 21), se cambian al color del Bubble del contacto.
+También y únicamente para dispositivos que tengan nivel de API mayor a 21, al modificar un contacto, el ActionBar, la StatusBar y todos los iconos de ContactOverview, se cambian al color del Bubble del contacto. Si se está por debajo de ese nivel de API, todos esos elementos se mantienen con el color predeterminado de la aplicación. 

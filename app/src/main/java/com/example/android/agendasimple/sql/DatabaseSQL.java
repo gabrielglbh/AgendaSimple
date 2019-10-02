@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -21,7 +20,20 @@ public class DatabaseSQL extends SQLiteOpenHelper {
     private static final String coloum_5 = "EMAIL";
     private static final String coloum_6 = "COLOR_BUBBLE";
 
-    public DatabaseSQL(Context context) {
+    private static DatabaseSQL sInstance;
+
+    /**
+     * Se sigue el patrón del SINGLETON para la creación de referencia a la base de datos
+     * para mantener una sola instancia a lo largo del ciclo de vida completo de la aplicación
+     * */
+    public static synchronized DatabaseSQL getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new DatabaseSQL(context.getApplicationContext());
+        }
+        return sInstance;
+    }
+
+    private DatabaseSQL(Context context) {
         super(context, DB, null, VERSION);
     }
 
@@ -138,6 +150,33 @@ public class DatabaseSQL extends SQLiteOpenHelper {
             );
             c.close();
             return contact;
+        } else {
+            c.close();
+            return null;
+        }
+    }
+
+    /**
+     * getSearchedContacts: Query para cargar todos los contactos que lleven en NAME el texto QUERY
+     * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
+     * */
+    public ArrayList<ContactEntity> getSearchedContacts(String QUERY){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_1 + " LIKE ?";
+        Cursor c = db.rawQuery(query, new String[] { QUERY + "%" });
+
+        if (c.getCount() > 0 && c.moveToNext()) {
+            ArrayList<ContactEntity> contacts = new ArrayList<>();
+            contacts.add(new ContactEntity(
+                    c.getString(c.getColumnIndex(coloum_1)),
+                    c.getString(c.getColumnIndex(coloum_2)),
+                    c.getString(c.getColumnIndex(coloum_3)),
+                    c.getString(c.getColumnIndex(coloum_4)),
+                    c.getString(c.getColumnIndex(coloum_5)),
+                    c.getString(c.getColumnIndex(coloum_6))
+            ));
+            c.close();
+            return contacts;
         } else {
             c.close();
             return null;
