@@ -259,7 +259,7 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     private void validateAndInsertContact() {
-        String[] colors = { "#008577", "#FF8C00", "#00D973", "#D60036", "#0057BA", "#FFE600" };
+        String[] colors = { "#008577", "#D17E2B", "#21A763", "#AF2E2E", "#265199", "#C4B22E", "#C251AC" };
         String name = editName.getText().toString();
         String number = editNumber.getText().toString();
         String phone = editPhone.getText().toString();
@@ -276,7 +276,6 @@ public class ContactOverview extends AppCompatActivity {
             if(!MainActivity.sql.deleteContact(NUMBER)) {
                 makeToast(getString(R.string.deletion_failed));
             }
-            makeToast(getString(R.string.empty_update));
             finish();
         }
         else {
@@ -286,7 +285,7 @@ public class ContactOverview extends AppCompatActivity {
                     editPhone.getText().toString(),
                     editHome.getText().toString(),
                     editEmail.getText().toString(),
-                    colors[r.nextInt(6)]
+                    colors[r.nextInt(7)]
             );
             if (MainActivity.sql.insertContact(newContact)) {
                 finish();
@@ -306,14 +305,12 @@ public class ContactOverview extends AppCompatActivity {
         if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
             contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
             contact.getEMAIL().equals(email)) {
-            makeToast(getString(R.string.update_equal));
             finish();
         } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
             if(!MainActivity.sql.deleteContact(NUMBER)) {
                 makeToast(getString(R.string.deletion_failed));
             }
-            makeToast(getString(R.string.empty_update));
             finish();
         } else {
             ContactEntity c = new ContactEntity(

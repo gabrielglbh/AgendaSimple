@@ -8,6 +8,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.example.android.agendasimple.sql.ContactEntity;
+
+import java.util.ArrayList;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -50,16 +54,15 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
 
     @Override
     public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-        /*
-        if(!MainActivity.sql.deleteContact()) {
+        int position = viewHolder.getAdapterPosition();
+        ArrayList<ContactEntity> contacts = adapter.getContactList();
+        ContactEntity contact = contacts.get(viewHolder.getAdapterPosition());
+        if(!MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
             Toast.makeText(ctx, ctx.getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
         } else {
-            Log.d("LOOP", "onSwiped: " + adapter.getItemCount());
-            adapter.notifyItemRemoved(viewHolder.getAdapterPosition());
-            adapter.notifyItemRangeChanged(0, adapter.getItemCount());
-            Log.d("LOOP", "onSwiped: " + adapter.getItemCount());
+            contacts.remove(position);
+            adapter.setContactList(contacts);
         }
-        */
     }
 
     /**

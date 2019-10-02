@@ -39,11 +39,8 @@ public class DatabaseSQL extends SQLiteOpenHelper {
     }
 
     /**
-     *
      * insertContact: Query para insertar un nuevo contacto en la base de datos
-     *
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
-     *
      * */
     public boolean insertContact(ContactEntity e){
         SQLiteDatabase db = this.getWritableDatabase();
@@ -62,11 +59,8 @@ public class DatabaseSQL extends SQLiteOpenHelper {
     }
 
     /**
-     *
      * updateContact: Query para hacer update de un contacto
-     *
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
-     *
      * */
     public boolean updateContact(ContactEntity e){
         SQLiteDatabase db = this.getWritableDatabase();
@@ -85,25 +79,18 @@ public class DatabaseSQL extends SQLiteOpenHelper {
     }
 
     /**
-     *
      * deleteContact: Query para hacer update de un contacto
-     *
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
-     *
      * */
     public boolean deleteContact(String NUMBER){
         SQLiteDatabase db = this.getWritableDatabase();
         long result = db.delete(TABLE_NAME,"PHONE_NUMBER=?", new String[] { NUMBER });
-
         return result != -1;
     }
 
     /**
-     *
      * getAllContacts: Query para cargar todos los contactos de la base de datos
-     *
      * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
-     *
      * */
     public ArrayList<ContactEntity> getAllContacts(){
         SQLiteDatabase db = this.getWritableDatabase();
@@ -131,11 +118,8 @@ public class DatabaseSQL extends SQLiteOpenHelper {
     }
 
     /**
-     *
      * getContact: Query para cargar un determinado contacto de la base de datos determinado por ID
-     *
      * @return del contacto en cuestión o null si la consulta ha fallado
-     *
      * */
     public ContactEntity getContact(String NUMBER){
         SQLiteDatabase db = this.getWritableDatabase();

@@ -112,7 +112,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      *
      * @param menu: Variable en la que se guarda el menú creado a partir del xml
      * */
-    // TODO: Update RecyclerView with queryText := name
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_activity_menu, menu);
@@ -141,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * setSearchWidget: Se configura el SearchView encargado de la búsqueda de contactos
      * */
     // TODO: Perform Search in DB
+    // TODO: Update RecyclerView with queryText := name
     private void setSearchWidget() {
         searchWidget.setQueryHint(getString(R.string.search_contact_hint));
         searchWidget.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -151,7 +151,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         searchWidget.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
-
                 searchWidget.clearFocus();
                 return false;
             }

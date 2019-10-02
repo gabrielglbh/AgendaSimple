@@ -10,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
 
@@ -39,6 +38,10 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         return new Contact(view);
     }
 
+    /**
+     * onBindViewHolder: Hace set de cada elemento del RecyclerView y lo pobla en la UI, además
+     * de programar su funcionalidad
+     * */
     @Override
     public void onBindViewHolder(@NonNull Contact holder, int i) {
         final int position = holder.getAdapterPosition();
@@ -53,13 +56,10 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         holder.call_to.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent dialIntent = new Intent(Intent.ACTION_DIAL);
-                dialIntent.setData(Uri.parse(contacts.get(position).getPHONE_NUMBER()));
-                if (dialIntent.resolveActivity(ctx.getPackageManager()) != null) {
-                    ctx.startActivity(dialIntent);
-                } else {
-                    Toast.makeText(ctx, ctx.getString(R.string.invalid_phone_call), Toast.LENGTH_SHORT).show();
-                }
+                Intent intent = new Intent(
+                        Intent.ACTION_DIAL,
+                        Uri.fromParts("tel:", contacts.get(position).getPHONE_NUMBER(), null));
+                view.getContext().startActivity(intent);
             }
         });
     }
@@ -79,6 +79,10 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     public void setContactList(ArrayList<ContactEntity> contacts) {
         this.contacts = contacts;
         notifyDataSetChanged();
+    }
+
+    public ArrayList<ContactEntity> getContactList() {
+        return this.contacts;
     }
 
     public interface ContactClickListener {
