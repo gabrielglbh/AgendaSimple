@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -12,7 +13,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     private static final String DB = "contacts";
     private static final String TABLE_NAME = "contact";
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     private static final String coloum_1 = "ID";
     private static final String coloum_2 = "NAME";
     private static final String coloum_3 = "PHONE_NUMBER";
@@ -35,7 +36,8 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        onCreate(sqLiteDatabase);
     }
 
     /**
@@ -109,13 +111,14 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public ArrayList<ContactEntity> getAllContacts(){
         SQLiteDatabase db = this.getWritableDatabase();
-        Cursor c = db.rawQuery("SELECT * FROM " + TABLE_NAME + " ORDER BY " + coloum_2 + " ASC",null);
+        String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + coloum_2 + " ASC";
+        Cursor c = db.rawQuery(query, null);
 
         if (c.getCount() > 0) {
             ArrayList<ContactEntity> contacts = new ArrayList<>();
             while (c.moveToNext()) {
                 contacts.add(new ContactEntity(
-                        Integer.parseInt(c.getString(c.getColumnIndex(coloum_1))),
+                        c.getInt(c.getColumnIndex(coloum_1)),
                         c.getString(c.getColumnIndex(coloum_2)),
                         c.getString(c.getColumnIndex(coloum_3)),
                         c.getString(c.getColumnIndex(coloum_4)),
@@ -141,11 +144,12 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public ContactEntity getContact(int ID){
         SQLiteDatabase db = this.getWritableDatabase();
-        Cursor c = db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_1 + " = " + ID,null);
+        String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_1 + " = ?";
+        Cursor c = db.rawQuery(query, new String[] { String.valueOf(ID) });
 
-        if (c.getCount() > 0) {
+        if (c.getCount() > 0 && c.moveToNext()) {
             ContactEntity contact = new ContactEntity(
-                    Integer.parseInt(c.getString(c.getColumnIndex(coloum_1))),
+                    c.getInt(c.getColumnIndex(coloum_1)),
                     c.getString(c.getColumnIndex(coloum_2)),
                     c.getString(c.getColumnIndex(coloum_3)),
                     c.getString(c.getColumnIndex(coloum_4)),

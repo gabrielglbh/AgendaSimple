@@ -1,6 +1,7 @@
 package com.example.android.agendasimple;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -8,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,8 +30,16 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private FloatingActionButton addContact;
     private SearchView searchWidget;
     public static DatabaseSQL sql;
+    private ItemTouchHelper touchHelper;
 
+    // ID que se pasa a ContactOverview para saber si se está modificando el contacto o añadiendo uno nuevo
     public static final String OVERVIEW_MODE = "OVERVIEW_MODE";
+    // ID que se pasa a ContactOverview para saber cuantos contactos hay y poner ese número + 1 como ID del
+    // siguiente contacto a añadir
+    public static final String NUMBER_CONTACTS = "NUMBER_OF_CONTACTS";
+    // ID que se pasa a ContactOverview para saber el ID de contacto con el buscar para cargar los campos del
+    // contacto seleccionado
+    public static final String ID_OF_CONTRACT = "ID_OF_CONTRACT";
     public final int MODE = 0;
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
@@ -41,18 +51,14 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
         sql = new DatabaseSQL(this);
 
-        addContact = findViewById(R.id.fab_add_contact);
-        addContact.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                startActivity(goTo);
-            }
-        });
-
         setRecyclerView();
+        setFAB();
     }
 
+    /**
+     * onResume: Se cargan todos los contactos con getAllContacts en el RecyclerView, añadiendo
+     * los nuevos contactos posibles
+     * */
     @Override
     protected void onResume() {
         contacts = sql.getAllContacts();
@@ -61,10 +67,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     }
 
     /**
-     *
-     * setRecyclerView: Configuración del RecyclerView para la lista de contactos, extraída de la
-     * base de datos
-     *
+     * setRecyclerView: Se cargan todos los contactos con getAllContacts en el RecyclerView, y se
+     * ancla el itemTouchHelper para la eliminación de contactos al RecyclerView
      * */
     private void setRecyclerView() {
         rv = findViewById(R.id.recycler_view_contacts);
@@ -73,30 +77,44 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         adapter = new AgendaAdapter(this, getApplicationContext());
         adapter.setContactList(contacts);
 
+        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter));
+        touchHelper.attachToRecyclerView(rv);
+
         LinearLayoutManager lm = new LinearLayoutManager(this);
         rv.setLayoutManager(lm);
         rv.setHasFixedSize(false);
         rv.setAdapter(adapter);
     }
 
+    private void setFAB() {
+        addContact = findViewById(R.id.fab_add_contact);
+        addContact.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                goTo.putExtra(NUMBER_CONTACTS, adapter.getItemCount());
+                startActivity(goTo);
+            }
+        });
+    }
+
+    /**
+     * onContactClicked: Handler para el click de un contacto para pasar a ContactOverview
+     * @param pos: ID del contacto en la posición clickada del RecyclerView
+     * */
     @Override
     public void onContactClicked(int pos) {
         Intent goTo = new Intent(this, ContactOverview.class);
         goTo.putExtra(OVERVIEW_MODE, MODE);
+        goTo.putExtra(ID_OF_CONTRACT, pos);
         startActivity(goTo);
     }
 
     /**
-     *
      * onCreateOptionsMenu: Se crea e infla el menu de MainActivity junto con la configuración
      * del widget de búsqueda de contacto searchWidget
      *
-     * onMenuItemActionExpand: Se abre el teclado software
-     *
-     * onMenuItemActionCollapse: Se cierra el teclado software
-     *
      * @param menu: Variable en la que se guarda el menú creado a partir del xml
-     *
      * */
     // TODO: Update RecyclerView with queryText := name
     @Override
@@ -124,9 +142,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     }
 
     /**
-     *
      * setSearchWidget: Se configura el SearchView encargado de la búsqueda de contactos
-     *
      * */
     // TODO: Perform Search in DB
     private void setSearchWidget() {
@@ -152,10 +168,10 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     }
 
     /**
-     *
      * onOptionsItemSelected: Se administran las opciones del menú, en este caso la exportación
      * de contactos a o desde la tarjeta SD de todos los contactos
      *
+     * @param item: item seleccionado del menu
      * */
     // TODO: Access to SD Card
     @Override
@@ -171,22 +187,12 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         return true;
     }
 
-    /**
-     *
-     * openKeyboard: Abre el teclado
-     *
-     * */
     private void openKeyboard() {
         searchWidget.requestFocus();
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, InputMethodManager.HIDE_IMPLICIT_ONLY);
     }
 
-    /**
-     *
-     * closeKeyboard: Cierra el teclado
-     *
-     * */
     private void closeKeyboard() {
         if (searchWidget != null) {
             searchWidget.clearFocus();

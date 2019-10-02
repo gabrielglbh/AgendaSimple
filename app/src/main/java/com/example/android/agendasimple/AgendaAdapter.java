@@ -12,7 +12,6 @@ import android.widget.TextView;
 import com.example.android.agendasimple.sql.ContactEntity;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -59,12 +58,11 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     }
 
     /**
-     *
      * setContactList: Método auxiliar para implementar la lista dinámicamente
-     *
      * */
     public void setContactList(ArrayList<ContactEntity> contacts) {
         this.contacts = contacts;
+        notifyDataSetChanged();
     }
 
     public interface ContactClickListener {
@@ -86,7 +84,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
         @Override
         public void onClick(View view) {
-            int pos = getAdapterPosition();
+            int pos = contacts.get(getAdapterPosition()).getID();
             listener.onContactClicked(pos);
         }
     }

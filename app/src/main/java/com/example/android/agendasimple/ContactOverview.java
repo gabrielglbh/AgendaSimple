@@ -1,10 +1,17 @@
 package com.example.android.agendasimple;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -13,6 +20,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -28,8 +36,13 @@ public class ContactOverview extends AppCompatActivity {
     private TextView nameHint, numberHint, phoneHint, homeHint, emailHint;
     private EditText editName, editNumber, editPhone, editHome, editEmail;
     private TextView guideName, guideNumber, guidePhone;
-
+    private TextView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon;
     private Toast mToast;
+
+    private ContactEntity contact;
+    private int numberOfContacts = 0;
+    private int ID;
+    private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,22 +53,46 @@ public class ContactOverview extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Intent i = getIntent();
-        if (i.hasExtra(MainActivity.OVERVIEW_MODE)) { setViews(i.getIntExtra(MainActivity.OVERVIEW_MODE, 0)); }
-        else { setViews(1); }
+        if (i.hasExtra(MainActivity.OVERVIEW_MODE)) {
+            mode = i.getIntExtra(MainActivity.OVERVIEW_MODE, 0);
+            if (i.hasExtra(MainActivity.ID_OF_CONTRACT)) {
+                ID = i.getIntExtra(MainActivity.ID_OF_CONTRACT, 0);
+            }
+            setViews();
+        }
+        else {
+            setViews();
+        }
+
+        if (i.hasExtra(MainActivity.NUMBER_CONTACTS)) {
+            numberOfContacts = i.getIntExtra(MainActivity.NUMBER_CONTACTS, 0);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mode == 1) {
+            validateAndInsertContact();
+        } else {
+            validateAndUpdateContact();
+        }
+        super.onDestroy();
     }
 
     /**
-     *
      * setViews: Configura las vistas iniciales
-     *
-     * @param mode: Especifica si se ha de llenar los campos del contacto o no
-     *
      *            0 = Se rellenan al entrar a la actividad desde un contacto ya existente
      *            1 = Se quedan vacios para poder añadir un contacto
+     * Se crean y establecen numerosos eventos para embellecer la UI como:
+     *            el uso de IME Options para pasar a otro EditText (setHierarchyBetweenEditTextsOnImeOpts),
+     *            el recuento de letras permitidas por campo (setLimitWordCount) o
+     *            el cambio de color del label de cada EditText al estar activo (setEditHints).
      *
+     * Si se accede a esta actividad para hacer un update del contacto, los colores de los iconos y
+     * la actionBar/statusBar se cambian al mismo que la burbuja de MainActivity relativa al contacto.
+     * (setUIToBubbleColor)
      */
-    // TODO: mode == 0 hacer load del contacto y set de los campos
-    private void setViews(int mode) {
+    private void setViews() {
 
         nameHint = findViewById(R.id.hint_name);
         editName = findViewById(R.id.input_name);
@@ -70,141 +107,103 @@ public class ContactOverview extends AppCompatActivity {
         editHome = findViewById(R.id.input_home);
         emailHint = findViewById(R.id.hint_mail);
         editEmail = findViewById(R.id.input_mail);
+        nameIcon = findViewById(R.id.icon_name);
+        numberIcon = findViewById(R.id.icon_number);
+        phoneIcon = findViewById(R.id.icon_home_phone);
+        homeIcon = findViewById(R.id.icon_home);
+        emailIcon = findViewById(R.id.icon_mail);
 
         setEditHints();
-        setGuideCount();
-        setImeOptions();
+        setLimitWordCount();
+        setHierarchyBetweenEditTextsOnImeOpts();
 
         if (mode == 0) {
             setTitle(getString(R.string.modify_contact_title));
+            contact = MainActivity.sql.getContact(ID);
+            setContact();
         } else {
             setTitle(getString(R.string.contact_overview_label));
             editName.requestFocus();
         }
     }
 
-    /**
-     *
-     * setEditHints: Establece la lógica para embellecer la vista al hacer focus a un EditText para
-     * que la hint del mismo se ponga de otro color
-     *
-     * Se utiliza el evento onFocusChanged
-     *
-     * */
+    private void setContact() {
+        int color = Color.parseColor(contact.getCOLOR_BUBBLE());
+        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(color));
+
+        if (Build.VERSION.SDK_INT >= 21) {
+            Window w = getWindow();
+            w.setStatusBarColor(color);
+        }
+
+        setUIToBubbleColor(nameIcon, R.drawable.ic_account, color);
+        setUIToBubbleColor(numberIcon, R.drawable.ic_smartphone, color);
+        setUIToBubbleColor(phoneIcon, R.drawable.ic_call, color);
+        setUIToBubbleColor(homeIcon, R.drawable.ic_home, color);
+        setUIToBubbleColor(emailIcon, R.drawable.ic_email, color);
+
+        editName.setText(contact.getNAME());
+        editNumber.setText(contact.getPHONE_NUMBER());
+        editPhone.setText(contact.getPHONE());
+        editHome.setText(contact.getHOME_ADDRESS());
+        editEmail.setText(contact.getEMAIL());
+    }
+
+    private void setUIToBubbleColor(TextView t, int drawable, int color) {
+        Drawable ic_name = ContextCompat.getDrawable(this, drawable);
+        ic_name.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+        t.setBackground(ic_name);
+    }
+
     private void setEditHints() {
-        editName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean focused) {
-                if (focused) nameHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.colorAccent));
-                else nameHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.text));
-            }
-        });
+        setOnFocusChangeListeners(editName, nameHint);
+        setOnFocusChangeListeners(editNumber, numberHint);
+        setOnFocusChangeListeners(editPhone, phoneHint);
+        setOnFocusChangeListeners(editHome, homeHint);
+        setOnFocusChangeListeners(editEmail, emailHint);
+    }
 
-        editNumber.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+    private void setOnFocusChangeListeners(EditText e, final TextView hint) {
+        e.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View view, boolean focused) {
-                if (focused) numberHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
+                if (focused) hint.setTextColor(ContextCompat.getColor(getApplicationContext(),
                         R.color.colorAccent));
-                else numberHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.text));
-            }
-        });
-
-        editPhone.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean focused) {
-                if (focused) phoneHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.colorAccent));
-                else phoneHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.text));
-            }
-        });
-
-        editHome.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean focused) {
-                if (focused) homeHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.colorAccent));
-                else homeHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.text));
-            }
-        });
-
-        editEmail.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean focused) {
-                if (focused) emailHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.colorAccent));
-                else emailHint.setTextColor(ContextCompat.getColor(getApplicationContext(),
+                else hint.setTextColor(ContextCompat.getColor(getApplicationContext(),
                         R.color.text));
             }
         });
     }
 
-    /**
-     *
-     * setGuideCount: Establece la lógica del recuento de caracteres en el campo de name, phone y number.
-     * Si se llega al límite no se permite escribir más
-     *
-     * Se utiliza el evento onTextChanged
-     *
-     * */
-    private void setGuideCount() {
-        editName.addTextChangedListener(new TextWatcher() {
+    private void setLimitWordCount() {
+        setOnTextChangeListeners(editName, guideName);
+        setOnTextChangeListeners(editNumber, guideNumber);
+        setOnTextChangeListeners(editPhone, guidePhone);
+    }
+
+    private void setOnTextChangeListeners(final EditText e, final TextView t) {
+        e.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                int curr = editName.getText().toString().length();
+                int curr = e.getText().toString().length();
+                String count;
                 if (curr != 0) {
-                    String count = curr + "/30";
-                    guideName.setText(count);
+                    if (e == editName) {
+                        count = curr + "/30";
+                    } else {
+                        count = curr + "/12";
+                    }
+                    t.setText(count);
                 } else {
-                    String count = getString(R.string.guideline_name);
-                    guideName.setText(count);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) { }
-        });
-
-        editNumber.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                int curr = editNumber.getText().toString().length();
-                if (curr != 0) {
-                    String count = curr + "/12";
-                    guideNumber.setText(count);
-                } else {
-                    String count = getString(R.string.guideline_number);
-                    guideNumber.setText(count);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) { }
-        });
-
-        editPhone.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                int curr = editPhone.getText().toString().length();
-                if (curr != 0) {
-                    String count = curr + "/12";
-                    guidePhone.setText(count);
-                } else {
-                    String count = getString(R.string.guideline_number);
-                    guidePhone.setText(count);
+                    if (e == editName) {
+                        count = getString(R.string.guideline_name);
+                    } else {
+                        count = getString(R.string.guideline_number);
+                    }
+                    t.setText(count);
                 }
             }
 
@@ -213,79 +212,41 @@ public class ContactOverview extends AppCompatActivity {
         });
     }
 
-    /**
-     *
-     * setImeOptions: Establece la jerarquía entre los EditText al darle al botón de DONE del
-     * teclado software
-     *
-     * Name -> Phone Number
-     * Phone Number -> Phone
-     * Phone -> Home Address
-     * Home Address -> Email
-     * Email -> El teclado se cierra
-     *
-     * */
-    private void setImeOptions() {
-        editName.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                if (i == EditorInfo.IME_ACTION_DONE) {
-                    editName.clearFocus();
-                    editNumber.requestFocus();
-                    return true;
-                }
-                return false;
-            }
-        });
+    private void setHierarchyBetweenEditTextsOnImeOpts() {
+        setOnEditorActionListeners(editName, editNumber);
+        setOnEditorActionListeners(editNumber, editPhone);
+        setOnEditorActionListeners(editPhone, editHome);
+        setOnEditorActionListeners(editHome, editEmail);
+        setOnEditorActionListeners(editEmail, null);
+    }
 
-        editNumber.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                if (i == EditorInfo.IME_ACTION_DONE) {
-                    editNumber.clearFocus();
-                    editPhone.requestFocus();
-                    return true;
+    private void setOnEditorActionListeners(final TextView focused, final TextView next) {
+        if (focused != editEmail) {
+            focused.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                @Override
+                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                    if (i == EditorInfo.IME_ACTION_DONE) {
+                        focused.clearFocus();
+                        next.requestFocus();
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            }
-        });
-
-        editPhone.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                if (i == EditorInfo.IME_ACTION_DONE) {
-                    editPhone.clearFocus();
-                    editHome.requestFocus();
-                    return true;
+            });
+        } else {
+            focused.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                @Override
+                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                    if (i == EditorInfo.IME_ACTION_DONE) {
+                        focused.clearFocus();
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(editEmail.getWindowToken(), 0);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            }
-        });
-
-        editHome.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                if (i == EditorInfo.IME_ACTION_DONE) {
-                    editHome.clearFocus();
-                    editEmail.requestFocus();
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        editEmail.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                if (i == EditorInfo.IME_ACTION_DONE) {
-                    editEmail.clearFocus();
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(editEmail.getWindowToken(), 0);
-                    return true;
-                }
-                return false;
-            }
-        });
+            });
+        }
     }
 
     @Override
@@ -294,32 +255,107 @@ public class ContactOverview extends AppCompatActivity {
         return true;
     }
 
-    // TODO: Como hacer para guardar la PK?
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-            case R.id.menu_save:
-                String[] colors = getResources().getStringArray(R.array.color_bubbles);
-                Random r = new Random();
-                ContactEntity newContact = new ContactEntity(
-                        0,
-                        editName.getText().toString(),
-                        editNumber.getText().toString(),
-                        editPhone.getText().toString(),
-                        editHome.getText().toString(),
-                        editEmail.getText().toString(),
-                        colors[r.nextInt(colors.length+1)]
-                );
-
-                if (MainActivity.sql.insertContact(newContact)) {
+                if (mode == 1) {
                     finish();
                 } else {
-                    mToast = Toast.makeText(this, "Something ocurred, insertion failed.", Toast.LENGTH_SHORT);
-                    mToast.show();
+                    validateAndUpdateContact();
+                }
+            case R.id.menu_save:
+                if (mode == 1) {
+                    validateAndInsertContact();
+                } else {
+                    validateAndUpdateContact();
                 }
                 break;
         }
         return true;
+    }
+
+    private void validateAndInsertContact() {
+        String[] colors = { "#008577", "#FF8C00", "#00D973", "#D60036", "#0057BA", "#FFE600" };
+        String name = editName.getText().toString();
+        String number = editNumber.getText().toString();
+        String phone = editPhone.getText().toString();
+        String address = editHome.getText().toString();
+        String email = editEmail.getText().toString();
+        Random r = new Random();
+
+        if (editName.getText().toString().trim().isEmpty() ||
+                editNumber.getText().toString().trim().isEmpty()) {
+            makeToast(getString(R.string.invalid_insertion_1));
+        }
+        else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
+                address.trim().isEmpty() && email.trim().isEmpty()) {
+            if(!MainActivity.sql.deleteContact(ID)) {
+                makeToast(getString(R.string.deletion_failed));
+            }
+            makeToast(getString(R.string.empty_update));
+            finish();
+        }
+        else {
+            ContactEntity newContact = new ContactEntity(
+                    numberOfContacts + 1,
+                    editName.getText().toString(),
+                    editNumber.getText().toString(),
+                    editPhone.getText().toString(),
+                    editHome.getText().toString(),
+                    editEmail.getText().toString(),
+                    colors[r.nextInt(6)]
+            );
+            if (MainActivity.sql.insertContact(newContact)) {
+                finish();
+            } else {
+                makeToast(getString(R.string.insertion_failed));
+            }
+        }
+    }
+
+    private void validateAndUpdateContact() {
+        String name = editName.getText().toString();
+        String number = editNumber.getText().toString();
+        String phone = editPhone.getText().toString();
+        String address = editHome.getText().toString();
+        String email = editEmail.getText().toString();
+
+        if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
+            contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
+            contact.getEMAIL().equals(email)) {
+            makeToast(getString(R.string.update_equal));
+            finish();
+        } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
+                address.trim().isEmpty() && email.trim().isEmpty()) {
+            if(!MainActivity.sql.deleteContact(ID)) {
+                makeToast(getString(R.string.deletion_failed));
+            }
+            makeToast(getString(R.string.empty_update));
+            finish();
+        } else {
+            ContactEntity c = new ContactEntity(
+                    ID,
+                    name,
+                    number,
+                    phone,
+                    address,
+                    email,
+                    contact.getCOLOR_BUBBLE()
+            );
+            if (MainActivity.sql.updateContact(c)) {
+                finish();
+            } else {
+                makeToast(getString(R.string.update_failed));
+            }
+        }
+    }
+
+    private void makeToast(String msg) {
+        if (mToast != null) {
+            mToast.cancel();
+        }
+        mToast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
+        mToast.show();
     }
 }

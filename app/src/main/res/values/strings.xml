@@ -5,8 +5,8 @@
     <string name="export_to_menu">Export to…</string>
     <string name="search_contact_hint">Search contact…</string>
     <string name="contact_overview_label">Add Contact</string>
-    <string name="name_contact_overview">Name</string>
-    <string name="number_contact_overview">Phone Number</string>
+    <string name="name_contact_overview">Name*</string>
+    <string name="number_contact_overview">Phone Number*</string>
     <string name="address_contact_overview">Home Address</string>
     <string name="email_contact_overview">Email</string>
     <string name="phone_contact_overview">Phone</string>
@@ -14,4 +14,13 @@
     <string name="modify_contact_title">Modify Contact</string>
     <string name="guideline_number">0/12</string>
     <string name="guideline_name">0/30</string>
+    <string name="positive_dialog">Yes</string>
+    <string name="negative_dialog">No</string>
+
+    <string name="invalid_insertion_1">Contact must have a name and/or a number.</string>
+    <string name="insertion_failed">Something occurred, insertion failed.</string>
+    <string name="deletion_failed">Something occurred, deletion failed.</string>
+    <string name="update_failed">Something occurred, update failed.</string>
+    <string name="update_equal">No changes were made.</string>
+    <string name="empty_update">Empty contact, discarded.</string>
 </resources>
