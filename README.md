@@ -11,7 +11,7 @@ Esta aplicación es capaz de añadir contactos, eliminarlos y modificarlos cuand
 
 Se ha utilizado SQLiteOpenHelper para administrar los datos con las operaciones descritas, además de para implementar la búsqueda de contactos.
 
-Además, la aplcación permite llamar al contacto y exportar desde o a la tarjeta SD del dispositivo.
+Además, la aplcación permite llamar al contacto y exportar desde o a la tarjeta SD del dispositivo, aparte de tener la opción a realizar llamadas de los números del contacto.
 
 Para mejorar la UI, se ha decidido que, al crear un usuario, se guarde un color aleatorio entre 7 propuestos. Este color se pintará en la lista en cada contacto junto con un texto que representa la inicial del nombre del contacto. Esto se ha denominado Bubble.
 
