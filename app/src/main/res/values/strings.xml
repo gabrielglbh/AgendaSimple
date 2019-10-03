@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name" translatable="false">Agenda</string>
+    <string name="app_name" translatable="true">MyAgenda</string>
     <string name="search_menu" translatable="true">Search</string>
-    <string name="export_from_menu" translatable="true">Export from External Storage</string>
-    <string name="export_to_menu" translatable="true">Export to External Storage</string>
+    <string name="export_from_menu" translatable="true">Import from SD Card</string>
+    <string name="export_to_menu" translatable="true">Export to SD Card</string>
     <string name="search_contact_hint" translatable="true">Search contact…</string>
     <string name="contact_overview_label" translatable="true">Add Contact</string>
     <string name="name_contact_overview" translatable="true">Name*</string>
@@ -25,6 +25,9 @@
     <string name="empty_update" translatable="true">Empty contact discarded.</string>
     <string name="invalid_phone_call" translatable="true">Invalid phone number.</string>
     <string name="whatsapp_error" translatable="true">Install WhatsApp to perform this action.</string>
-    <string name="export_to_SD" translatable="true">Something went wrong while exporting to external storage</string>
+    <string name="export_to_SD" translatable="true">Something went wrong while exporting to SD Card.</string>
     <string name="success_export_to" translatable="true">Contacts were successfully exported.</string>
+    <string name="import_to_SD" translatable="true">Something went wrong while importing from SD Card.</string>
+    <string name="success_import_to" translatable="true">Contacts were successfully imported.</string>
+    <string name="file_sd" translatable="false">contacts.cnt</string>
 </resources>

@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.InputType;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,9 +26,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener {
@@ -47,6 +49,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     // contacto seleccionado
     public static final String NUMBER_OF_CONTACTS = "NUMBER_CONTACT";
     public final int MODE = 0;
+
+    private final String nameJSON = "name";
+    private final String numberJSON = "number";
+    private final String phoneJSON = "phone";
+    private final String addressJSON = "address";
+    private final String emailJSON = "email";
+    private final String bubbleJSON = "bubble";
+    private final String contactsJSON = "contacts";
+    private final String infoJSON = "info";
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
@@ -188,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.export_from_contacts:
-                exportFromSD();
+                importFromSD();
                 break;
             case R.id.export_to_contacts:
                 exportToSD();
@@ -197,13 +208,68 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         return true;
     }
 
-    private void exportFromSD() {
+    /**
+     * importFromSD: Recoge el PATH al archivo contacts.cnt de la SD del teléfono y se lee el archivo.
+     * Además se parsea el String devuelto.
+     * */
+    private void importFromSD() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            if (dir.exists()) {
+                try {
+                    File file = new File(dir, getString(R.string.file_sd));
+                    BufferedReader fd = new BufferedReader(
+                            new InputStreamReader(new FileInputStream(file)));
+                    String jsonObj = fd.readLine();
+                    parseJsonAndPopulateRecyclerView(jsonObj);
+                    fd.close();
+                    Toast.makeText(this, getString(R.string.success_import_to), Toast.LENGTH_SHORT).show();
+                } catch (IOException err) {
+                    Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+        }
+    }
 
+    /**
+     * parseJsonAndPopulateRecyclerView: Parsea el String que contiene el JSON con todos los contactos y
+     * popula el RecyclerView con los mismos.
+     * */
+    private void parseJsonAndPopulateRecyclerView(String jsonObj) {
+        ArrayList<ContactEntity> contacts = new ArrayList<>();
+
+        try {
+            JSONObject json = new JSONObject(jsonObj);
+            JSONArray arr = json.getJSONArray(contactsJSON);
+            int sizeOfContactsJSON = arr.length();
+
+            for (int x = 0; x < sizeOfContactsJSON; x++) {
+                JSONObject params = arr.getJSONObject(x);
+                String number = params.getString(numberJSON);
+                JSONObject info = params.getJSONObject(infoJSON);
+                String name = info.getString(nameJSON);
+                String phone = info.getString(phoneJSON);
+                String address = info.getString(addressJSON);
+                String email = info.getString(emailJSON);
+                String bubble = info.getString(bubbleJSON);
+
+                contacts.add(new ContactEntity(name, number, phone, address, email, bubble));
+            }
+
+            adapter.setContactList(contacts);
+        } catch (JSONException err) {
+            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
      * exportToSD: Recoge el PATH a la SD del teléfono, se crea un archivo JSON,
-     * se crea un directorio "agenda/contacts.cnt" en la SD y se guarda ahí el objeto JSON.
+     * se crea un directorio "MyAgenda/contacts.cnt" en la SD y se guarda ahí el objeto JSON.
      **/
     private void exportToSD() {
         JSONObject json = buildJSONContacts();
@@ -211,28 +277,24 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         // External Storage
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-
-        }
-
-        // Internal Storage
-        File dir = new File(this.getFilesDir(), "/Agenda");
-        if (!dir.mkdir()) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            boolean isDirCreated = dir.mkdir();
+            if (dir.exists() || isDirCreated) {
+                try {
+                    File file = new File(dir, getString(R.string.file_sd));
+                    FileWriter fd = new FileWriter(file);
+                    fd.write(json.toString());
+                    fd.close();
+                    Toast.makeText(this, getString(R.string.success_export_to), Toast.LENGTH_SHORT).show();
+                } catch (IOException err) {
+                    Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+            }
+        } else {
             Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
         }
-
-        Log.d("DEBUG", "exportToSD: dir PATH: " + dir);
-
-        File file = new File(dir, "contacts.txt");
-        try {
-            file.createNewFile();
-            FileWriter fd = new FileWriter(file);
-            fd.write(json.toString());
-            fd.close();
-            Toast.makeText(this, getString(R.string.success_export_to), Toast.LENGTH_SHORT).show();
-        } catch (IOException err) {
-            Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
-        }
-
     }
 
     /**
@@ -246,6 +308,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      *                  "phone": getPHONE,
      *                  "address": getADDRESS,
      *                  "email": getEMAIL,
+     *                  "bubble": getBUBBLE
      *              }
      *          },
      *          ...
@@ -260,23 +323,25 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         for (int x = 0; x < contacts.size(); x++) {
             try {
                 if (x == 0) {
-                    contactFormatted.put("contacts", contactsArray
+                    contactFormatted.put(contactsJSON, contactsArray
                             .put(new JSONObject()
-                                    .put("number", contacts.get(x).getPHONE_NUMBER())
-                                    .put("info", new JSONObject()
-                                            .put("name", contacts.get(x).getNAME())
-                                            .put("phone", contacts.get(x).getPHONE())
-                                            .put("address", contacts.get(x).getHOME_ADDRESS())
-                                            .put("email", contacts.get(x).getEMAIL())
+                                    .put(numberJSON, contacts.get(x).getPHONE_NUMBER())
+                                    .put(infoJSON, new JSONObject()
+                                            .put(nameJSON, contacts.get(x).getNAME())
+                                            .put(phoneJSON, contacts.get(x).getPHONE())
+                                            .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
+                                            .put(emailJSON, contacts.get(x).getEMAIL())
+                                            .put(bubbleJSON, contacts.get(x).getCOLOR_BUBBLE())
                                     )));
                 } else {
                     contactsArray.put(new JSONObject()
-                            .put("number", contacts.get(x).getPHONE_NUMBER())
-                            .put("info", new JSONObject()
-                                    .put("name", contacts.get(x).getNAME())
-                                    .put("phone", contacts.get(x).getPHONE())
-                                    .put("address", contacts.get(x).getHOME_ADDRESS())
-                                    .put("email", contacts.get(x).getEMAIL())
+                            .put(numberJSON, contacts.get(x).getPHONE_NUMBER())
+                            .put(infoJSON, new JSONObject()
+                                    .put(nameJSON, contacts.get(x).getNAME())
+                                    .put(phoneJSON, contacts.get(x).getPHONE())
+                                    .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
+                                    .put(emailJSON, contacts.get(x).getEMAIL())
+                                    .put(bubbleJSON, contacts.get(x).getCOLOR_BUBBLE())
                             ));
                 }
             } catch (JSONException err) {
