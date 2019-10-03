@@ -105,6 +105,16 @@ public class DatabaseSQL extends SQLiteOpenHelper {
     }
 
     /**
+     * deleteAllContacts: Query para hacer update de un contacto
+     * @return true si la inserción ha ido bien, false si ha ocurrido un error
+     * */
+    public boolean deleteAllContacts(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        long result = db.delete(TABLE_NAME,null, null);
+        return result != -1;
+    }
+
+    /**
      * getAllContacts: Query para cargar todos los contactos de la base de datos
      * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
      * */

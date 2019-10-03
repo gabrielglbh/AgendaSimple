@@ -239,31 +239,40 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     /**
      * parseJsonAndPopulateRecyclerView: Parsea el String que contiene el JSON con todos los contactos y
      * popula el RecyclerView con los mismos.
+     * Se elimna la tabla de CONTACTS y se popula de nuevo con cada contacto importado.
      * */
     private void parseJsonAndPopulateRecyclerView(String jsonObj) {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
 
-        try {
-            JSONObject json = new JSONObject(jsonObj);
-            JSONArray arr = json.getJSONArray(contactsJSON);
-            int sizeOfContactsJSON = arr.length();
-
-            for (int x = 0; x < sizeOfContactsJSON; x++) {
-                JSONObject params = arr.getJSONObject(x);
-                String number = params.getString(numberJSON);
-                JSONObject info = params.getJSONObject(infoJSON);
-                String name = info.getString(nameJSON);
-                String phone = info.getString(phoneJSON);
-                String address = info.getString(addressJSON);
-                String email = info.getString(emailJSON);
-                String bubble = info.getString(bubbleJSON);
-
-                contacts.add(new ContactEntity(name, number, phone, address, email, bubble));
-            }
-
-            adapter.setContactList(contacts);
-        } catch (JSONException err) {
+        if (!sql.deleteAllContacts()) {
             Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+        } else {
+            try {
+                JSONObject json = new JSONObject(jsonObj);
+                JSONArray arr = json.getJSONArray(contactsJSON);
+                int sizeOfContactsJSON = arr.length();
+
+                for (int x = 0; x < sizeOfContactsJSON; x++) {
+                    JSONObject params = arr.getJSONObject(x);
+                    String number = params.getString(numberJSON);
+                    JSONObject info = params.getJSONObject(infoJSON);
+                    String name = info.getString(nameJSON);
+                    String phone = info.getString(phoneJSON);
+                    String address = info.getString(addressJSON);
+                    String email = info.getString(emailJSON);
+                    String bubble = info.getString(bubbleJSON);
+
+                    ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble);
+                    contacts.add(c);
+                    if(!sql.insertContact(c)) {
+                        Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                adapter.setContactList(contacts);
+            } catch (JSONException err) {
+                Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
