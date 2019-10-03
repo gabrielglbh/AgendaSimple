@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -16,11 +17,19 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
 import com.example.android.agendasimple.sql.DatabaseSQL;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener {
@@ -175,18 +184,107 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      *
      * @param item: item seleccionado del menu
      * */
-    // TODO: Access to SD Card
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.export_from_contacts:
-
+                exportFromSD();
                 break;
             case R.id.export_to_contacts:
-
+                exportToSD();
                 break;
         }
         return true;
+    }
+
+    private void exportFromSD() {
+
+    }
+
+    /**
+     * exportToSD: Recoge el PATH a la SD del teléfono, se crea un archivo JSON,
+     * se crea un directorio "agenda/contacts.cnt" en la SD y se guarda ahí el objeto JSON.
+     **/
+    private void exportToSD() {
+        JSONObject json = buildJSONContacts();
+
+        // External Storage
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+
+        }
+
+        // Internal Storage
+        File dir = new File(this.getFilesDir(), "/Agenda");
+        if (!dir.mkdir()) {
+            Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+        }
+
+        Log.d("DEBUG", "exportToSD: dir PATH: " + dir);
+
+        File file = new File(dir, "contacts.txt");
+        try {
+            file.createNewFile();
+            FileWriter fd = new FileWriter(file);
+            fd.write(json.toString());
+            fd.close();
+            Toast.makeText(this, getString(R.string.success_export_to), Toast.LENGTH_SHORT).show();
+        } catch (IOException err) {
+            Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+    /**
+     * buildJSONContacts: Crea el objeto JSON a escribir en el fichero de la SD
+     * {
+     *     "contacts": [
+     *          {
+     *              "number": getNUMBER,
+     *              "info": {
+     *                  "name": getNAME,
+     *                  "phone": getPHONE,
+     *                  "address": getADDRESS,
+     *                  "email": getEMAIL,
+     *              }
+     *          },
+     *          ...
+     *     ]
+     * }
+     * @return objeto JSON creado con todos los parametros
+     */
+    private JSONObject buildJSONContacts() {
+        JSONObject contactFormatted = new JSONObject();
+        JSONArray contactsArray = new JSONArray();
+
+        for (int x = 0; x < contacts.size(); x++) {
+            try {
+                if (x == 0) {
+                    contactFormatted.put("contacts", contactsArray
+                            .put(new JSONObject()
+                                    .put("number", contacts.get(x).getPHONE_NUMBER())
+                                    .put("info", new JSONObject()
+                                            .put("name", contacts.get(x).getNAME())
+                                            .put("phone", contacts.get(x).getPHONE())
+                                            .put("address", contacts.get(x).getHOME_ADDRESS())
+                                            .put("email", contacts.get(x).getEMAIL())
+                                    )));
+                } else {
+                    contactsArray.put(new JSONObject()
+                            .put("number", contacts.get(x).getPHONE_NUMBER())
+                            .put("info", new JSONObject()
+                                    .put("name", contacts.get(x).getNAME())
+                                    .put("phone", contacts.get(x).getPHONE())
+                                    .put("address", contacts.get(x).getHOME_ADDRESS())
+                                    .put("email", contacts.get(x).getEMAIL())
+                            ));
+                }
+            } catch (JSONException err) {
+                Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        return contactFormatted;
     }
 
     private void openKeyboard() {

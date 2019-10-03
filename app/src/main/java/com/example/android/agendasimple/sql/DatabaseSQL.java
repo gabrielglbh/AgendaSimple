@@ -53,6 +53,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     /**
      * insertContact: Query para insertar un nuevo contacto en la base de datos
+     * @param e: Entidad a insertar con los campos recogidos de ContactOverview
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
      * */
     public boolean insertContact(ContactEntity e){
@@ -73,6 +74,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     /**
      * updateContact: Query para hacer update de un contacto
+     * @param e: Entidad a modificar con los campos actualizados de ContactOverview
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
      * */
     public boolean updateContact(ContactEntity e){
@@ -93,6 +95,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     /**
      * deleteContact: Query para hacer update de un contacto
+     * @param NUMBER: Primary Key del contacto a eliminar
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
      * */
     public boolean deleteContact(String NUMBER){
@@ -132,6 +135,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     /**
      * getContact: Query para cargar un determinado contacto de la base de datos determinado por ID
+     * @param NUMBER: Primary Key del contacto a seleccionar
      * @return del contacto en cuestión o null si la consulta ha fallado
      * */
     public ContactEntity getContact(String NUMBER){
@@ -158,6 +162,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     /**
      * getSearchedContacts: Query para cargar todos los contactos que lleven en NAME el texto QUERY
+     * @param QUERY: Texto introducido por el usuario que sirve para la WHERE clause
      * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
      * */
     public ArrayList<ContactEntity> getSearchedContacts(String QUERY){

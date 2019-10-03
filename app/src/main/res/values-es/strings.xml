@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="search_menu">Búsqueda</string>
-    <string name="export_from_menu">Exportar desde SD</string>
-    <string name="export_to_menu">Exportar a SD</string>
+    <string name="export_from_menu">Exportar desde Almacenamiento Externo</string>
+    <string name="export_to_menu">Exportar a Almacenamiento Externo</string>
     <string name="search_contact_hint">Buscar Contacto…</string>
     <string name="contact_overview_label">Añadir Contacto</string>
     <string name="name_contact_overview">Nombre*</string>
@@ -21,4 +21,6 @@
     <string name="empty_update">Contacto vacío descartado.</string>
     <string name="invalid_phone_call">Número de teléfono inválido.</string>
     <string name="whatsapp_error">Instala WhatsApp para realizar la acción.</string>
+    <string name="export_to_SD">Algo ha salido mal durante la exportación a la almacenamiento externo.</string>
+    <string name="success_export_to">Los contactos han sido exportados correctamente.</string>
 </resources>
