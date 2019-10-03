@@ -2,6 +2,7 @@ package com.example.android.agendasimple;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -14,6 +15,7 @@ import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
@@ -42,6 +44,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     /**
      * onBindViewHolder: Hace set de cada elemento del RecyclerView y lo pobla en la UI, además
      * de programar su funcionalidad
+     * Se hace set de dos onClickListeners para el acceso a la llamada y para mandar un mensaje de whatsapp
      * */
     @Override
     public void onBindViewHolder(@NonNull Contact holder, int i) {
@@ -62,6 +65,35 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
                 if (intent.resolveActivity(view.getContext().getPackageManager()) != null) {
                     view.getContext().startActivity(intent);
                 } else {
+                    Toast.makeText(ctx, ctx.getString(R.string.invalid_phone_call), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        holder.send_to.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PackageManager pm = view.getContext().getPackageManager();
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+
+                try {
+                    String number = contacts.get(position).getPHONE_NUMBER();
+                    String url;
+                    if (!number.contains("+34")) {
+                        url = "https://api.whatsapp.com/send?phone=+34" + number +
+                                "&text=" + URLEncoder.encode("", "UTF-8");
+                    } else {
+                        url = "https://api.whatsapp.com/send?phone=" + number +
+                                "&text=" + URLEncoder.encode("", "UTF-8");
+                    }
+                    intent.setPackage("com.whatsapp");
+                    intent.setData(Uri.parse(url));
+                    if (intent.resolveActivity(pm) != null) {
+                        view.getContext().startActivity(intent);
+                    } else {
+                        Toast.makeText(ctx, ctx.getString(R.string.whatsapp_error), Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception err) {
                     Toast.makeText(ctx, ctx.getString(R.string.invalid_phone_call), Toast.LENGTH_SHORT).show();
                 }
             }
@@ -95,7 +127,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
     class Contact extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        TextView icon_contact, initial_contact, name_contact, number_contact, call_to;
+        TextView icon_contact, initial_contact, name_contact, number_contact, call_to, send_to;
 
         public Contact(@NonNull View itemView) {
             super(itemView);
@@ -105,6 +137,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             name_contact = itemView.findViewById(R.id.name_contact);
             number_contact = itemView.findViewById(R.id.number_contact);
             call_to = itemView.findViewById(R.id.call_to);
+            send_to = itemView.findViewById(R.id.send_to);
         }
 
         @Override

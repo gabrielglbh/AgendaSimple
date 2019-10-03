@@ -80,6 +80,7 @@ public class ContactOverview extends AppCompatActivity {
      * setViews: Configura las vistas iniciales
      *            0 = Se rellenan al entrar a la actividad desde un contacto ya existente
      *            1 = Se quedan vacios para poder añadir un contacto
+     *
      * Se crean y establecen numerosos eventos para embellecer la UI como:
      *            el uso de IME Options para pasar a otro EditText (setHierarchyBetweenEditTextsOnImeOpts),
      *            el recuento de letras permitidas por campo (setLimitWordCount) o
@@ -146,6 +147,8 @@ public class ContactOverview extends AppCompatActivity {
         editEmail.setText(contact.getEMAIL());
     }
 
+    // Start of UI and UX methods
+
     private void setUIToBubbleColor(TextView t, int drawable, int color) {
         Drawable ic_name = ContextCompat.getDrawable(this, drawable);
         ic_name.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
@@ -173,34 +176,48 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     private void setLimitWordCount() {
-        setOnTextChangeListeners(editName, guideName);
-        setOnTextChangeListeners(editNumber, guideNumber);
-        setOnTextChangeListeners(editPhone, guidePhone);
+        setOnTextChangeListeners(editName, editNumber, guideName);
+        setOnTextChangeListeners(editNumber, editPhone, guideNumber);
+        setOnTextChangeListeners(editPhone, editHome, guidePhone);
     }
 
-    private void setOnTextChangeListeners(final EditText e, final TextView t) {
-        e.addTextChangedListener(new TextWatcher() {
+    private void setOnTextChangeListeners(final EditText initial, final EditText next, final TextView t) {
+        initial.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                int curr = e.getText().toString().length();
+                int curr = initial.getText().toString().length();
                 String count;
                 if (curr != 0) {
-                    if (e == editName) {
-                        count = curr + "/30";
-                    } else {
-                        count = curr + "/12";
+                    if (initial == editName) {
+                        if (curr <= 20) {
+                            count = curr + "/20";
+                            t.setText(count);
+                        } else {
+                            initial.setText(initial.getText().toString().substring(0, curr - 1));
+                            initial.clearFocus();
+                            next.requestFocus();
+                        }
+                    } else if (initial == editNumber || initial == editPhone) {
+                        if (curr <= 12) {
+                            count = curr + "/12";
+                            t.setText(count);
+                        } else {
+                            initial.setText(initial.getText().toString().substring(0, curr - 1));
+                            initial.clearFocus();
+                            next.requestFocus();
+                        }
                     }
-                    t.setText(count);
                 } else {
-                    if (e == editName) {
+                    if (initial == editName) {
                         count = getString(R.string.guideline_name);
-                    } else {
+                        t.setText(count);
+                    } else if (initial == editNumber || initial == editPhone){
                         count = getString(R.string.guideline_number);
+                        t.setText(count);
                     }
-                    t.setText(count);
                 }
             }
 
@@ -246,6 +263,8 @@ public class ContactOverview extends AppCompatActivity {
         }
     }
 
+    // End of UI and UX methods
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.contact_overview_menu, menu);
@@ -284,7 +303,9 @@ public class ContactOverview extends AppCompatActivity {
 
         if (editName.getText().toString().trim().isEmpty() ||
                 editNumber.getText().toString().trim().isEmpty()) {
-            makeToast(getString(R.string.invalid_insertion_1));
+            if (alreadyUpdated) {
+                makeToast(getString(R.string.invalid_insertion_1));
+            }
         }
         else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
