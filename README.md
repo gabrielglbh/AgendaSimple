@@ -11,9 +11,10 @@ Se ha utilizado SQLiteOpenHelper para administrar los datos con las operaciones 
 
 Además, la aplicación permite:
 
-  - Llamar al contacto y exportar desde o a la tarjeta SD del dispositivo.
+  - Exportar todos los contactos y su información al almacenamiento externo del dispositivo mediane un JSON a un archivo CNT.
+  - Importar todos los contactos desde la copia de seguridad en el almacenamiento externo.
   - Realizar llamadas de los números del contacto mediante el intent ACTION_DIAL.
-  - Realizar búsquedas de contactos mediante SearchView con acceso a la BBDD.
+  - Realizar búsquedas de contactos mediante un SearchView con acceso a la BBDD.
   - Acceso a WhatsApp para mandar un mensaje directo mediante ACTION_VIEW y la API de WhatsApp a un determinado contacto (sólo válido para números con prefijo +34).
 
 Para mejorar la UI, se ha decidido que, al crear un usuario, se guarde un color aleatorio entre 7 propuestos. Este color se pintará en la lista en cada contacto junto con un texto que representa la inicial del nombre del contacto. Esto se ha denominado Bubble.
