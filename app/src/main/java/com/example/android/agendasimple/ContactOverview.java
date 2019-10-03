@@ -13,7 +13,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +32,7 @@ public class ContactOverview extends AppCompatActivity {
 
     private TextView nameHint, numberHint, phoneHint, homeHint, emailHint;
     private EditText editName, editNumber, editPhone, editHome, editEmail;
+    private TextView nameClear, numberClear, phoneClear, homeClear, emailClear;
     private TextView guideName, guideNumber, guidePhone;
     private TextView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon;
     private Toast mToast;
@@ -83,8 +83,9 @@ public class ContactOverview extends AppCompatActivity {
      *
      * Se crean y establecen numerosos eventos para embellecer la UI como:
      *            el uso de IME Options para pasar a otro EditText (setHierarchyBetweenEditTextsOnImeOpts),
-     *            el recuento de letras permitidas por campo (setLimitWordCount) o
-     *            el cambio de color del label de cada EditText al estar activo (setEditHints).
+     *            el recuento de letras permitidas por campo (setHandlersOfTextOnChange),
+     *            el cambio de color del label de cada EditText al estar activo (setEditHints) o
+     *            la administración y visibilidad de los botones para eliminar texto (setClearButtons).
      *
      * Si se accede a esta actividad para hacer un update del contacto, los colores de los iconos y
      * la actionBar/statusBar se cambian al mismo que la burbuja de MainActivity relativa al contacto.
@@ -110,10 +111,16 @@ public class ContactOverview extends AppCompatActivity {
         phoneIcon = findViewById(R.id.icon_home_phone);
         homeIcon = findViewById(R.id.icon_home);
         emailIcon = findViewById(R.id.icon_mail);
+        nameClear = findViewById(R.id.input_name_clear);
+        numberClear = findViewById(R.id.input_number_clear);
+        phoneClear = findViewById(R.id.input_home_phone_clear);
+        homeClear = findViewById(R.id.input_home_clear);
+        emailClear = findViewById(R.id.input_mail_clear);
 
         setEditHints();
-        setLimitWordCount();
+        setHandlersOfTextOnChange();
         setHierarchyBetweenEditTextsOnImeOpts();
+        setClearButtons();
 
         if (mode == 0) {
             setTitle(getString(R.string.modify_contact_title));
@@ -175,13 +182,16 @@ public class ContactOverview extends AppCompatActivity {
         });
     }
 
-    private void setLimitWordCount() {
-        setOnTextChangeListeners(editName, editNumber, guideName);
-        setOnTextChangeListeners(editNumber, editPhone, guideNumber);
-        setOnTextChangeListeners(editPhone, editHome, guidePhone);
+    private void setHandlersOfTextOnChange() {
+        setOnTextChangeListeners(editName, editNumber, guideName, nameClear);
+        setOnTextChangeListeners(editNumber, editPhone, guideNumber, numberClear);
+        setOnTextChangeListeners(editPhone, editHome, guidePhone, phoneClear);
+        setOnTextChangeListeners(editHome, null, null, homeClear);
+        setOnTextChangeListeners(editEmail, null, null, emailClear);
     }
 
-    private void setOnTextChangeListeners(final EditText initial, final EditText next, final TextView t) {
+    private void setOnTextChangeListeners(final EditText initial, final EditText next, final TextView t,
+                                          final TextView clear) {
         initial.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
@@ -191,6 +201,7 @@ public class ContactOverview extends AppCompatActivity {
                 int curr = initial.getText().toString().length();
                 String count;
                 if (curr != 0) {
+                    clear.setVisibility(View.VISIBLE);
                     if (initial == editName) {
                         if (curr <= 20) {
                             count = curr + "/20";
@@ -211,6 +222,7 @@ public class ContactOverview extends AppCompatActivity {
                         }
                     }
                 } else {
+                    clear.setVisibility(View.GONE);
                     if (initial == editName) {
                         count = getString(R.string.guideline_name);
                         t.setText(count);
@@ -261,6 +273,23 @@ public class ContactOverview extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    private void setClearButtons() {
+        setOnClickListenersClear(nameClear, editName);
+        setOnClickListenersClear(numberClear, editNumber);
+        setOnClickListenersClear(phoneClear, editPhone);
+        setOnClickListenersClear(homeClear, editHome);
+        setOnClickListenersClear(emailClear, editEmail);
+    }
+
+    private void setOnClickListenersClear(final TextView clearButton, final TextView text) {
+        clearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                text.setText("");
+            }
+        });
     }
 
     // End of UI and UX methods
