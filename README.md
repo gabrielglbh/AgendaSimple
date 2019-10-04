@@ -16,6 +16,7 @@ Además, la aplicación permite:
   - Importar todos los contactos de la lista de contactos propia del móvil con el ContentProvider de ContactsContract.
   - Realizar llamadas de los números del contacto mediante el intent ACTION_DIAL.
   - Realizar búsquedas de contactos mediante un SearchView con acceso a la BBDD.
+  - Marcar como favoritos los contactos que se quieran. Aparecerán al principio de la lista.
   - Acceso a WhatsApp para mandar un mensaje directo mediante ACTION_VIEW y la API de WhatsApp a un determinado contacto (sólo válido para números con prefijo +34).
 
 Para mejorar la UI, se ha decidido que, al crear un usuario, se guarde un color aleatorio entre 7 propuestos. Este color se pintará en la lista en cada contacto junto con un texto que representa la inicial del nombre del contacto. Esto se ha denominado Bubble.
