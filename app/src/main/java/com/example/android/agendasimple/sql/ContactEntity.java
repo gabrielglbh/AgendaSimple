@@ -8,15 +8,17 @@ public class ContactEntity {
     private String HOME_ADDRESS;
     private String EMAIL;
     private String COLOR_BUBBLE;
+    private String FAVOURITE; // 0 si es favorito, 1 si no
 
     public ContactEntity(String NAME, String PHONE_NUMBER, String PHONE, String HOME_ADDRESS,
-                         String EMAIL, String COLOR_BUBBLE) {
+                         String EMAIL, String COLOR_BUBBLE, String FAVOURITE) {
         setNAME(NAME);
         setPHONE_NUMBER(PHONE_NUMBER);
         setPHONE(PHONE);
         setHOME_ADDRESS(HOME_ADDRESS);
         setEMAIL(EMAIL);
         setCOLOR_BUBBLE(COLOR_BUBBLE);
+        setFAVOURITE(FAVOURITE);
     }
 
     public String getNAME() {
@@ -43,27 +45,35 @@ public class ContactEntity {
         return COLOR_BUBBLE;
     }
 
-    public void setNAME(String NAME) {
+    public String getFAVOURITE() {
+        return FAVOURITE;
+    }
+
+    private void setNAME(String NAME) {
         this.NAME = NAME;
     }
 
-    public void setPHONE_NUMBER(String PHONE_NUMBER) {
+    private void setPHONE_NUMBER(String PHONE_NUMBER) {
         this.PHONE_NUMBER = PHONE_NUMBER;
     }
 
-    public void setPHONE(String PHONE) {
+    private void setPHONE(String PHONE) {
         this.PHONE = PHONE;
     }
 
-    public void setHOME_ADDRESS(String HOME_ADDRESS) {
+    private void setHOME_ADDRESS(String HOME_ADDRESS) {
         this.HOME_ADDRESS = HOME_ADDRESS;
     }
 
-    public void setEMAIL(String EMAIL) {
+    private void setEMAIL(String EMAIL) {
         this.EMAIL = EMAIL;
     }
 
-    public void setCOLOR_BUBBLE(String COLOR_BUBBLE) {
+    private void setCOLOR_BUBBLE(String COLOR_BUBBLE) {
         this.COLOR_BUBBLE = COLOR_BUBBLE;
+    }
+
+    private void setFAVOURITE(String FAVOURITE) {
+        this.FAVOURITE = FAVOURITE;
     }
 }

@@ -31,4 +31,5 @@
     <string name="import_to_SD" translatable="true">Something went wrong while importing from SD Card.</string>
     <string name="success_import_to" translatable="true">Contacts were successfully imported.</string>
     <string name="file_sd" translatable="false">contacts.cnt</string>
+    <string name="favorite_contact" translatable="true">Favourite</string>
 </resources>

@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +20,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -56,6 +58,12 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         holder.name_contact.setText(contacts.get(position).getNAME());
         holder.number_contact.setText(contacts.get(position).getPHONE_NUMBER());
         holder.initial_contact.setText(contacts.get(position).getNAME().substring(0, 1));
+
+        if (contacts.get(position).getFAVOURITE().equals("0")) {
+            holder.fav.setVisibility(View.VISIBLE);
+        } else {
+            holder.fav.setVisibility(View.GONE);
+        }
 
         holder.call_to.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -127,7 +135,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
     class Contact extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        TextView icon_contact, initial_contact, name_contact, number_contact, call_to, send_to;
+        TextView icon_contact, initial_contact, name_contact, number_contact, call_to, send_to, fav;
 
         public Contact(@NonNull View itemView) {
             super(itemView);
@@ -138,6 +146,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             number_contact = itemView.findViewById(R.id.number_contact);
             call_to = itemView.findViewById(R.id.call_to);
             send_to = itemView.findViewById(R.id.send_to);
+            fav = itemView.findViewById(R.id.favorite_rv);
         }
 
         @Override

@@ -1,9 +1,11 @@
 package com.example.android.agendasimple;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -13,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -36,12 +39,13 @@ public class ContactOverview extends AppCompatActivity {
     private TextView guideName, guideNumber, guidePhone;
     private TextView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon;
     private Toast mToast;
+    private Menu menu;
 
     private ContactEntity contact;
     private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
-    private String NUMBER;
+    private String NUMBER, FAVOURITE = "1";
 
-    private boolean alreadyUpdated = false;
+    private boolean isLikedPressed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,15 +69,12 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        if (!alreadyUpdated) {
-            if (mode == 1) {
-                validateAndInsertContact();
-            } else {
-                validateAndUpdateContact();
-            }
+    public void onBackPressed() {
+        if (mode == 1) {
+            validateAndInsertContact();
+        } else {
+            validateAndUpdateContact();
         }
-        super.onDestroy();
     }
 
     /**
@@ -297,6 +298,17 @@ public class ContactOverview extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.contact_overview_menu, menu);
+        this.menu = menu;
+        if (mode == 0) {
+            if (contact.getFAVOURITE().equals("0")) {
+                menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart_filled));
+                FAVOURITE = "0";
+                isLikedPressed = true;
+            } else {
+                menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart));
+                FAVOURITE = "1";
+            }
+        }
         return true;
     }
 
@@ -304,17 +316,22 @@ public class ContactOverview extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                if (mode == 1) {
-                    alreadyUpdated = true;
-                    finish();
-                } else {
-                    validateAndUpdateContact();
-                }
             case R.id.menu_save:
                 if (mode == 1) {
                     validateAndInsertContact();
                 } else {
                     validateAndUpdateContact();
+                }
+                break;
+            case R.id.menu_favorite:
+                if (!isLikedPressed) {
+                    menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart_filled));
+                    FAVOURITE = "0";
+                    isLikedPressed = true;
+                } else {
+                    menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart));
+                    FAVOURITE = "1";
+                    isLikedPressed = false;
                 }
                 break;
         }
@@ -331,29 +348,19 @@ public class ContactOverview extends AppCompatActivity {
 
         if (editName.getText().toString().trim().isEmpty() ||
                 editNumber.getText().toString().trim().isEmpty()) {
-            if (alreadyUpdated) {
-                makeToast(getString(R.string.invalid_insertion_1));
-            }
+            makeToast(getString(R.string.invalid_insertion_1));
         }
         else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
             if(!MainActivity.sql.deleteContact(NUMBER)) {
                 makeToast(getString(R.string.deletion_failed));
             }
-            alreadyUpdated = true;
             finish();
         }
         else {
-            ContactEntity newContact = new ContactEntity(
-                    editName.getText().toString(),
-                    editNumber.getText().toString(),
-                    editPhone.getText().toString(),
-                    editHome.getText().toString(),
-                    editEmail.getText().toString(),
-                    MainActivity.colors[r.nextInt(MainActivity.colors.length)]
-            );
-            if (MainActivity.sql.insertContact(newContact)) {
-                alreadyUpdated = true;
+            ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                    MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE);
+            if (MainActivity.sql.insertContact(c)) {
                 finish();
             } else {
                 makeToast(getString(R.string.insertion_failed));
@@ -371,26 +378,25 @@ public class ContactOverview extends AppCompatActivity {
         if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
             contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
             contact.getEMAIL().equals(email)) {
-            alreadyUpdated = true;
-            finish();
+            if (!FAVOURITE.equals(contact.getFAVOURITE())) {
+                ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
+                if (MainActivity.sql.updateContact(c)) {
+                    finish();
+                } else {
+                    makeToast(getString(R.string.update_failed));
+                }
+            } else {
+                finish();
+            }
         } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
             if(!MainActivity.sql.deleteContact(NUMBER)) {
                 makeToast(getString(R.string.deletion_failed));
             }
-            alreadyUpdated = true;
             finish();
         } else {
-            ContactEntity c = new ContactEntity(
-                    name,
-                    number,
-                    phone,
-                    address,
-                    email,
-                    contact.getCOLOR_BUBBLE()
-            );
+            ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
             if (MainActivity.sql.updateContact(c)) {
-                alreadyUpdated = true;
                 finish();
             } else {
                 makeToast(getString(R.string.update_failed));

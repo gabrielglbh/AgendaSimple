@@ -12,13 +12,14 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     private static final String DB = "contacts";
     private static final String TABLE_NAME = "contact";
-    private static final int VERSION = 4;
+    private static final int VERSION = 5;
     private static final String coloum_1 = "NAME";
     private static final String coloum_2 = "PHONE_NUMBER";
     private static final String coloum_3 = "PHONE";
     private static final String coloum_4 = "HOME_ADDRESS";
     private static final String coloum_5 = "EMAIL";
     private static final String coloum_6 = "COLOR_BUBBLE";
+    private static final String coloum_7 = "FAVOURITE";
 
     private static DatabaseSQL sInstance;
 
@@ -42,7 +43,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL("CREATE TABLE " + TABLE_NAME + "(" + coloum_1 + " TEXT PRIMARY KEY, " +
                 coloum_2 + " TEXT, " + coloum_3 + " TEXT, " +
                 "" + coloum_4 + " TEXT, " + coloum_5 + " TEXT, " +
-                "" + coloum_6 + " INTEGER NOT NULL DEFAULT 0)");
+                "" + coloum_6 + " TEXT, " + coloum_7 + " TEXT)");
     }
 
     @Override
@@ -66,6 +67,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         contentValues.put(coloum_4, e.getHOME_ADDRESS());
         contentValues.put(coloum_5, e.getEMAIL());
         contentValues.put(coloum_6, e.getCOLOR_BUBBLE());
+        contentValues.put(coloum_7, e.getFAVOURITE());
 
         long result = db.insert(TABLE_NAME,null, contentValues);
 
@@ -87,6 +89,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         contentValues.put(coloum_4, e.getHOME_ADDRESS());
         contentValues.put(coloum_5, e.getEMAIL());
         contentValues.put(coloum_6, e.getCOLOR_BUBBLE());
+        contentValues.put(coloum_7, e.getFAVOURITE());
 
         long result = db.update(TABLE_NAME, contentValues, "PHONE_NUMBER=?", new String[] { e.getPHONE_NUMBER() });
 
@@ -120,7 +123,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public ArrayList<ContactEntity> getAllContacts(){
         SQLiteDatabase db = this.getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + coloum_1 + " ASC";
+        String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + coloum_7 + " ASC, " + coloum_1 + " ASC";
         Cursor c = db.rawQuery(query, null);
 
         if (c.getCount() > 0) {
@@ -132,7 +135,8 @@ public class DatabaseSQL extends SQLiteOpenHelper {
                         c.getString(c.getColumnIndex(coloum_3)),
                         c.getString(c.getColumnIndex(coloum_4)),
                         c.getString(c.getColumnIndex(coloum_5)),
-                        c.getString(c.getColumnIndex(coloum_6)))
+                        c.getString(c.getColumnIndex(coloum_6)),
+                        c.getString(c.getColumnIndex(coloum_7)))
                 );
             }
             c.close();
@@ -160,7 +164,8 @@ public class DatabaseSQL extends SQLiteOpenHelper {
                     c.getString(c.getColumnIndex(coloum_3)),
                     c.getString(c.getColumnIndex(coloum_4)),
                     c.getString(c.getColumnIndex(coloum_5)),
-                    c.getString(c.getColumnIndex(coloum_6))
+                    c.getString(c.getColumnIndex(coloum_6)),
+                    c.getString(c.getColumnIndex(coloum_7))
             );
             c.close();
             return contact;
@@ -189,7 +194,8 @@ public class DatabaseSQL extends SQLiteOpenHelper {
                         c.getString(c.getColumnIndex(coloum_3)),
                         c.getString(c.getColumnIndex(coloum_4)),
                         c.getString(c.getColumnIndex(coloum_5)),
-                        c.getString(c.getColumnIndex(coloum_6))
+                        c.getString(c.getColumnIndex(coloum_6)),
+                        c.getString(c.getColumnIndex(coloum_7))
                 ));
             }
             c.close();

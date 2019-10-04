@@ -65,7 +65,7 @@
         android:background="@drawable/ic_call_intent"
         app:layout_constraintBottom_toBottomOf="@+id/icon_contact"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/name_contact" />
+        app:layout_constraintTop_toTopOf="@+id/icon_contact" />
 
     <TextView
         android:id="@+id/send_to"
@@ -75,7 +75,7 @@
         android:background="@drawable/ic_whatsapp"
         app:layout_constraintBottom_toBottomOf="@+id/icon_contact"
         app:layout_constraintEnd_toStartOf="@+id/call_to"
-        app:layout_constraintTop_toTopOf="@+id/name_contact" />
+        app:layout_constraintTop_toTopOf="@+id/icon_contact" />
 
     <TextView
         android:id="@+id/separator"
@@ -87,5 +87,15 @@
         app:layout_constraintEnd_toEndOf="@+id/call_to"
         app:layout_constraintStart_toStartOf="@+id/icon_contact"
         app:layout_constraintTop_toBottomOf="@+id/icon_contact" />
+
+    <TextView
+        android:id="@+id/favorite_rv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="38dp"
+        android:layout_marginTop="38dp"
+        android:background="@drawable/ic_heart_filled_rv"
+        app:layout_constraintStart_toStartOf="@+id/icon_contact"
+        app:layout_constraintTop_toTopOf="@+id/icon_contact" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

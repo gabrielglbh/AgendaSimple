@@ -60,10 +60,11 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private final String phoneJSON = "phone";
     private final String addressJSON = "address";
     private final String emailJSON = "email";
+    private final String favouriteJSON = "favourite";
     private final String contactsJSON = "contacts";
     private final String infoJSON = "info";
 
-    public static String[] colors = { "#008577", "#EC8C2E", "#21A763", "#E04646", "#5383D6", "#E6C815", "#E072CC" };
+    public static String[] colors = { "#008577", "#EC8C2E", "#21A763", "#DF2D2D", "#5383D6", "#E6C815", "#E072CC" };
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
@@ -275,8 +276,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                 String address = info.getString(addressJSON);
                 String email = info.getString(emailJSON);
                 String bubble = colors[r.nextInt(colors.length)];
+                String favourite = info.getString(favouriteJSON);
 
-                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble);
+                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite);
                 contacts.add(c);
                 if(!sql.insertContact(c)) {
                     Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
@@ -329,7 +331,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      *                  "name": getNAME,
      *                  "phone": getPHONE,
      *                  "address": getADDRESS,
-     *                  "email": getEMAIL
+     *                  "email": getEMAIL,
+     *                  "favorite": getFAVOURITE
      *              }
      *          },
      *          ...
@@ -352,6 +355,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                                             .put(phoneJSON, contacts.get(x).getPHONE())
                                             .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
                                             .put(emailJSON, contacts.get(x).getEMAIL())
+                                            .put(favouriteJSON, contacts.get(x).getFAVOURITE())
                                     )));
                 } else {
                     contactsArray.put(new JSONObject()
@@ -361,6 +365,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                                     .put(phoneJSON, contacts.get(x).getPHONE())
                                     .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
                                     .put(emailJSON, contacts.get(x).getEMAIL())
+                                    .put(favouriteJSON, contacts.get(x).getFAVOURITE())
                             ));
                 }
             } catch (JSONException err) {
@@ -420,7 +425,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         "",
                         "",
                         "",
-                        colors[r.nextInt(colors.length)]
+                        colors[r.nextInt(colors.length)],
+                        "1"
                 );
                 contacts.add(c);
                 if(!sql.insertContact(c)) {

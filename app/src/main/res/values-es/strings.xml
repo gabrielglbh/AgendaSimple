@@ -27,4 +27,5 @@
     <string name="success_export_to">Los contactos han sido exportados correctamente.</string>
     <string name="import_to_SD">Algo ha salido mal durante la importación desde la tarjeta SD.</string>
     <string name="success_import_to">Los contactos han sido importados correctamente.</string>
+    <string name="favorite_contact">Favorito</string>
 </resources>
