@@ -407,6 +407,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
                     while (phones.moveToNext()) {
                         number = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        if (number.contains(" ")) {
+                            number = number.replace(" ", "");
+                        }
                     }
                     phones.close();
                 }
