@@ -4,6 +4,7 @@
     <string name="search_menu">Búsqueda</string>
     <string name="export_from_menu">Importar desde Tarjeta SD</string>
     <string name="export_to_menu">Exportar a Tarjeta SD</string>
+    <string name="import_from_contacts">Importar desde Contactos</string>
     <string name="search_contact_hint">Buscar Contacto…</string>
     <string name="contact_overview_label">Añadir Contacto</string>
     <string name="name_contact_overview">Nombre*</string>

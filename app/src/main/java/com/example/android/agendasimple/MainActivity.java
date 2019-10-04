@@ -7,9 +7,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.ContactsContract;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,6 +37,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener {
 
@@ -55,9 +60,10 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private final String phoneJSON = "phone";
     private final String addressJSON = "address";
     private final String emailJSON = "email";
-    private final String bubbleJSON = "bubble";
     private final String contactsJSON = "contacts";
     private final String infoJSON = "info";
+
+    public static String[] colors = { "#008577", "#EC8C2E", "#21A763", "#E04646", "#5383D6", "#E6C815", "#E072CC" };
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
@@ -199,10 +205,21 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.export_from_contacts:
-                importFromSD();
+                if (!sql.deleteAllContacts()) {
+                    Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+                } else {
+                    importFromSD();
+                }
                 break;
             case R.id.export_to_contacts:
                 exportToSD();
+                break;
+            case R.id.export_from_content_provider:
+                if (!sql.deleteAllContacts()) {
+                    Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+                } else {
+                    importFromContacts();
+                }
                 break;
         }
         return true;
@@ -243,36 +260,32 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * */
     private void parseJsonAndPopulateRecyclerView(String jsonObj) {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
+        try {
+            JSONObject json = new JSONObject(jsonObj);
+            JSONArray arr = json.getJSONArray(contactsJSON);
+            int sizeOfContactsJSON = arr.length();
+            Random r = new Random();
 
-        if (!sql.deleteAllContacts()) {
-            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
-        } else {
-            try {
-                JSONObject json = new JSONObject(jsonObj);
-                JSONArray arr = json.getJSONArray(contactsJSON);
-                int sizeOfContactsJSON = arr.length();
+            for (int x = 0; x < sizeOfContactsJSON; x++) {
+                JSONObject params = arr.getJSONObject(x);
+                String number = params.getString(numberJSON);
+                JSONObject info = params.getJSONObject(infoJSON);
+                String name = info.getString(nameJSON);
+                String phone = info.getString(phoneJSON);
+                String address = info.getString(addressJSON);
+                String email = info.getString(emailJSON);
+                String bubble = colors[r.nextInt(colors.length)];
 
-                for (int x = 0; x < sizeOfContactsJSON; x++) {
-                    JSONObject params = arr.getJSONObject(x);
-                    String number = params.getString(numberJSON);
-                    JSONObject info = params.getJSONObject(infoJSON);
-                    String name = info.getString(nameJSON);
-                    String phone = info.getString(phoneJSON);
-                    String address = info.getString(addressJSON);
-                    String email = info.getString(emailJSON);
-                    String bubble = info.getString(bubbleJSON);
-
-                    ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble);
-                    contacts.add(c);
-                    if(!sql.insertContact(c)) {
-                        Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
-                    }
+                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble);
+                contacts.add(c);
+                if(!sql.insertContact(c)) {
+                    Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
                 }
-
-                adapter.setContactList(contacts);
-            } catch (JSONException err) {
-                Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
             }
+
+            adapter.setContactList(contacts);
+        } catch (JSONException err) {
+            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -316,8 +329,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      *                  "name": getNAME,
      *                  "phone": getPHONE,
      *                  "address": getADDRESS,
-     *                  "email": getEMAIL,
-     *                  "bubble": getBUBBLE
+     *                  "email": getEMAIL
      *              }
      *          },
      *          ...
@@ -340,7 +352,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                                             .put(phoneJSON, contacts.get(x).getPHONE())
                                             .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
                                             .put(emailJSON, contacts.get(x).getEMAIL())
-                                            .put(bubbleJSON, contacts.get(x).getCOLOR_BUBBLE())
                                     )));
                 } else {
                     contactsArray.put(new JSONObject()
@@ -350,7 +361,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                                     .put(phoneJSON, contacts.get(x).getPHONE())
                                     .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
                                     .put(emailJSON, contacts.get(x).getEMAIL())
-                                    .put(bubbleJSON, contacts.get(x).getCOLOR_BUBBLE())
                             ));
                 }
             } catch (JSONException err) {
@@ -359,6 +369,64 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         }
 
         return contactFormatted;
+    }
+
+    /**
+     * importFromContacts: Método que gracias al contentProvider que ofrece contactos, hace una query
+     * para sacar todos los contactos del teléfono y por cada uno de ellos se guarda en el fromato
+     * adecuado para su importación a la aplicación de MiAgenda.
+     * */
+    private void importFromContacts() {
+        ArrayList<ContactEntity> contacts = new ArrayList<>();
+
+        Cursor cursor = getContentResolver().query(
+                ContactsContract.Contacts.CONTENT_URI,
+                new String[]{
+                        ContactsContract.Contacts._ID,
+                        ContactsContract.Contacts.HAS_PHONE_NUMBER,
+                        ContactsContract.Contacts.DISPLAY_NAME
+                },
+                null,
+                null,
+                ContactsContract.Contacts.DISPLAY_NAME + " ASC"
+        );
+
+        if (cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                Random r = new Random();
+                String contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+                String hasPhone = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
+                String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                String number = "";
+
+                if (hasPhone.equals("1")) {
+                    Cursor phones = getContentResolver().query(
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactId,
+                            null, null);
+
+                    while (phones.moveToNext()) {
+                        number = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    }
+                    phones.close();
+                }
+
+                ContactEntity c = new ContactEntity(
+                        name,
+                        number,
+                        "",
+                        "",
+                        "",
+                        colors[r.nextInt(colors.length)]
+                );
+                contacts.add(c);
+                if(!sql.insertContact(c)) {
+                    Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+        cursor.close();
+        adapter.setContactList(contacts);
     }
 
     private void openKeyboard() {

@@ -322,7 +322,6 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     private void validateAndInsertContact() {
-        String[] colors = { "#008577", "#D17E2B", "#21A763", "#AF2E2E", "#265199", "#C4B22E", "#C251AC" };
         String name = editName.getText().toString();
         String number = editNumber.getText().toString();
         String phone = editPhone.getText().toString();
@@ -351,7 +350,7 @@ public class ContactOverview extends AppCompatActivity {
                     editPhone.getText().toString(),
                     editHome.getText().toString(),
                     editEmail.getText().toString(),
-                    colors[r.nextInt(7)]
+                    MainActivity.colors[r.nextInt(MainActivity.colors.length)]
             );
             if (MainActivity.sql.insertContact(newContact)) {
                 alreadyUpdated = true;
