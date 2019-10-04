@@ -13,6 +13,7 @@ Además, la aplicación permite:
 
   - Exportar todos los contactos y su información al almacenamiento externo del dispositivo mediane un JSON a un archivo CNT.
   - Importar todos los contactos desde la copia de seguridad en el almacenamiento externo.
+  - Importar todos los contactos de la lista de contactos propia del móvil con el ContentProvider de ContactsContract.
   - Realizar llamadas de los números del contacto mediante el intent ACTION_DIAL.
   - Realizar búsquedas de contactos mediante un SearchView con acceso a la BBDD.
   - Acceso a WhatsApp para mandar un mensaje directo mediante ACTION_VIEW y la API de WhatsApp a un determinado contacto (sólo válido para números con prefijo +34).
