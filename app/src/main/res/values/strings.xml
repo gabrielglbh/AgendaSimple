@@ -18,7 +18,7 @@
     <string name="positive_dialog" translatable="true">Yes</string>
     <string name="negative_dialog" translatable="false">No</string>
 
-    <string name="invalid_insertion_1" translatable="true">Contact must have a name and/or a number.</string>
+    <string name="invalid_insertion_1" translatable="true">Contact must have a name and a number.</string>
     <string name="insertion_failed" translatable="true">The phone number is already saved.</string>
     <string name="deletion_failed" translatable="true">Something occurred, deletion failed.</string>
     <string name="update_failed" translatable="true">Something occurred, update failed.</string>
@@ -32,4 +32,9 @@
     <string name="success_import_to" translatable="true">Contacts were successfully imported.</string>
     <string name="file_sd" translatable="false">contacts.cnt</string>
     <string name="favorite_contact" translatable="true">Favourite</string>
+    <string name="no_dialog" translatable="false">No</string>
+    <string name="yes_dialog" translatable="true">Yes</string>
+    <string name="msg_dialog" translatable="true">Do you want to discard the contact?</string>
+    <string name="no_cont_to_export" translatable="true">You do not have any contacts to export.</string>
+    <string name="no_cont_to_import" translatable="true">No contacts were imported.</string>
 </resources>

@@ -122,7 +122,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
      * */
     public ArrayList<ContactEntity> getAllContacts(){
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + coloum_7 + " ASC, " + coloum_1 + " ASC";
         Cursor c = db.rawQuery(query, null);
 
@@ -153,7 +153,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @return del contacto en cuestión o null si la consulta ha fallado
      * */
     public ContactEntity getContact(String NUMBER){
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_2 + " = ?";
         Cursor c = db.rawQuery(query, new String[] { NUMBER });
 
@@ -181,7 +181,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
      * */
     public ArrayList<ContactEntity> getSearchedContacts(String QUERY){
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_1 + " LIKE ?";
         Cursor c = db.rawQuery(query, new String[] { QUERY + "%" });
 

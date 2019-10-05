@@ -28,4 +28,8 @@
     <string name="import_to_SD">Algo ha salido mal durante la importación desde la tarjeta SD.</string>
     <string name="success_import_to">Los contactos han sido importados correctamente.</string>
     <string name="favorite_contact">Favorito</string>
+    <string name="yes_dialog">Sí</string>
+    <string name="msg_dialog">¿Quieres descartar el contacto?</string>
+    <string name="no_cont_to_export">No tienes contactos para exportar.</string>
+    <string name="no_cont_to_import">Ningún contacto ha sido importado.</string>
 </resources>

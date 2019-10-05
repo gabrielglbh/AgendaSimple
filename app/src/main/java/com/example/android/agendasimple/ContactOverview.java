@@ -40,6 +40,7 @@ public class ContactOverview extends AppCompatActivity {
     private TextView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon;
     private Toast mToast;
     private Menu menu;
+    private AlertDialog alert;
 
     private ContactEntity contact;
     private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
@@ -348,7 +349,23 @@ public class ContactOverview extends AppCompatActivity {
 
         if (editName.getText().toString().trim().isEmpty() ||
                 editNumber.getText().toString().trim().isEmpty()) {
-            makeToast(getString(R.string.invalid_insertion_1));
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(getString(R.string.invalid_insertion_1));
+            builder.setMessage(getString(R.string.msg_dialog));
+            builder.setNegativeButton(getString(R.string.no_dialog), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    alert.dismiss();
+                }
+            });
+            builder.setPositiveButton(getString(R.string.yes_dialog), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    finish();
+                }
+            });
+            alert = builder.create();
+            alert.show();
         }
         else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {

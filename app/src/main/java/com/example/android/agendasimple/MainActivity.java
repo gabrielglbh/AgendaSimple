@@ -1,19 +1,21 @@
 package com.example.android.agendasimple;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
 import android.text.InputType;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -64,6 +66,14 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private final String contactsJSON = "contacts";
     private final String infoJSON = "info";
 
+    private final String[] permissions= new String[]{
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.READ_CONTACTS};
+    private final int CODE_WRITE_ES = 0;
+    private final int CODE_READ_ES = 1;
+    private final int CODE_READ_CONTACT = 2;
+
     public static String[] colors = { "#008577", "#EC8C2E", "#21A763", "#DF2D2D", "#5383D6", "#E6C815", "#E072CC" };
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
@@ -88,6 +98,49 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         contacts = sql.getAllContacts();
         adapter.setContactList(contacts);
         super.onResume();
+    }
+
+    /**
+     * checkPermits: Método que verifica si se han permitido los permisos necesarios
+     **/
+    private boolean checkPermits(String permission){
+        if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case CODE_WRITE_ES: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    exportToSD();
+                }
+                break;
+            }
+            case CODE_READ_ES: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (!sql.deleteAllContacts()) {
+                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+                    } else {
+                        importFromSD();
+                    }
+                }
+                break;
+            }
+            case CODE_READ_CONTACT: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (!sql.deleteAllContacts()) {
+                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+                    } else {
+                        importFromContacts();
+                    }
+                }
+                break;
+            }
+        }
     }
 
     /**
@@ -199,27 +252,40 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     /**
      * onOptionsItemSelected: Se administran las opciones del menú, en este caso la exportación
      * de contactos a o desde la tarjeta SD de todos los contactos
+     * Se verifica en cada botón si los permisos están correctamente permitidos
      *
      * @param item: item seleccionado del menu
      * */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
-            case R.id.export_from_contacts:
-                if (!sql.deleteAllContacts()) {
-                    Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+            case R.id.export_to_contacts:
+                if(checkPermits(permissions[0])){
+                    ActivityCompat.requestPermissions(this, new String[] {permissions[0]} , CODE_WRITE_ES);
                 } else {
-                    importFromSD();
+                    exportToSD();
                 }
                 break;
-            case R.id.export_to_contacts:
-                exportToSD();
+            case R.id.export_from_contacts:
+                if(checkPermits(permissions[1])){
+                    ActivityCompat.requestPermissions(this, new String[] {permissions[1]} , CODE_READ_ES);
+                } else {
+                    if (!sql.deleteAllContacts()) {
+                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+                    } else {
+                        importFromSD();
+                    }
+                }
                 break;
             case R.id.export_from_content_provider:
-                if (!sql.deleteAllContacts()) {
-                    Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+                if(checkPermits(permissions[2])){
+                    ActivityCompat.requestPermissions(this, new String[] {permissions[2]} , CODE_READ_CONTACT);
                 } else {
-                    importFromContacts();
+                    if (!sql.deleteAllContacts()) {
+                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+                    } else {
+                        importFromContacts();
+                    }
                 }
                 break;
         }
@@ -242,7 +308,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                     String jsonObj = fd.readLine();
                     parseJsonAndPopulateRecyclerView(jsonObj);
                     fd.close();
-                    Toast.makeText(this, getString(R.string.success_import_to), Toast.LENGTH_SHORT).show();
                 } catch (IOException err) {
                     Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
                 }
@@ -267,25 +332,30 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             int sizeOfContactsJSON = arr.length();
             Random r = new Random();
 
-            for (int x = 0; x < sizeOfContactsJSON; x++) {
-                JSONObject params = arr.getJSONObject(x);
-                String number = params.getString(numberJSON);
-                JSONObject info = params.getJSONObject(infoJSON);
-                String name = info.getString(nameJSON);
-                String phone = info.getString(phoneJSON);
-                String address = info.getString(addressJSON);
-                String email = info.getString(emailJSON);
-                String bubble = colors[r.nextInt(colors.length)];
-                String favourite = info.getString(favouriteJSON);
+            if (sizeOfContactsJSON == 0) {
+                for (int x = 0; x < sizeOfContactsJSON; x++) {
+                    JSONObject params = arr.getJSONObject(x);
+                    String number = params.getString(numberJSON);
+                    JSONObject info = params.getJSONObject(infoJSON);
+                    String name = info.getString(nameJSON);
+                    String phone = info.getString(phoneJSON);
+                    String address = info.getString(addressJSON);
+                    String email = info.getString(emailJSON);
+                    String bubble = colors[r.nextInt(colors.length)];
+                    String favourite = info.getString(favouriteJSON);
 
-                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite);
-                contacts.add(c);
-                if(!sql.insertContact(c)) {
-                    Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
+                    ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite);
+                    contacts.add(c);
+                    if (!sql.insertContact(c)) {
+                        Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
 
-            adapter.setContactList(contacts);
+                adapter.setContactList(contacts);
+                Toast.makeText(this, getString(R.string.success_import_to), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, getString(R.string.no_cont_to_import), Toast.LENGTH_SHORT).show();
+            }
         } catch (JSONException err) {
             Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
         }
@@ -309,7 +379,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                     FileWriter fd = new FileWriter(file);
                     fd.write(json.toString());
                     fd.close();
-                    Toast.makeText(this, getString(R.string.success_export_to), Toast.LENGTH_SHORT).show();
                 } catch (IOException err) {
                     Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
                 }
@@ -344,33 +413,38 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         JSONObject contactFormatted = new JSONObject();
         JSONArray contactsArray = new JSONArray();
 
-        for (int x = 0; x < contacts.size(); x++) {
-            try {
-                if (x == 0) {
-                    contactFormatted.put(contactsJSON, contactsArray
-                            .put(new JSONObject()
-                                    .put(numberJSON, contacts.get(x).getPHONE_NUMBER())
-                                    .put(infoJSON, new JSONObject()
-                                            .put(nameJSON, contacts.get(x).getNAME())
-                                            .put(phoneJSON, contacts.get(x).getPHONE())
-                                            .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
-                                            .put(emailJSON, contacts.get(x).getEMAIL())
-                                            .put(favouriteJSON, contacts.get(x).getFAVOURITE())
-                                    )));
-                } else {
-                    contactsArray.put(new JSONObject()
-                            .put(numberJSON, contacts.get(x).getPHONE_NUMBER())
-                            .put(infoJSON, new JSONObject()
-                                    .put(nameJSON, contacts.get(x).getNAME())
-                                    .put(phoneJSON, contacts.get(x).getPHONE())
-                                    .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
-                                    .put(emailJSON, contacts.get(x).getEMAIL())
-                                    .put(favouriteJSON, contacts.get(x).getFAVOURITE())
-                            ));
+        if (contacts != null) {
+            for (int x = 0; x < contacts.size(); x++) {
+                try {
+                    if (x == 0) {
+                        contactFormatted.put(contactsJSON, contactsArray
+                                .put(new JSONObject()
+                                        .put(numberJSON, contacts.get(x).getPHONE_NUMBER())
+                                        .put(infoJSON, new JSONObject()
+                                                .put(nameJSON, contacts.get(x).getNAME())
+                                                .put(phoneJSON, contacts.get(x).getPHONE())
+                                                .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
+                                                .put(emailJSON, contacts.get(x).getEMAIL())
+                                                .put(favouriteJSON, contacts.get(x).getFAVOURITE())
+                                        )));
+                    } else {
+                        contactsArray.put(new JSONObject()
+                                .put(numberJSON, contacts.get(x).getPHONE_NUMBER())
+                                .put(infoJSON, new JSONObject()
+                                        .put(nameJSON, contacts.get(x).getNAME())
+                                        .put(phoneJSON, contacts.get(x).getPHONE())
+                                        .put(addressJSON, contacts.get(x).getHOME_ADDRESS())
+                                        .put(emailJSON, contacts.get(x).getEMAIL())
+                                        .put(favouriteJSON, contacts.get(x).getFAVOURITE())
+                                ));
+                    }
+                    Toast.makeText(this, getString(R.string.success_export_to), Toast.LENGTH_SHORT).show();
+                } catch (JSONException err) {
+                    Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
                 }
-            } catch (JSONException err) {
-                Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
             }
+        } else {
+            Toast.makeText(this, getString(R.string.no_cont_to_export), Toast.LENGTH_SHORT).show();
         }
 
         return contactFormatted;
