@@ -332,30 +332,27 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             int sizeOfContactsJSON = arr.length();
             Random r = new Random();
 
-            if (sizeOfContactsJSON == 0) {
-                for (int x = 0; x < sizeOfContactsJSON; x++) {
-                    JSONObject params = arr.getJSONObject(x);
-                    String number = params.getString(numberJSON);
-                    JSONObject info = params.getJSONObject(infoJSON);
-                    String name = info.getString(nameJSON);
-                    String phone = info.getString(phoneJSON);
-                    String address = info.getString(addressJSON);
-                    String email = info.getString(emailJSON);
-                    String bubble = colors[r.nextInt(colors.length)];
-                    String favourite = info.getString(favouriteJSON);
+            for (int x = 0; x < sizeOfContactsJSON; x++) {
+                JSONObject params = arr.getJSONObject(x);
+                String number = params.getString(numberJSON);
+                JSONObject info = params.getJSONObject(infoJSON);
+                String name = info.getString(nameJSON);
+                String phone = info.getString(phoneJSON);
+                String address = info.getString(addressJSON);
+                String email = info.getString(emailJSON);
+                String bubble = colors[r.nextInt(colors.length)];
+                String favourite = info.getString(favouriteJSON);
 
-                    ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite);
-                    contacts.add(c);
-                    if (!sql.insertContact(c)) {
-                        Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
-                    }
+                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite);
+                contacts.add(c);
+                if (!sql.insertContact(c)) {
+                    Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
                 }
-
-                adapter.setContactList(contacts);
-                Toast.makeText(this, getString(R.string.success_import_to), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, getString(R.string.no_cont_to_import), Toast.LENGTH_SHORT).show();
             }
+
+            this.contacts = contacts;
+            adapter.setContactList(contacts);
+            Toast.makeText(this, getString(R.string.success_import_to), Toast.LENGTH_SHORT).show();
         } catch (JSONException err) {
             Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
         }
@@ -509,6 +506,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             }
         }
         cursor.close();
+        this.contacts = contacts;
         adapter.setContactList(contacts);
     }
 
