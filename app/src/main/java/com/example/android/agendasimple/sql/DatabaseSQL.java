@@ -6,20 +6,14 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.example.android.agendasimple.contentProvider.ContactContract.ContactEntry;
+
 import java.util.ArrayList;
 
 public class DatabaseSQL extends SQLiteOpenHelper {
 
     private static final String DB = "contacts";
-    private static final String TABLE_NAME = "contact";
-    private static final int VERSION = 5;
-    private static final String coloum_1 = "NAME";
-    private static final String coloum_2 = "PHONE_NUMBER";
-    private static final String coloum_3 = "PHONE";
-    private static final String coloum_4 = "HOME_ADDRESS";
-    private static final String coloum_5 = "EMAIL";
-    private static final String coloum_6 = "COLOR_BUBBLE";
-    private static final String coloum_7 = "FAVOURITE";
+    private static final int VERSION = 6;
 
     private static DatabaseSQL sInstance;
 
@@ -34,21 +28,26 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         return sInstance;
     }
 
-    private DatabaseSQL(Context context) {
+    public DatabaseSQL(Context context) {
         super(context, DB, null, VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL("CREATE TABLE " + TABLE_NAME + "(" + coloum_1 + " TEXT PRIMARY KEY, " +
-                coloum_2 + " TEXT, " + coloum_3 + " TEXT, " +
-                "" + coloum_4 + " TEXT, " + coloum_5 + " TEXT, " +
-                "" + coloum_6 + " TEXT, " + coloum_7 + " TEXT)");
+        sqLiteDatabase.execSQL("CREATE TABLE " +
+                ContactEntry.TABLE_NAME + "(" +
+                ContactEntry.COLUMN_1 + " TEXT PRIMARY KEY, " +
+                ContactEntry.COLUMN_2 + " TEXT, " +
+                ContactEntry.COLUMN_3 + " TEXT, " +
+                ContactEntry.COLUMN_4 + " TEXT, " +
+                ContactEntry.COLUMN_5 + " TEXT, " +
+                ContactEntry.COLUMN_6 + " TEXT, " +
+                ContactEntry.COLUMN_7 + " TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + ContactEntry.TABLE_NAME);
         onCreate(sqLiteDatabase);
     }
 
@@ -61,15 +60,15 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
-        contentValues.put(coloum_1, e.getNAME());
-        contentValues.put(coloum_2, e.getPHONE_NUMBER());
-        contentValues.put(coloum_3, e.getPHONE());
-        contentValues.put(coloum_4, e.getHOME_ADDRESS());
-        contentValues.put(coloum_5, e.getEMAIL());
-        contentValues.put(coloum_6, e.getCOLOR_BUBBLE());
-        contentValues.put(coloum_7, e.getFAVOURITE());
+        contentValues.put(ContactEntry.COLUMN_1, e.getNAME());
+        contentValues.put(ContactEntry.COLUMN_2, e.getPHONE_NUMBER());
+        contentValues.put(ContactEntry.COLUMN_3, e.getPHONE());
+        contentValues.put(ContactEntry.COLUMN_4, e.getHOME_ADDRESS());
+        contentValues.put(ContactEntry.COLUMN_5, e.getEMAIL());
+        contentValues.put(ContactEntry.COLUMN_6, e.getCOLOR_BUBBLE());
+        contentValues.put(ContactEntry.COLUMN_7, e.getFAVOURITE());
 
-        long result = db.insert(TABLE_NAME,null, contentValues);
+        long result = db.insert(ContactEntry.TABLE_NAME,null, contentValues);
 
         return result != -1;
     }
@@ -83,15 +82,15 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
-        contentValues.put(coloum_1, e.getNAME());
-        contentValues.put(coloum_2, e.getPHONE_NUMBER());
-        contentValues.put(coloum_3, e.getPHONE());
-        contentValues.put(coloum_4, e.getHOME_ADDRESS());
-        contentValues.put(coloum_5, e.getEMAIL());
-        contentValues.put(coloum_6, e.getCOLOR_BUBBLE());
-        contentValues.put(coloum_7, e.getFAVOURITE());
+        contentValues.put(ContactEntry.COLUMN_1, e.getNAME());
+        contentValues.put(ContactEntry.COLUMN_2, e.getPHONE_NUMBER());
+        contentValues.put(ContactEntry.COLUMN_3, e.getPHONE());
+        contentValues.put(ContactEntry.COLUMN_4, e.getHOME_ADDRESS());
+        contentValues.put(ContactEntry.COLUMN_5, e.getEMAIL());
+        contentValues.put(ContactEntry.COLUMN_6, e.getCOLOR_BUBBLE());
+        contentValues.put(ContactEntry.COLUMN_7, e.getFAVOURITE());
 
-        long result = db.update(TABLE_NAME, contentValues, "PHONE_NUMBER=?", new String[] { e.getPHONE_NUMBER() });
+        long result = db.update(ContactEntry.TABLE_NAME, contentValues, "PHONE_NUMBER=?", new String[] { e.getPHONE_NUMBER() });
 
         return result != -1;
     }
@@ -103,7 +102,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public boolean deleteContact(String NUMBER){
         SQLiteDatabase db = this.getWritableDatabase();
-        long result = db.delete(TABLE_NAME,"PHONE_NUMBER=?", new String[] { NUMBER });
+        long result = db.delete(ContactEntry.TABLE_NAME,"PHONE_NUMBER=?", new String[] { NUMBER });
         return result != -1;
     }
 
@@ -113,7 +112,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public boolean deleteAllContacts(){
         SQLiteDatabase db = this.getWritableDatabase();
-        long result = db.delete(TABLE_NAME,null, null);
+        long result = db.delete(ContactEntry.TABLE_NAME,null, null);
         return result != -1;
     }
 
@@ -123,20 +122,23 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public ArrayList<ContactEntity> getAllContacts(){
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + coloum_7 + " ASC, " + coloum_1 + " ASC";
+        String query = "SELECT * FROM " +
+                ContactEntry.TABLE_NAME + " ORDER BY " +
+                ContactEntry.COLUMN_7 + " ASC, " +
+                ContactEntry.COLUMN_1 + " ASC";
         Cursor c = db.rawQuery(query, null);
 
         if (c.getCount() > 0) {
             ArrayList<ContactEntity> contacts = new ArrayList<>();
             while (c.moveToNext()) {
                 contacts.add(new ContactEntity(
-                        c.getString(c.getColumnIndex(coloum_1)),
-                        c.getString(c.getColumnIndex(coloum_2)),
-                        c.getString(c.getColumnIndex(coloum_3)),
-                        c.getString(c.getColumnIndex(coloum_4)),
-                        c.getString(c.getColumnIndex(coloum_5)),
-                        c.getString(c.getColumnIndex(coloum_6)),
-                        c.getString(c.getColumnIndex(coloum_7)))
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_1)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_2)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_3)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_4)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_5)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_6)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_7)))
                 );
             }
             c.close();
@@ -154,18 +156,18 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public ContactEntity getContact(String NUMBER){
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_2 + " = ?";
+        String query = "SELECT * FROM " + ContactEntry.TABLE_NAME + " WHERE " + ContactEntry.COLUMN_2 + " = ?";
         Cursor c = db.rawQuery(query, new String[] { NUMBER });
 
         if (c.getCount() > 0 && c.moveToNext()) {
             ContactEntity contact = new ContactEntity(
-                    c.getString(c.getColumnIndex(coloum_1)),
-                    c.getString(c.getColumnIndex(coloum_2)),
-                    c.getString(c.getColumnIndex(coloum_3)),
-                    c.getString(c.getColumnIndex(coloum_4)),
-                    c.getString(c.getColumnIndex(coloum_5)),
-                    c.getString(c.getColumnIndex(coloum_6)),
-                    c.getString(c.getColumnIndex(coloum_7))
+                    c.getString(c.getColumnIndex(ContactEntry.COLUMN_1)),
+                    c.getString(c.getColumnIndex(ContactEntry.COLUMN_2)),
+                    c.getString(c.getColumnIndex(ContactEntry.COLUMN_3)),
+                    c.getString(c.getColumnIndex(ContactEntry.COLUMN_4)),
+                    c.getString(c.getColumnIndex(ContactEntry.COLUMN_5)),
+                    c.getString(c.getColumnIndex(ContactEntry.COLUMN_6)),
+                    c.getString(c.getColumnIndex(ContactEntry.COLUMN_7))
             );
             c.close();
             return contact;
@@ -182,20 +184,20 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public ArrayList<ContactEntity> getSearchedContacts(String QUERY){
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME + " WHERE " + coloum_1 + " LIKE ?";
+        String query = "SELECT * FROM " + ContactEntry.TABLE_NAME + " WHERE " + ContactEntry.COLUMN_1 + " LIKE ?";
         Cursor c = db.rawQuery(query, new String[] { QUERY + "%" });
 
         if (c.getCount() > 0) {
             ArrayList<ContactEntity> contacts = new ArrayList<>();
             while (c.moveToNext()) {
                 contacts.add(new ContactEntity(
-                        c.getString(c.getColumnIndex(coloum_1)),
-                        c.getString(c.getColumnIndex(coloum_2)),
-                        c.getString(c.getColumnIndex(coloum_3)),
-                        c.getString(c.getColumnIndex(coloum_4)),
-                        c.getString(c.getColumnIndex(coloum_5)),
-                        c.getString(c.getColumnIndex(coloum_6)),
-                        c.getString(c.getColumnIndex(coloum_7))
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_1)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_2)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_3)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_4)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_5)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_6)),
+                        c.getString(c.getColumnIndex(ContactEntry.COLUMN_7))
                 ));
             }
             c.close();

@@ -13,6 +13,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <provider
+            android:authorities="es.upm.etsisi.miprovedordecontenidos"
+            android:exported="false"
+            android:name=".contentProvider.ContactContract"/>
+
         <activity
             android:name=".ContactOverview" />
         <activity
