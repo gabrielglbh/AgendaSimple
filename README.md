@@ -1,5 +1,5 @@
 # AgendaSimple
-Aplicación de una Agenda de contactos para la asignatura de Android en el Máster de Desarrollo de Aplicaciones Móviles de la UPM disponible en Español (ES) e Inglés (EN). 
+Aplicación de una Agenda de Contactos para la asignatura de Android en el Máster de Desarrollo de Aplicaciones Móviles de la UPM disponible en Español (ES) e Inglés (EN). 
 
 Esta aplicación es capaz de añadir contactos, eliminarlos y modificarlos cuando se quiera:
 
@@ -19,7 +19,8 @@ Además, la aplicación permite:
   - Marcar como favoritos los contactos que se quieran. Aparecerán al principio de la lista.
   - Acceso a WhatsApp para mandar un mensaje directo mediante ACTION_VIEW y la API de WhatsApp a un determinado contacto (sólo válido para números con prefijo +34).
   - La utilización de la base de datos propia en aplicaciones de terceros mediante la creación de un ContentProvider propio.
+  - Acceso al Correo Electrónico para mandar directamente un correo a un contacto si éste tiene un correo asociado.
 
 Para mejorar la UI, se ha decidido que, al crear un usuario, se guarde un color aleatorio entre 7 propuestos. Este color se pintará en la lista en cada contacto junto con un texto que representa la inicial del nombre del contacto. Esto se ha denominado Bubble.
 
-También y únicamente para dispositivos que tengan nivel de API mayor a 21, al modificar un contacto, el ActionBar, la StatusBar y todos los iconos de ContactOverview, se cambian al color del Bubble del contacto. Si se está por debajo de ese nivel de API, todos esos elementos se mantienen con el color predeterminado de la aplicación. 
+También, y, únicamente para dispositivos que tengan nivel de API mayor a 21, al modificar un contacto, el ActionBar, la StatusBar y todos los iconos de ContactOverview, se cambian al color del Bubble del contacto. Si se está por debajo de ese nivel de API, todos esos elementos se mantienen con el color predeterminado de la aplicación. 
