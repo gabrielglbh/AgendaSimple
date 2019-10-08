@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/call_to"
+        android:icon="@drawable/ic_call_intent"
+        app:showAsAction="ifRoom"
+        android:orderInCategory="1"
+        android:title="@string/call_to"/>
+
+    <item
+        android:id="@+id/whatsapp_to"
+        android:icon="@drawable/ic_whatsapp"
+        app:showAsAction="ifRoom"
+        android:orderInCategory="2"
+        android:title="@string/whastapp_pop"/>
+
+    <item
+        android:id="@+id/mail_to"
+        android:icon="@drawable/ic_email_rv"
+        app:showAsAction="ifRoom"
+        android:orderInCategory="3"
+        android:title="@string/mail_to"/>
+
+</menu>

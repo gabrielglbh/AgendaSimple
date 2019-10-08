@@ -16,7 +16,7 @@
 
         <provider
             android:authorities="es.upm.etsisi.miprovedordecontenidos"
-            android:exported="false"
+            android:exported="true"
             android:name=".contentProvider.ContactContract"/>
 
         <activity

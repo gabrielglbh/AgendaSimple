@@ -8,9 +8,10 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,7 +21,9 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.appcompat.view.menu.MenuBuilder;
+import androidx.appcompat.view.menu.MenuPopupHelper;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -65,45 +68,36 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             holder.fav.setVisibility(View.GONE);
         }
 
-        holder.call_to.setOnClickListener(new View.OnClickListener() {
+        holder.open_menu.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_DIAL);
-                intent.setData(Uri.parse("tel:" + contacts.get(position).getPHONE_NUMBER()));
-                if (intent.resolveActivity(view.getContext().getPackageManager()) != null) {
-                    view.getContext().startActivity(intent);
-                } else {
-                    Toast.makeText(ctx, ctx.getString(R.string.invalid_phone_call), Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        holder.send_to.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                PackageManager pm = view.getContext().getPackageManager();
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-
-                try {
-                    String number = contacts.get(position).getPHONE_NUMBER();
-                    String url;
-                    if (!number.contains("+34")) {
-                        url = "https://api.whatsapp.com/send?phone=+34" + number +
-                                "&text=" + URLEncoder.encode("", "UTF-8");
-                    } else {
-                        url = "https://api.whatsapp.com/send?phone=" + number +
-                                "&text=" + URLEncoder.encode("", "UTF-8");
+            public void onClick(final View view) {
+                PopupMenu popup = new PopupMenu(view.getContext(), view);
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.whatsapp_to:
+                                openWhatsappConversation(position, view.getContext());
+                                break;
+                            case R.id.call_to:
+                                callDial(position, view.getContext());
+                                break;
+                            case R.id.mail_to:
+                                sendMailTo(position, view.getContext());
+                                break;
+                        }
+                        return true;
                     }
-                    intent.setPackage("com.whatsapp");
-                    intent.setData(Uri.parse(url));
-                    if (intent.resolveActivity(pm) != null) {
-                        view.getContext().startActivity(intent);
-                    } else {
-                        Toast.makeText(ctx, ctx.getString(R.string.whatsapp_error), Toast.LENGTH_SHORT).show();
-                    }
-                } catch (Exception err) {
-                    Toast.makeText(ctx, ctx.getString(R.string.invalid_phone_call), Toast.LENGTH_SHORT).show();
-                }
+                });
+                MenuInflater inflater = popup.getMenuInflater();
+                inflater.inflate(R.menu.options_contact_menu, popup.getMenu());
+                popup.show();
+
+                /*
+                MenuPopupHelper menuHelper = new MenuPopupHelper(view.getContext(), (MenuBuilder) popup.getMenu(), view);
+                menuHelper.setForceShowIcon(true);
+                menuHelper.show();
+                */
             }
         });
     }
@@ -118,6 +112,71 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     }
 
     /**
+     * callDial: Abre la pestaña de llamada para llamar con el número deseado
+     * @param c: Contexto de la aplicación
+     * @param position: Posición del elemento en el RecyclerView
+     **/
+    private void callDial(int position, Context c) {
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        intent.setData(Uri.parse("tel:" + contacts.get(position).getPHONE_NUMBER()));
+        if (intent.resolveActivity(c.getPackageManager()) != null) {
+            c.startActivity(intent);
+        } else {
+            Toast.makeText(ctx, ctx.getString(R.string.invalid_phone_call), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * openWhatsappConversation: Abre la WhatsApp para mandar un mensaje al contacto deseado
+     * @param c: Contexto de la aplicación
+     * @param position: Posición del elemento en el RecyclerView
+     **/
+    private void openWhatsappConversation(int position, Context c) {
+        PackageManager pm = c.getPackageManager();
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+
+        try {
+            String number = contacts.get(position).getPHONE_NUMBER();
+            String url;
+            if (!number.contains("+34")) {
+                url = "https://api.whatsapp.com/send?phone=+34" + number +
+                        "&text=" + URLEncoder.encode("", "UTF-8");
+            } else {
+                url = "https://api.whatsapp.com/send?phone=" + number +
+                        "&text=" + URLEncoder.encode("", "UTF-8");
+            }
+            intent.setPackage("com.whatsapp");
+            intent.setData(Uri.parse(url));
+            if (intent.resolveActivity(pm) != null) {
+                c.startActivity(intent);
+            } else {
+                Toast.makeText(ctx, ctx.getString(R.string.whatsapp_error), Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception err) {
+            Toast.makeText(ctx, ctx.getString(R.string.invalid_phone_call), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * sendMailTo: Abre la aplicación de correo electrónico instalada para mandar un correo al contacto deseado
+     * @param c: Contexto de la aplicación
+     * @param position: Posición del elemento en el RecyclerView
+     **/
+    private void sendMailTo(int position, Context c) {
+        if (contacts.get(position).getEMAIL() == null ||
+                contacts.get(position).getEMAIL().trim().isEmpty()) {
+            Toast.makeText(ctx, ctx.getString(R.string.email_field_empty), Toast.LENGTH_SHORT).show();
+        } else {
+            Intent intent = new Intent(Intent.ACTION_SENDTO);
+            intent.setData(Uri.parse("mailto:"));
+            intent.putExtra(Intent.EXTRA_EMAIL, contacts.get(position).getEMAIL());
+            if (intent.resolveActivity(c.getPackageManager()) != null) {
+                c.startActivity(Intent.createChooser(intent, ctx.getString(R.string.chooser_email)));
+            }
+        }
+    }
+
+    /**
      * setContactList: Método auxiliar para implementar la lista dinámicamente
      * */
     public void setContactList(ArrayList<ContactEntity> contacts) {
@@ -125,9 +184,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         notifyDataSetChanged();
     }
 
-    public ArrayList<ContactEntity> getContactList() {
-        return this.contacts;
-    }
+    public ArrayList<ContactEntity> getContactList() { return this.contacts; }
 
     public interface ContactClickListener {
         void onContactClicked(String number);
@@ -135,7 +192,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
     class Contact extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        TextView icon_contact, initial_contact, name_contact, number_contact, call_to, send_to, fav;
+        TextView icon_contact, initial_contact, name_contact, number_contact, fav, open_menu;
 
         public Contact(@NonNull View itemView) {
             super(itemView);
@@ -144,9 +201,8 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             initial_contact = itemView.findViewById(R.id.initial_contact);
             name_contact = itemView.findViewById(R.id.name_contact);
             number_contact = itemView.findViewById(R.id.number_contact);
-            call_to = itemView.findViewById(R.id.call_to);
-            send_to = itemView.findViewById(R.id.send_to);
             fav = itemView.findViewById(R.id.favorite_rv);
+            open_menu = itemView.findViewById(R.id.open_menu);
         }
 
         @Override

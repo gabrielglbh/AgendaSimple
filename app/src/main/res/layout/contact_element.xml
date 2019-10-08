@@ -59,22 +59,12 @@
         tools:text="661937039" />
 
     <TextView
-        android:id="@+id/call_to"
+        android:id="@+id/open_menu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/ic_call_intent"
+        android:background="@drawable/ic_more"
         app:layout_constraintBottom_toBottomOf="@+id/icon_contact"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/icon_contact" />
-
-    <TextView
-        android:id="@+id/send_to"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="24dp"
-        android:background="@drawable/ic_whatsapp"
-        app:layout_constraintBottom_toBottomOf="@+id/icon_contact"
-        app:layout_constraintEnd_toStartOf="@+id/call_to"
         app:layout_constraintTop_toTopOf="@+id/icon_contact" />
 
     <TextView
@@ -84,7 +74,7 @@
         android:layout_marginTop="12dp"
         android:background="@color/separator"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/call_to"
+        app:layout_constraintEnd_toEndOf="@+id/open_menu"
         app:layout_constraintStart_toStartOf="@+id/icon_contact"
         app:layout_constraintTop_toBottomOf="@+id/icon_contact" />
 

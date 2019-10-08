@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="true">MyAgenda</string>
+    <string name="app_name" translatable="false">Agenda</string>
     <string name="search_menu" translatable="true">Search</string>
     <string name="export_from_menu" translatable="true">Import from SD Card</string>
     <string name="export_to_menu" translatable="true">Export to SD Card</string>
@@ -37,4 +37,9 @@
     <string name="msg_dialog" translatable="true">Do you want to discard the contact?</string>
     <string name="no_cont_to_export" translatable="true">You do not have any contacts to export.</string>
     <string name="no_cont_to_import" translatable="true">No contacts were imported.</string>
+    <string name="chooser_email" translatable="true">Email via…</string>
+    <string name="email_field_empty" translatable="true">Email field is empty.</string>
+    <string name="whastapp_pop" translatable="true">Send WhastApp</string>
+    <string name="call_to" translatable="true">Call</string>
+    <string name="mail_to" translatable="true">Send Mail</string>
 </resources>
