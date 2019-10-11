@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
@@ -101,11 +102,16 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     }
 
     /**
-     * checkPermits: Método que verifica si se han permitido los permisos necesarios
+     * checkPermits: Método que verifica si se han permitido los permisos necesarios.
+     *
      **/
     private boolean checkPermits(String permission){
-        if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-            return true;
+        if (Build.VERSION.SDK_INT >= 6) {
+            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return true;
+            }
+        } else {
+            return false;
         }
         return false;
     }
@@ -260,15 +266,27 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.export_to_contacts:
-                if(checkPermits(permissions[0])){
-                    ActivityCompat.requestPermissions(this, new String[] {permissions[0]} , CODE_WRITE_ES);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkPermits(permissions[0])) {
+                        ActivityCompat.requestPermissions(this, new String[]{permissions[0]}, CODE_WRITE_ES);
+                    } else {
+                        exportToSD();
+                    }
                 } else {
                     exportToSD();
                 }
                 break;
             case R.id.export_from_contacts:
-                if(checkPermits(permissions[1])){
-                    ActivityCompat.requestPermissions(this, new String[] {permissions[1]} , CODE_READ_ES);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkPermits(permissions[1])) {
+                        ActivityCompat.requestPermissions(this, new String[]{permissions[1]}, CODE_READ_ES);
+                    } else {
+                        if (!sql.deleteAllContacts()) {
+                            Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+                        } else {
+                            importFromSD();
+                        }
+                    }
                 } else {
                     if (!sql.deleteAllContacts()) {
                         Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
@@ -278,8 +296,16 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                 }
                 break;
             case R.id.export_from_content_provider:
-                if(checkPermits(permissions[2])){
-                    ActivityCompat.requestPermissions(this, new String[] {permissions[2]} , CODE_READ_CONTACT);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkPermits(permissions[2])) {
+                        ActivityCompat.requestPermissions(this, new String[]{permissions[2]}, CODE_READ_CONTACT);
+                    } else {
+                        if (!sql.deleteAllContacts()) {
+                            Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
+                        } else {
+                            importFromContacts();
+                        }
+                    }
                 } else {
                     if (!sql.deleteAllContacts()) {
                         Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
