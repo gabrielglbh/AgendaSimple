@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class DatabaseSQL extends SQLiteOpenHelper {
 
     private static final String DB = "contacts";
-    private static final int VERSION = 6;
+    private static final int VERSION = 10;
 
     private static DatabaseSQL sInstance;
 
@@ -32,17 +32,20 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         super(context, DB, null, VERSION);
     }
 
+    /**
+     * PRIMARY KEY: el número del contacto
+     * */
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL("CREATE TABLE " +
                 ContactEntry.TABLE_NAME + "(" +
-                ContactEntry.COLUMN_1 + " TEXT PRIMARY KEY, " +
-                ContactEntry.COLUMN_2 + " TEXT, " +
-                ContactEntry.COLUMN_3 + " TEXT, " +
-                ContactEntry.COLUMN_4 + " TEXT, " +
-                ContactEntry.COLUMN_5 + " TEXT, " +
-                ContactEntry.COLUMN_6 + " TEXT, " +
-                ContactEntry.COLUMN_7 + " TEXT)");
+                ContactEntry.COLUMN_1 + " VARCHAR(20), " +
+                ContactEntry.COLUMN_2 + " VARCHAR(12) PRIMARY KEY, " +
+                ContactEntry.COLUMN_3 + " VARCHAR(12), " +
+                ContactEntry.COLUMN_4 + " VARCHAR(40), " +
+                ContactEntry.COLUMN_5 + " VARCHAR(30), " +
+                ContactEntry.COLUMN_6 + " VARCHAR(7), " +
+                ContactEntry.COLUMN_7 + " VARCHAR(1))");
     }
 
     @Override
@@ -90,7 +93,9 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         contentValues.put(ContactEntry.COLUMN_6, e.getCOLOR_BUBBLE());
         contentValues.put(ContactEntry.COLUMN_7, e.getFAVOURITE());
 
-        long result = db.update(ContactEntry.TABLE_NAME, contentValues, "PHONE_NUMBER=?", new String[] { e.getPHONE_NUMBER() });
+        long result = db.update(ContactEntry.TABLE_NAME, contentValues,
+                ContactEntry.COLUMN_2 + "=?",
+                new String[] { e.getPHONE_NUMBER() });
 
         return result != -1;
     }
@@ -102,7 +107,9 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * */
     public boolean deleteContact(String NUMBER){
         SQLiteDatabase db = this.getWritableDatabase();
-        long result = db.delete(ContactEntry.TABLE_NAME,"PHONE_NUMBER=?", new String[] { NUMBER });
+        long result = db.delete(ContactEntry.TABLE_NAME,
+                ContactEntry.COLUMN_2 + "=?",
+                new String[] { NUMBER });
         return result != -1;
     }
 

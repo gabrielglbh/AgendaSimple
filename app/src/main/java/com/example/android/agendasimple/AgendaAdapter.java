@@ -21,8 +21,6 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.view.menu.MenuBuilder;
-import androidx.appcompat.view.menu.MenuPopupHelper;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
@@ -92,12 +90,6 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
                 MenuInflater inflater = popup.getMenuInflater();
                 inflater.inflate(R.menu.options_contact_menu, popup.getMenu());
                 popup.show();
-
-                /*
-                MenuPopupHelper menuHelper = new MenuPopupHelper(view.getContext(), (MenuBuilder) popup.getMenu(), view);
-                menuHelper.setForceShowIcon(true);
-                menuHelper.show();
-                */
             }
         });
     }

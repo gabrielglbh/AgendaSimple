@@ -60,8 +60,8 @@
 
     <TextView
         android:id="@+id/open_menu"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:background="@drawable/ic_more"
         app:layout_constraintBottom_toBottomOf="@+id/icon_contact"
         app:layout_constraintEnd_toEndOf="parent"

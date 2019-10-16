@@ -339,6 +339,12 @@ public class ContactOverview extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * validateAndInsertContact: Inserta el contacto
+     *      Si el contacto está vacío --> finish
+     *      Si el nombre o el número están vacios --> dialog(discard o no)
+     *      Si el contacto es válido --> INSERT
+     * */
     private void validateAndInsertContact() {
         String name = editName.getText().toString();
         String number = editNumber.getText().toString();
@@ -349,29 +355,10 @@ public class ContactOverview extends AppCompatActivity {
 
         if (editName.getText().toString().trim().isEmpty() ||
                 editNumber.getText().toString().trim().isEmpty()) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(getString(R.string.invalid_insertion_1));
-            builder.setMessage(getString(R.string.msg_dialog));
-            builder.setNegativeButton(getString(R.string.no_dialog), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    alert.dismiss();
-                }
-            });
-            builder.setPositiveButton(getString(R.string.yes_dialog), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    finish();
-                }
-            });
-            alert = builder.create();
-            alert.show();
+            createDialog(getString(R.string.invalid_insertion_1));
         }
         else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
-            if(!MainActivity.sql.deleteContact(NUMBER)) {
-                makeToast(getString(R.string.deletion_failed));
-            }
             finish();
         }
         else {
@@ -380,11 +367,22 @@ public class ContactOverview extends AppCompatActivity {
             if (MainActivity.sql.insertContact(c)) {
                 finish();
             } else {
-                makeToast(getString(R.string.insertion_failed));
+                createDialog(getString(R.string.insertion_failed));
             }
         }
     }
 
+    /**
+     * validateAndUpdateContact: Modifica el contacto
+     *      Si el contacto está vacío --> DELETE
+     *      Si el contacto es exactamente igual que al abrirlo --> finish
+     *      Si el contacto es exactamente igual que al abrirlo, pero se cambia el FAV --> UPDATE
+     *      Si el nombre o el número están vacios --> dialog(discard o no)
+     *      Si el contacto es válido -->
+     *              - Check si el número (PK) está en la base de datos -->
+     *                      - Si: dialog(discard o no)
+     *                      - No: DELETE & UPDATE
+     * */
     private void validateAndUpdateContact() {
         String name = editName.getText().toString();
         String number = editNumber.getText().toString();
@@ -412,11 +410,23 @@ public class ContactOverview extends AppCompatActivity {
             }
             finish();
         } else {
-            ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-            if (MainActivity.sql.updateContact(c)) {
-                finish();
+            if (name.trim().isEmpty() || number.trim().isEmpty()) {
+                createDialog(getString(R.string.invalid_insertion_1));
             } else {
-                makeToast(getString(R.string.update_failed));
+                if (MainActivity.sql.getContact(number) != null) {
+                    createDialog(getString(R.string.insertion_failed));
+                } else {
+                    if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+                        ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
+                        if (MainActivity.sql.insertContact(c)) {
+                            finish();
+                        } else {
+                            makeToast(getString(R.string.insertion_failed));
+                        }
+                    } else {
+                        makeToast(getString(R.string.deletion_failed));
+                    }
+                }
             }
         }
     }
@@ -427,5 +437,25 @@ public class ContactOverview extends AppCompatActivity {
         }
         mToast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
         mToast.show();
+    }
+
+    private void createDialog(String title) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setMessage(getString(R.string.msg_dialog));
+        builder.setNegativeButton(getString(R.string.no_dialog), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                alert.dismiss();
+            }
+        });
+        builder.setPositiveButton(getString(R.string.yes_dialog), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                finish();
+            }
+        });
+        alert = builder.create();
+        alert.show();
     }
 }
