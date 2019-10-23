@@ -414,7 +414,12 @@ public class ContactOverview extends AppCompatActivity {
                 createDialog(getString(R.string.invalid_insertion_1));
             } else {
                 if (MainActivity.sql.getContact(number) != null) {
-                    createDialog(getString(R.string.insertion_failed));
+                    ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
+                    if (MainActivity.sql.updateContact(c)) {
+                        finish();
+                    } else {
+                        makeToast(getString(R.string.update_failed));
+                    }
                 } else {
                     if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
                         ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
