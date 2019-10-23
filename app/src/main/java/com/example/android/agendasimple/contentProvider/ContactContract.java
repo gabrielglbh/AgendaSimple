@@ -47,8 +47,6 @@ public class ContactContract extends ContentProvider {
     private final static int LIST_ITEMS_ID = 0;
     private final static int ITEM_ID = 1;
     private final static UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-    // Se llama cada vez que se llama a algo de esta clase
-    // Estas son las uri que el contentprovider tiene que reconocer, lo demás dará error
     static {
         uriMatcher.addURI(ContactEntry.CONTENT_AUTHORITY, ContactEntry.TABLE_NAME, LIST_ITEMS_ID);
         uriMatcher.addURI(ContactEntry.CONTENT_AUTHORITY, ContactEntry.TABLE_NAME + "/#", ITEM_ID);

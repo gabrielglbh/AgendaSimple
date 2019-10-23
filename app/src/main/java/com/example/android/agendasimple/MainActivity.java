@@ -128,11 +128,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             }
             case CODE_READ_ES: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    /*if (!sql.deleteAllContacts()) {
-                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                    } else {
-                        importFromSD();
-                    }*/
                     sql.deleteAllContacts();
                     importFromSD();
                 }
@@ -140,11 +135,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             }
             case CODE_READ_CONTACT: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    /*if (!sql.deleteAllContacts()) {
-                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                    } else {
-                        importFromContacts();
-                    }*/
                     sql.deleteAllContacts();
                     importFromContacts();
                 }
@@ -285,20 +275,10 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                     if (checkPermits(permissions[1])) {
                         ActivityCompat.requestPermissions(this, new String[]{permissions[1]}, CODE_READ_ES);
                     } else {
-                        /*if (!sql.deleteAllContacts()) {
-                            Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                        } else {
-                            importFromSD();
-                        }*/
                         sql.deleteAllContacts();
                         importFromSD();
                     }
                 } else {
-                    /*if (!sql.deleteAllContacts()) {
-                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                    } else {
-                        importFromSD();
-                    }*/
                     sql.deleteAllContacts();
                     importFromSD();
                 }
@@ -308,21 +288,10 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                     if (checkPermits(permissions[2])) {
                         ActivityCompat.requestPermissions(this, new String[]{permissions[2]}, CODE_READ_CONTACT);
                     } else {
-                        /*if (!sql.deleteAllContacts()) {
-                            Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                        } else {
-                            importFromContacts();
-                        }*/
                         sql.deleteAllContacts();
                         importFromContacts();
                     }
                 } else {
-                    /*
-                    if (!sql.deleteAllContacts()) {
-                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                    } else {
-                        importFromContacts();
-                    }*/
                     sql.deleteAllContacts();
                     importFromContacts();
                 }
@@ -385,9 +354,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                 ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite);
                 contacts.add(c);
                 sql.insertContact(c);
-                /*if (!sql.insertContact(c)) {
-                    Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
-                }*/
             }
 
             this.contacts = contacts;
@@ -540,10 +506,11 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         "1"
                 );
                 contacts.add(c);
-                sql.insertContact(c);
-                /*if(!sql.insertContact(c)) {
+                try {
+                    sql.insertContact(c);
+                } catch (Exception err) {
                     Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
-                }*/
+                }
             }
         }
         cursor.close();

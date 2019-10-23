@@ -15,7 +15,7 @@ import java.util.ArrayList;
 public class DatabaseSQL extends SQLiteOpenHelper {
 
     private static final String DB = "contacts";
-    private static final int VERSION = 10;
+    private static final int VERSION = 11;
 
     private static DatabaseSQL sInstance;
     private Context context;

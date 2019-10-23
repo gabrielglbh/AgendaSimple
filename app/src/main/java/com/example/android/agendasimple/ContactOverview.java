@@ -366,11 +366,6 @@ public class ContactOverview extends AppCompatActivity {
                     MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE);
             MainActivity.sql.insertContact(c);
             finish();
-            /*if (MainActivity.sql.insertContact(c)) {
-                finish();
-            } else {
-                createDialog(getString(R.string.insertion_failed));
-            }*/
         }
     }
 
@@ -399,19 +394,11 @@ public class ContactOverview extends AppCompatActivity {
                 ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
                 MainActivity.sql.updateContact(c);
                 finish();
-                /*if (MainActivity.sql.updateContact(c)) {
-                    finish();
-                } else {
-                    makeToast(getString(R.string.update_failed));
-                }*/
             } else {
                 finish();
             }
         } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
-            /*if(!MainActivity.sql.deleteContact(NUMBER)) {
-                makeToast(getString(R.string.deletion_failed));
-            }*/
             MainActivity.sql.deleteContact(NUMBER);
             finish();
         } else {
@@ -419,33 +406,17 @@ public class ContactOverview extends AppCompatActivity {
                 createDialog(getString(R.string.invalid_insertion_1));
             } else {
                 if (MainActivity.sql.getContact(number) != null) {
-                    createDialog(getString(R.string.insertion_failed));
+                    ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
+                    MainActivity.sql.updateContact(c);
+                    finish();
                 } else {
                     MainActivity.sql.deleteContact(contact.getPHONE_NUMBER());
                     ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
                     MainActivity.sql.insertContact(c);
                     finish();
-                    /*if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
-                        ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                        if (MainActivity.sql.insertContact(c)) {
-                            finish();
-                        } else {
-                            makeToast(getString(R.string.insertion_failed));
-                        }
-                    } else {
-                        makeToast(getString(R.string.deletion_failed));
-                    }*/
                 }
             }
         }
-    }
-
-    private void makeToast(String msg) {
-        if (mToast != null) {
-            mToast.cancel();
-        }
-        mToast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
-        mToast.show();
     }
 
     private void createDialog(String title) {
