@@ -20,19 +20,18 @@ public class ContactContract extends ContentProvider {
     public static class ContactEntry implements BaseColumns {
 
         public static final String PREFIX = "content";
-        public static final String CONTENT_AUTHORITY = "es.upm.etsisi.contactprovider";
-        public static final String PATH_TO_CONTACTS = "contacts";
+        public static final String CONTENT_AUTHORITY = "com.example.android.agendasimple";
+        public static final String TABLE_NAME = "contacts";
         public static final Uri BASE_CONTENT_URI = Uri.parse(PREFIX + "://" + CONTENT_AUTHORITY);
-        public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_TO_CONTACTS);
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, TABLE_NAME);
+        public static final Uri CONTENT_URI_UNIQUE = Uri.withAppendedPath(CONTENT_URI, Integer.toString(ITEM_ID));
 
-        public static final String CONTENT_LIST_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_TO_CONTACTS;
-        public static final String CONTENT_ELEMENT_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_TO_CONTACTS;
+        public static final String CONTENT_LIST_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + TABLE_NAME;
+        public static final String CONTENT_ELEMENT_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + TABLE_NAME;
 
-        public static Uri buildGenreUri(long id){
+        public static Uri buildGenreUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
-
-        public static final String TABLE_NAME = "contacts";
 
         public static final String COLUMN_1 = "NAME";
         public static final String COLUMN_2 = "PHONE_NUMBER";
@@ -51,8 +50,8 @@ public class ContactContract extends ContentProvider {
     // Se llama cada vez que se llama a algo de esta clase
     // Estas son las uri que el contentprovider tiene que reconocer, lo demás dará error
     static {
-        uriMatcher.addURI(ContactEntry.CONTENT_AUTHORITY, ContactEntry.PATH_TO_CONTACTS, LIST_ITEMS_ID);
-        uriMatcher.addURI(ContactEntry.CONTENT_AUTHORITY, ContactEntry.PATH_TO_CONTACTS + "/#", ITEM_ID);
+        uriMatcher.addURI(ContactEntry.CONTENT_AUTHORITY, ContactEntry.TABLE_NAME, LIST_ITEMS_ID);
+        uriMatcher.addURI(ContactEntry.CONTENT_AUTHORITY, ContactEntry.TABLE_NAME + "/#", ITEM_ID);
     }
 
     @Override
@@ -65,11 +64,18 @@ public class ContactContract extends ContentProvider {
     @Override
     public Cursor query(@NonNull Uri uri, @Nullable String[] strings, @Nullable String s,
                         @Nullable String[] strings1, @Nullable String s1) {
-
         SQLiteDatabase sql = db.getReadableDatabase();
-        int match = uriMatcher.match(uri);
-        Cursor c;
+        // int match = uriMatcher.match(uri);
 
+        Cursor c = sql.query(
+                ContactEntry.TABLE_NAME,
+                strings,
+                s,
+                strings1,
+                null,
+                null,
+                s1);
+        /*
         switch (match) {
             case LIST_ITEMS_ID:
                 c = sql.query(
@@ -94,6 +100,7 @@ public class ContactContract extends ContentProvider {
             default:
                 throw new IllegalStateException("URI no conocida " + uri);
         }
+        */
 
         return c;
     }
@@ -116,9 +123,15 @@ public class ContactContract extends ContentProvider {
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues contentValues) {
         SQLiteDatabase sql = db.getReadableDatabase();
-        int match = uriMatcher.match(uri);
+        // int match = uriMatcher.match(uri);
         long res;
-
+        res = sql.insert(ContactEntry.TABLE_NAME, null, contentValues);
+        if(res > 0){
+            return ContactEntry.buildGenreUri(res);
+        } else{
+            throw new UnsupportedOperationException("Unable to insert rows into: " + uri);
+        }
+        /*
         if (match == ITEM_ID) {
             res = sql.insert(ContactEntry.TABLE_NAME, null, contentValues);
             if(res > 0){
@@ -129,21 +142,27 @@ public class ContactContract extends ContentProvider {
         } else {
             return null;
         }
+        */
     }
 
     @Override
     public int delete(@NonNull Uri uri, @Nullable String s, @Nullable String[] strings) {
         SQLiteDatabase sql = db.getWritableDatabase();
         int affectedRows;
-        int match = uriMatcher.match(uri);
-
+        // int match = uriMatcher.match(uri);
+        affectedRows = sql.delete(ContactEntry.TABLE_NAME, s, strings);
+        /*
         switch(match){
             case ITEM_ID:
                 affectedRows = sql.delete(ContactEntry.TABLE_NAME, s, strings);
                 break;
+            case LIST_ITEMS_ID:
+                affectedRows = sql.delete(ContactEntry.TABLE_NAME, null,null);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
+        */
         return affectedRows;
     }
 
@@ -151,8 +170,9 @@ public class ContactContract extends ContentProvider {
     public int update(@NonNull Uri uri, @Nullable ContentValues contentValues, @Nullable String s, @Nullable String[] strings) {
         SQLiteDatabase sql = db.getWritableDatabase();
         int affectedRows;
-        int match = uriMatcher.match(uri);
-
+        // int match = uriMatcher.match(uri);
+        affectedRows = sql.update(ContactEntry.TABLE_NAME, contentValues, s, strings);
+        /*
         switch(match){
             case ITEM_ID:
                 affectedRows = sql.update(ContactEntry.TABLE_NAME, contentValues, s, strings);
@@ -160,6 +180,7 @@ public class ContactContract extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
+        */
         return affectedRows;
     }
 }

@@ -364,11 +364,13 @@ public class ContactOverview extends AppCompatActivity {
         else {
             ContactEntity c = new ContactEntity(name, number, phone, address, email,
                     MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE);
-            if (MainActivity.sql.insertContact(c)) {
+            MainActivity.sql.insertContact(c);
+            finish();
+            /*if (MainActivity.sql.insertContact(c)) {
                 finish();
             } else {
                 createDialog(getString(R.string.insertion_failed));
-            }
+            }*/
         }
     }
 
@@ -395,19 +397,22 @@ public class ContactOverview extends AppCompatActivity {
             contact.getEMAIL().equals(email)) {
             if (!FAVOURITE.equals(contact.getFAVOURITE())) {
                 ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                if (MainActivity.sql.updateContact(c)) {
+                MainActivity.sql.updateContact(c);
+                finish();
+                /*if (MainActivity.sql.updateContact(c)) {
                     finish();
                 } else {
                     makeToast(getString(R.string.update_failed));
-                }
+                }*/
             } else {
                 finish();
             }
         } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                 address.trim().isEmpty() && email.trim().isEmpty()) {
-            if(!MainActivity.sql.deleteContact(NUMBER)) {
+            /*if(!MainActivity.sql.deleteContact(NUMBER)) {
                 makeToast(getString(R.string.deletion_failed));
-            }
+            }*/
+            MainActivity.sql.deleteContact(NUMBER);
             finish();
         } else {
             if (name.trim().isEmpty() || number.trim().isEmpty()) {
@@ -416,7 +421,11 @@ public class ContactOverview extends AppCompatActivity {
                 if (MainActivity.sql.getContact(number) != null) {
                     createDialog(getString(R.string.insertion_failed));
                 } else {
-                    if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+                    MainActivity.sql.deleteContact(contact.getPHONE_NUMBER());
+                    ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
+                    MainActivity.sql.insertContact(c);
+                    finish();
+                    /*if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
                         ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
                         if (MainActivity.sql.insertContact(c)) {
                             finish();
@@ -425,7 +434,7 @@ public class ContactOverview extends AppCompatActivity {
                         }
                     } else {
                         makeToast(getString(R.string.deletion_failed));
-                    }
+                    }*/
                 }
             }
         }

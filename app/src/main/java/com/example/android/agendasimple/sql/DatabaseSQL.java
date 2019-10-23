@@ -1,10 +1,12 @@
 package com.example.android.agendasimple.sql;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
 
 import com.example.android.agendasimple.contentProvider.ContactContract.ContactEntry;
 
@@ -16,6 +18,16 @@ public class DatabaseSQL extends SQLiteOpenHelper {
     private static final int VERSION = 10;
 
     private static DatabaseSQL sInstance;
+    private Context context;
+    private final String[] ALL_COLUMNS = {
+            ContactEntry.COLUMN_1,
+            ContactEntry.COLUMN_2,
+            ContactEntry.COLUMN_3,
+            ContactEntry.COLUMN_4,
+            ContactEntry.COLUMN_5,
+            ContactEntry.COLUMN_6,
+            ContactEntry.COLUMN_7,
+    };
 
     /**
      * Se sigue el patrón del SINGLETON para la creación de referencia a la base de datos
@@ -30,6 +42,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
 
     public DatabaseSQL(Context context) {
         super(context, DB, null, VERSION);
+        this.context = context;
     }
 
     /**
@@ -59,8 +72,11 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @param e: Entidad a insertar con los campos recogidos de ContactOverview
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
      * */
-    public boolean insertContact(ContactEntity e){
-        SQLiteDatabase db = this.getWritableDatabase();
+    public void insertContact(ContactEntity e){
+        Uri uri = ContactEntry.CONTENT_URI;
+        ContentResolver cr = context.getContentResolver();
+
+        /*SQLiteDatabase db = this.getWritableDatabase();*/
         ContentValues contentValues = new ContentValues();
 
         contentValues.put(ContactEntry.COLUMN_1, e.getNAME());
@@ -71,9 +87,13 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         contentValues.put(ContactEntry.COLUMN_6, e.getCOLOR_BUBBLE());
         contentValues.put(ContactEntry.COLUMN_7, e.getFAVOURITE());
 
+        cr.insert(uri, contentValues);
+
+        /*
         long result = db.insert(ContactEntry.TABLE_NAME,null, contentValues);
 
         return result != -1;
+        */
     }
 
     /**
@@ -81,8 +101,11 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @param e: Entidad a modificar con los campos actualizados de ContactOverview
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
      * */
-    public boolean updateContact(ContactEntity e){
-        SQLiteDatabase db = this.getWritableDatabase();
+    public void updateContact(ContactEntity e){
+        Uri uri = ContactEntry.CONTENT_URI;
+        ContentResolver cr = context.getContentResolver();
+
+        /*SQLiteDatabase db = this.getWritableDatabase();*/
         ContentValues contentValues = new ContentValues();
 
         contentValues.put(ContactEntry.COLUMN_1, e.getNAME());
@@ -93,11 +116,15 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         contentValues.put(ContactEntry.COLUMN_6, e.getCOLOR_BUBBLE());
         contentValues.put(ContactEntry.COLUMN_7, e.getFAVOURITE());
 
+        cr.update(uri, contentValues, ContactEntry.COLUMN_2 + "=?", new String[] { e.getPHONE_NUMBER() });
+
+        /*
         long result = db.update(ContactEntry.TABLE_NAME, contentValues,
                 ContactEntry.COLUMN_2 + "=?",
                 new String[] { e.getPHONE_NUMBER() });
 
         return result != -1;
+        */
     }
 
     /**
@@ -105,22 +132,34 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @param NUMBER: Primary Key del contacto a eliminar
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
      * */
-    public boolean deleteContact(String NUMBER){
+    public void deleteContact(String NUMBER){
+        Uri uri = ContactEntry.CONTENT_URI;
+        ContentResolver cr = context.getContentResolver();
+
+        cr.delete(uri, ContactEntry.COLUMN_2 + "=?", new String[] { NUMBER });
+        /*
         SQLiteDatabase db = this.getWritableDatabase();
         long result = db.delete(ContactEntry.TABLE_NAME,
                 ContactEntry.COLUMN_2 + "=?",
                 new String[] { NUMBER });
         return result != -1;
+        */
     }
 
     /**
      * deleteAllContacts: Query para hacer update de un contacto
      * @return true si la inserción ha ido bien, false si ha ocurrido un error
      * */
-    public boolean deleteAllContacts(){
+    public void deleteAllContacts(){
+        Uri uri = ContactEntry.CONTENT_URI;
+        ContentResolver cr = context.getContentResolver();
+
+        cr.delete(uri, null, null);
+        /*
         SQLiteDatabase db = this.getWritableDatabase();
         long result = db.delete(ContactEntry.TABLE_NAME,null, null);
         return result != -1;
+        */
     }
 
     /**
@@ -128,12 +167,19 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
      * */
     public ArrayList<ContactEntity> getAllContacts(){
+        Uri uri = ContactEntry.CONTENT_URI;
+        ContentResolver cr = context.getContentResolver();
+
+        Cursor c = cr.query(uri, ALL_COLUMNS, null, null,
+                ContactEntry.COLUMN_7 + " ASC, " + ContactEntry.COLUMN_1 + " ASC");
+        /*
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " +
                 ContactEntry.TABLE_NAME + " ORDER BY " +
                 ContactEntry.COLUMN_7 + " ASC, " +
                 ContactEntry.COLUMN_1 + " ASC";
         Cursor c = db.rawQuery(query, null);
+        */
 
         if (c.getCount() > 0) {
             ArrayList<ContactEntity> contacts = new ArrayList<>();
@@ -162,9 +208,16 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @return del contacto en cuestión o null si la consulta ha fallado
      * */
     public ContactEntity getContact(String NUMBER){
+        Uri uri = ContactEntry.CONTENT_URI;
+        ContentResolver cr = context.getContentResolver();
+
+        Cursor c = cr.query(uri, null, ContactEntry.COLUMN_2 + "=?", new String[] { NUMBER }, null);
+
+        /*
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + ContactEntry.TABLE_NAME + " WHERE " + ContactEntry.COLUMN_2 + " = ?";
         Cursor c = db.rawQuery(query, new String[] { NUMBER });
+        */
 
         if (c.getCount() > 0 && c.moveToNext()) {
             ContactEntity contact = new ContactEntity(
@@ -190,9 +243,16 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
      * */
     public ArrayList<ContactEntity> getSearchedContacts(String QUERY){
+        Uri uri = ContactEntry.CONTENT_URI;
+        ContentResolver cr = context.getContentResolver();
+
+        Cursor c = cr.query(uri, null, ContactEntry.COLUMN_1 + " LIKE ?", new String[] { QUERY }, null);
+
+        /*
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + ContactEntry.TABLE_NAME + " WHERE " + ContactEntry.COLUMN_1 + " LIKE ?";
         Cursor c = db.rawQuery(query, new String[] { QUERY + "%" });
+        */
 
         if (c.getCount() > 0) {
             ArrayList<ContactEntity> contacts = new ArrayList<>();

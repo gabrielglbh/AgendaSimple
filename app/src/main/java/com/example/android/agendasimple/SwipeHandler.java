@@ -57,12 +57,15 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
         int position = viewHolder.getAdapterPosition();
         ArrayList<ContactEntity> contacts = adapter.getContactList();
         ContactEntity contact = contacts.get(viewHolder.getAdapterPosition());
-        if(!MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+        MainActivity.sql.deleteContact(contact.getPHONE_NUMBER());
+        contacts.remove(position);
+        adapter.setContactList(contacts);
+        /*if(!MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
             Toast.makeText(ctx, ctx.getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
         } else {
             contacts.remove(position);
             adapter.setContactList(contacts);
-        }
+        }*/
     }
 
     /**

@@ -15,7 +15,7 @@
         android:theme="@style/AppTheme">
 
         <provider
-            android:authorities="es.upm.etsisi.miprovedordecontenidos"
+            android:authorities="com.example.android.agendasimple"
             android:exported="true"
             android:name=".contentProvider.ContactContract"/>
 
