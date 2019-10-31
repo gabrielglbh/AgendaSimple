@@ -11,7 +11,7 @@ import java.util.ArrayList;
 public class DatabaseSQL extends SQLiteOpenHelper {
 
     private static final String DB = "contacts";
-    private static final int VERSION = 11;
+    private static final int VERSION = 14;
 
     public static final String TABLE_NAME = "contacts";
 

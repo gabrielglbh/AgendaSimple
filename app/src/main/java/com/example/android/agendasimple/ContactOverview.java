@@ -1,19 +1,26 @@
 package com.example.android.agendasimple;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,44 +30,57 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Random;
 import java.util.regex.Pattern;
 
 public class ContactOverview extends AppCompatActivity {
 
     private TextInputEditText inputName, inputNumber, inputPhone, inputHome, inputEmail;
-    private TextInputLayout layoutName, layoutNumber, layoutPhone;
-    private FloatingActionButton favContact;
+    private FloatingActionButton checkContact;
     private AppBarLayout appbar;
+    private CollapsingToolbarLayout collapsingToolbar;
+    private Toolbar toolbar;
 
-    private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon;
+    private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon, headerImage;
     private Toast mToast;
     private AlertDialog alert;
+    private Menu menu;
+    private ProgressBar savingContact;
 
     private ContactEntity contact;
     private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
     private String NUMBER, FAVOURITE = "1";
+    private final int RESULT_LOAD_IMG = 123;
 
     private boolean isLikedPressed = false;
     private boolean isOverflown = false;
 
-    private Pattern namePattern = Pattern.compile("[a-zA-Z]+");
+    private Pattern namePattern = Pattern.compile("[A-Za-zñáéíóúÑÁÉÍÓÚ A-Za-z]+");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_overview);
-
-        getSupportActionBar().setHomeButtonEnabled(true);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Intent i = getIntent();
         if (i.hasExtra(MainActivity.OVERVIEW_MODE)) {
@@ -77,10 +97,77 @@ public class ContactOverview extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (mode == 1) {
-            validateAndInsertContact();
+        checkErrors();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.contact_overview_menu, menu);
+        this.menu = menu;
+        if (mode == 0) {
+            if (contact.getFAVOURITE().equals("0")) {
+                menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
+                FAVOURITE = "0";
+                isLikedPressed = true;
+            } else {
+                menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
+                FAVOURITE = "1";
+            }
+        }
+
+        if (mode == 0) {
+            if (getImageFromStorage() != null) {
+                menu.getItem(0).setVisible(true);
+            } else {
+                menu.getItem(0).setVisible(false);
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+            case R.id.menu_save:
+                checkErrors();
+                break;
+            case R.id.menu_fav:
+                if (!isLikedPressed) {
+                    menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
+                    FAVOURITE = "0";
+                    isLikedPressed = true;
+                } else {
+                    menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
+                    FAVOURITE = "1";
+                    isLikedPressed = false;
+                }
+                break;
+            case R.id.menu_remove_img:
+                removeImageStorage();
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK && requestCode == RESULT_LOAD_IMG) {
+            try {
+                final Uri imageUri = data.getData();
+                final InputStream imageStream = getContentResolver().openInputStream(imageUri);
+                final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+                headerImage.setImageBitmap(selectedImage);
+                toolbar.setBackgroundColor(Color.TRANSPARENT);
+                menu.getItem(0).setVisible(true);
+            } catch (FileNotFoundException | NullPointerException e) {
+                e.printStackTrace();
+                makeToast(getString(R.string.insertion_image_error));
+            }
         } else {
-            validateAndUpdateContact();
+            makeToast(getString(R.string.insertion_image_error));
         }
     }
 
@@ -92,6 +179,7 @@ public class ContactOverview extends AppCompatActivity {
      * Se crea la administración y visibilidad de los botones para eliminar texto (setClearButtons).
      * Se crea el TextWatcher para los contadores de los campos de name, phone y number.
      * Se crea el manejo del FAB.
+     * Se customiza el AppBar y el CollapseActionView.
      *
      * Si se accede a esta actividad para hacer un update del contacto, los colores de los iconos y
      * la actionBar/statusBar se cambian al mismo que la burbuja de MainActivity relativa al contacto.
@@ -111,32 +199,39 @@ public class ContactOverview extends AppCompatActivity {
         emailIcon = findViewById(R.id.icon_mail);
 
         appbar = findViewById(R.id.appBarLayout);
+        collapsingToolbar = findViewById(R.id.collapsingToolbar);
+        toolbar = findViewById(R.id.toolbar);
 
-        layoutName = findViewById(R.id.tiet_name_layout);
-        layoutNumber = findViewById(R.id.tiet_number_layout);
-        layoutPhone = findViewById(R.id.tiet_home_phone_layout);
+        headerImage = findViewById(R.id.headerImage);
+        savingContact = findViewById(R.id.savingContact);
 
-        favContact = findViewById(R.id.floating_share);
+        setAppBar();
+
+        final TextInputLayout layoutName = findViewById(R.id.tiet_name_layout);
+        final TextInputLayout layoutNumber = findViewById(R.id.tiet_number_layout);
+        final TextInputLayout layoutPhone = findViewById(R.id.tiet_home_phone_layout);
+
+        checkContact = findViewById(R.id.floating_share);
 
         setTextWatchers(inputName, layoutName);
         setTextWatchers(inputNumber, layoutNumber);
         setTextWatchers(inputPhone, layoutPhone);
+        setFloatingActionButton();
 
         if (mode == 0) {
-            setTitle(getString(R.string.modify_contact_title));
+            collapsingToolbar.setTitle(getString(R.string.modify_contact_title));
             contact = MainActivity.sql.getContact(NUMBER);
             setContact();
-            setFAB();
         } else {
-            setTitle(getString(R.string.contact_overview_label));
+            collapsingToolbar.setTitle(getString(R.string.contact_overview_label));
         }
     }
 
     private void setContact() {
-        int color = Color.parseColor(contact.getCOLOR_BUBBLE());
+        final int color = Color.parseColor(contact.getCOLOR_BUBBLE());
+        final Bitmap bitmap = getImageFromStorage();
 
         if (Build.VERSION.SDK_INT >= 21) {
-            getSupportActionBar().setBackgroundDrawable(new ColorDrawable(color));
             Window w = getWindow();
             w.setStatusBarColor(color);
 
@@ -148,6 +243,14 @@ public class ContactOverview extends AppCompatActivity {
         }
 
         appbar.setBackgroundColor(color);
+        collapsingToolbar.setContentScrimColor(color);
+
+        if (getImageFromStorage() != null) {
+            headerImage.setImageBitmap(bitmap);
+            toolbar.setBackgroundColor(Color.TRANSPARENT);
+        } else {
+            toolbar.setBackgroundColor(color);
+        }
 
         inputName.setText(contact.getNAME());
         inputNumber.setText(contact.getPHONE_NUMBER());
@@ -156,42 +259,31 @@ public class ContactOverview extends AppCompatActivity {
         inputEmail.setText(contact.getEMAIL());
     }
 
-    private void setFAB() {
-        if (mode == 0) {
-            if (contact.getFAVOURITE().equals("0")) {
-                favContact.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
-                FAVOURITE = "0";
-                isLikedPressed = true;
-            } else {
-                favContact.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
-                FAVOURITE = "1";
-            }
-        }
+    private void setAppBar() {
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDefaultDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
 
-        favContact.setScaleX(0);
-        favContact.setScaleY(0);
+    private void setFloatingActionButton() {
+        checkContact.setScaleX(0);
+        checkContact.setScaleY(0);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             final Interpolator interpolator = AnimationUtils.loadInterpolator(getBaseContext(), android.R.interpolator.fast_out_slow_in);
-            favContact.animate()
+            checkContact.animate()
                     .scaleX(1)
                     .scaleY(1)
                     .setInterpolator(interpolator)
                     .setDuration(600);
         }
 
-        favContact.setOnClickListener(new View.OnClickListener() {
+        checkContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!isLikedPressed) {
-                    favContact.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
-                    FAVOURITE = "0";
-                    isLikedPressed = true;
-                } else {
-                    favContact.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
-                    FAVOURITE = "1";
-                    isLikedPressed = false;
-                }
+                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                photoPickerIntent.setType("image/*");
+                startActivityForResult(photoPickerIntent, RESULT_LOAD_IMG);
             }
         });
     }
@@ -207,7 +299,7 @@ public class ContactOverview extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (charSequence.length() >= layout.getCounterMaxLength()) {
+                if (charSequence.length() > layout.getCounterMaxLength()) {
                     isOverflown = true;
                     text.setError(getString(R.string.overflow_chars));
                 } else {
@@ -218,27 +310,6 @@ public class ContactOverview extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable editable) { }
         });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.contact_overview_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-            case R.id.menu_save:
-                if (mode == 1) {
-                    validateAndInsertContact();
-                } else {
-                    validateAndUpdateContact();
-                }
-                break;
-        }
-        return true;
     }
 
     /**
@@ -283,10 +354,12 @@ public class ContactOverview extends AppCompatActivity {
             } else {
                 ContactEntity c = new ContactEntity(name, number, phone, address, email,
                         MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE);
-                if (MainActivity.sql.insertContact(c)) {
-                    finish();
-                } else {
-                    createDialog(getString(R.string.insertion_failed));
+                try {
+                    Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
+                    saveImageToStorage(bitmap);
+                    insert(c);
+                } catch (NullPointerException err) {
+                    insert(c);
                 }
             }
         }
@@ -318,18 +391,30 @@ public class ContactOverview extends AppCompatActivity {
                     contact.getEMAIL().equals(email)) {
                 if (!FAVOURITE.equals(contact.getFAVOURITE())) {
                     ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                    if (MainActivity.sql.updateContact(c)) {
-                        finish();
-                    } else {
-                        makeToast(getString(R.string.update_failed));
+                    try {
+                        Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
+                        saveImageToStorage(bitmap);
+                        update(c);
+                    } catch (NullPointerException err) {
+                        update(c);
                     }
                 } else {
-                    finish();
+                    try {
+                        Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
+                        saveImageToStorage(bitmap);
+                        finish();
+                    } catch (NullPointerException err) {
+                        finish();
+                    }
                 }
             } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                     address.trim().isEmpty() && email.trim().isEmpty()) {
                 if (!MainActivity.sql.deleteContact(NUMBER)) {
                     makeToast(getString(R.string.deletion_failed));
+                } else {
+                    if (!removeImageStorage()) {
+                        Toast.makeText(this, R.string.error_delete_img, Toast.LENGTH_SHORT).show();
+                    }
                 }
                 finish();
             } else {
@@ -338,18 +423,26 @@ public class ContactOverview extends AppCompatActivity {
                 } else {
                     if (MainActivity.sql.getContact(number) != null) {
                         ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                        if (MainActivity.sql.updateContact(c)) {
-                            finish();
-                        } else {
-                            makeToast(getString(R.string.update_failed));
+                        try {
+                            Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
+                            saveImageToStorage(bitmap);
+                            update(c);
+                        } catch (NullPointerException err) {
+                            update(c);
                         }
                     } else {
                         if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
-                            ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                            if (MainActivity.sql.insertContact(c)) {
-                                finish();
+                            if (!removeImageStorage()) {
+                                Toast.makeText(this, R.string.error_delete_img, Toast.LENGTH_SHORT).show();
                             } else {
-                                makeToast(getString(R.string.insertion_failed));
+                                ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
+                                try {
+                                    Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
+                                    saveImageToStorage(bitmap);
+                                    insert(c);
+                                } catch (NullPointerException err) {
+                                    insert(c);
+                                }
                             }
                         } else {
                             makeToast(getString(R.string.deletion_failed));
@@ -357,6 +450,95 @@ public class ContactOverview extends AppCompatActivity {
                     }
                 }
             }
+        }
+    }
+
+    private void saveImageToStorage(Bitmap bitmap) {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            boolean isDirCreated = dir.mkdir();
+            if (dir.exists() || isDirCreated) {
+                try {
+                    File file = new File(dir, inputNumber.getText().toString() + "_" + inputName.getText().toString() + ".png");
+                    FileOutputStream out = new FileOutputStream(file);
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    out.flush();
+                    out.close();
+                } catch (IOException err) {
+                    Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Bitmap getImageFromStorage() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            if (dir.exists()) {
+                File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
+                return BitmapFactory.decodeFile(file.getPath());
+            } else {
+                Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+        }
+        return null;
+    }
+
+    private boolean removeImageStorage() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            if (dir.exists()) {
+                File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
+                headerImage.setImageBitmap(null);
+                collapsingToolbar.setContentScrimColor(Color.parseColor(contact.getCOLOR_BUBBLE()));
+                menu.getItem(0).setVisible(false);
+                return file.delete();
+            } else {
+                Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+        }
+        return false;
+    }
+
+    private void checkErrors() {
+        if (inputName.getError() != null || inputEmail.getError() != null ||
+                inputNumber.getError() != null || inputPhone.getError() != null) {
+            createDialog(getString(R.string.error_on_back));
+        } else {
+            savingContact.setVisibility(View.VISIBLE);
+            if (mode == 1) {
+                validateAndInsertContact();
+            } else {
+                validateAndUpdateContact();
+            }
+            savingContact.setVisibility(View.GONE);
+        }
+    }
+
+    private void insert(ContactEntity c) {
+        if (MainActivity.sql.insertContact(c)) {
+            finish();
+        } else {
+            createDialog(getString(R.string.insertion_failed));
+        }
+    }
+
+    private void update(ContactEntity c) {
+        if (MainActivity.sql.updateContact(c)) {
+            finish();
+        } else {
+            makeToast(getString(R.string.update_failed));
         }
     }
 

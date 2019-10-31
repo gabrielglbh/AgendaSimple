@@ -18,6 +18,7 @@
     <string name="insertion_failed">El número introducido ya está guardado.</string>
     <string name="deletion_failed">Algo ha salido mal, eliminación fallida.</string>
     <string name="update_failed">Algo ha salido mal, modificación fallida.</string>
+    <string name="insertion_image_error">Imagen no cargada.</string>
     <string name="update_equal">Cambios descartados.</string>
     <string name="empty_update">Contacto vacío descartado.</string>
     <string name="invalid_phone_call">Número de teléfono inválido.</string>
@@ -38,4 +39,7 @@
     <string name="mail_to">Enviar Correo</string>
     <string name="overflow_chars">Se ha sobrepasado el límite de caracteres.</string>
     <string name="error_field">Campo no válido.</string>
+    <string name="error_on_back">La información el contacto no es válida.</string>
+    <string name="remove_image">Eliminar imagen</string>
+    <string name="error_delete_img">Algo ha salido mal durante el borrado de la imagen.</string>
 </resources>

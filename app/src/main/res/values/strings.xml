@@ -6,8 +6,8 @@
     <string name="import_from_contacts" translatable="true">Import from Phone</string>
     <string name="search_contact_hint" translatable="true">Search contact…</string>
     <string name="contact_overview_label" translatable="true">Add Contact</string>
-    <string name="name_contact_overview" translatable="true">Name</string>
-    <string name="number_contact_overview" translatable="true">Phone Number</string>
+    <string name="name_contact_overview" translatable="true">Name*</string>
+    <string name="number_contact_overview" translatable="true">Phone Number*</string>
     <string name="address_contact_overview" translatable="true">Home Address</string>
     <string name="email_contact_overview" translatable="false">Email</string>
     <string name="phone_contact_overview" translatable="true">Phone</string>
@@ -18,6 +18,7 @@
 
     <string name="invalid_insertion_1" translatable="true">Contact must have a name and a number.</string>
     <string name="insertion_failed" translatable="true">The phone number is already saved.</string>
+    <string name="insertion_image_error" translatable="true">Image not loaded.</string>
     <string name="deletion_failed" translatable="true">Something occurred, deletion failed.</string>
     <string name="update_failed" translatable="true">Something occurred, update failed.</string>
     <string name="update_equal" translatable="true">Changes were discarded.</string>
@@ -42,4 +43,7 @@
     <string name="mail_to" translatable="true">Send Mail</string>
     <string name="overflow_chars" translatable="true">The character limit has been surpassed.</string>
     <string name="error_field" translatable="true">Invalid field.</string>
+    <string name="error_on_back" translatable="true">The contact information is not valid.</string>
+    <string name="remove_image" translatable="true">Remove image</string>
+    <string name="error_delete_img" translatable="true">Something wrong occurred while deleting the image.</string>
 </resources>
