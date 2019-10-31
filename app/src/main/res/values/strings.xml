@@ -6,15 +6,13 @@
     <string name="import_from_contacts" translatable="true">Import from Phone</string>
     <string name="search_contact_hint" translatable="true">Search contact…</string>
     <string name="contact_overview_label" translatable="true">Add Contact</string>
-    <string name="name_contact_overview" translatable="true">Name*</string>
-    <string name="number_contact_overview" translatable="true">Phone Number*</string>
+    <string name="name_contact_overview" translatable="true">Name</string>
+    <string name="number_contact_overview" translatable="true">Phone Number</string>
     <string name="address_contact_overview" translatable="true">Home Address</string>
     <string name="email_contact_overview" translatable="false">Email</string>
     <string name="phone_contact_overview" translatable="true">Phone</string>
     <string name="title_save_contact_overview" translatable="true">Save Contact</string>
     <string name="modify_contact_title" translatable="true">Modify Contact</string>
-    <string name="guideline_number" translatable="false">0/12</string>
-    <string name="guideline_name" translatable="false">0/20</string>
     <string name="positive_dialog" translatable="true">Yes</string>
     <string name="negative_dialog" translatable="false">No</string>
 
@@ -42,4 +40,6 @@
     <string name="whastapp_pop" translatable="true">Send WhastApp</string>
     <string name="call_to" translatable="true">Call</string>
     <string name="mail_to" translatable="true">Send Mail</string>
+    <string name="overflow_chars" translatable="true">The character limit has been surpassed.</string>
+    <string name="error_field" translatable="true">Invalid field.</string>
 </resources>

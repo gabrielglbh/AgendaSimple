@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.animation.Animator;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -20,6 +21,8 @@ import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.SearchView;
@@ -171,6 +174,18 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
     private void setFAB() {
         addContact = findViewById(R.id.fab_add_contact);
+        addContact.setScaleX(0);
+        addContact.setScaleY(0);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            final Interpolator interpolator = AnimationUtils.loadInterpolator(getBaseContext(), android.R.interpolator.fast_out_slow_in);
+            addContact.animate()
+                    .scaleX(1)
+                    .scaleY(1)
+                    .setInterpolator(interpolator)
+                    .setDuration(600);
+        }
+
         addContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

@@ -11,252 +11,192 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:padding="8dp">
+        android:focusableInTouchMode="true">
 
-        <EditText
-            android:id="@+id/input_name"
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/appBarLayout"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/floating_share"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="32dp"
+            android:src="@drawable/ic_heart"
+            app:layout_constraintBottom_toTopOf="@+id/tiet_number_layout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tiet_name_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="16dp"
-            android:imeOptions="actionDone"
-            android:inputType="text|textCapSentences"
+            android:hint="@string/name_contact_overview"
             android:maxLines="1"
-            android:maxLength="30"
+            app:counterEnabled="true"
+            app:counterMaxLength="30"
+            app:hintEnabled="true"
+            app:errorEnabled="true"
             app:layout_constraintBottom_toBottomOf="@+id/icon_name"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/icon_name"
-            app:layout_constraintTop_toTopOf="@+id/icon_name" />
+            app:layout_constraintTop_toTopOf="@+id/icon_name">
 
-        <TextView
-            android:id="@+id/input_name_clear"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/ic_close"
-            app:layout_constraintBottom_toBottomOf="@+id/input_name"
-            app:layout_constraintEnd_toEndOf="@+id/input_name"
-            app:layout_constraintTop_toTopOf="@+id/input_name" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/tiet_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text|textCapSentences" />
 
-        <EditText
-            android:id="@+id/input_number"
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tiet_number_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="16dp"
-            android:imeOptions="actionDone"
-            android:inputType="number|phone"
-            android:maxLength="12"
             android:maxLines="1"
+            android:hint="@string/number_contact_overview"
+            app:counterEnabled="true"
+            app:counterMaxLength="12"
+            app:hintEnabled="true"
             app:layout_constraintBottom_toBottomOf="@+id/icon_number"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toEndOf="@+id/icon_number"
             app:layout_constraintTop_toTopOf="@+id/icon_number"
-            app:layout_constraintVertical_bias="0.523" />
+            app:layout_constraintVertical_bias="0.523">
 
-        <TextView
-            android:id="@+id/input_number_clear"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/ic_close"
-            app:layout_constraintBottom_toBottomOf="@+id/input_number"
-            app:layout_constraintEnd_toEndOf="@+id/input_number"
-            app:layout_constraintTop_toTopOf="@+id/input_number" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/tiet_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number|phone"/>
 
-        <EditText
-            android:id="@+id/input_home"
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tiet_home_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="16dp"
-            android:imeOptions="actionDone"
-            android:inputType="text|textCapSentences"
             android:maxLines="1"
+            android:hint="@string/address_contact_overview"
+            app:hintEnabled="true"
             app:layout_constraintBottom_toBottomOf="@+id/icon_home"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/icon_home"
-            app:layout_constraintTop_toTopOf="@+id/icon_home" />
+            app:layout_constraintTop_toTopOf="@+id/icon_home">
 
-        <TextView
-            android:id="@+id/input_home_clear"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/ic_close"
-            app:layout_constraintBottom_toBottomOf="@+id/input_home"
-            app:layout_constraintEnd_toEndOf="@+id/input_home"
-            app:layout_constraintTop_toTopOf="@+id/input_home" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/tiet_home"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text|textCapSentences"/>
 
-        <EditText
-            android:id="@+id/input_mail"
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tiet_mail_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="16dp"
-            android:imeOptions="actionDone"
-            android:inputType="text|textCapSentences"
             android:maxLines="1"
+            android:hint="@string/email_contact_overview"
+            app:hintEnabled="true"
             app:layout_constraintBottom_toBottomOf="@+id/icon_mail"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/icon_mail"
-            app:layout_constraintTop_toTopOf="@+id/icon_mail" />
+            app:layout_constraintTop_toTopOf="@+id/icon_mail">
 
-        <TextView
-            android:id="@+id/input_mail_clear"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/ic_close"
-            app:layout_constraintBottom_toBottomOf="@+id/input_mail"
-            app:layout_constraintEnd_toEndOf="@+id/input_mail"
-            app:layout_constraintTop_toTopOf="@+id/input_mail" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/tiet_mail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text|textCapSentences"/>
 
-        <EditText
-            android:id="@+id/input_home_phone"
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tiet_home_phone_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="16dp"
-            android:imeOptions="actionDone"
-            android:inputType="number|phone"
             android:maxLines="1"
+            android:hint="@string/phone_contact_overview"
+            app:counterEnabled="true"
+            app:counterMaxLength="12"
+            app:hintEnabled="true"
             app:layout_constraintBottom_toBottomOf="@+id/icon_home_phone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/icon_home_phone"
-            app:layout_constraintTop_toTopOf="@+id/icon_home_phone" />
+            app:layout_constraintTop_toTopOf="@+id/icon_home_phone">
 
-        <TextView
-            android:id="@+id/input_home_phone_clear"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/ic_close"
-            app:layout_constraintBottom_toBottomOf="@+id/input_home_phone"
-            app:layout_constraintEnd_toEndOf="@+id/input_home_phone"
-            app:layout_constraintTop_toTopOf="@+id/input_home_phone" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/tiet_home_phone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number|phone"/>
 
-        <TextView
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ImageView
             android:id="@+id/icon_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="64dp"
-            android:background="@drawable/ic_account"
+            android:src="@drawable/ic_account"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
 
-    <TextView
-            android:id="@+id/hint_name"
+        <ImageView
+            android:id="@+id/icon_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/name_contact_overview"
-            android:textSize="18sp"
-            android:textColor="@color/text"
-            app:layout_constraintBottom_toTopOf="@+id/input_name"
-            app:layout_constraintStart_toStartOf="@+id/input_name" />
+            android:layout_marginTop="32dp"
+            android:src="@drawable/ic_smartphone"
+            app:layout_constraintStart_toStartOf="@+id/icon_name"
+            app:layout_constraintTop_toBottomOf="@+id/tiet_name_layout" />
 
-        <TextView
-            android:id="@+id/guide_count_name"
+        <ImageView
+            android:id="@+id/icon_home_phone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="@+id/input_name"
-            app:layout_constraintTop_toBottomOf="@+id/input_name"
-            android:text="@string/guideline_name" />
+            android:layout_marginTop="32dp"
+            android:src="@drawable/ic_call"
+            app:layout_constraintStart_toStartOf="@+id/icon_number"
+            app:layout_constraintTop_toBottomOf="@+id/tiet_number_layout" />
 
-    <TextView
-        android:id="@+id/icon_number"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="64dp"
-        android:background="@drawable/ic_smartphone"
-        app:layout_constraintStart_toStartOf="@+id/icon_name"
-        app:layout_constraintTop_toBottomOf="@+id/input_name" />
-
-    <TextView
-        android:id="@+id/icon_home_phone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="64dp"
-        android:background="@drawable/ic_call"
-        app:layout_constraintStart_toStartOf="@+id/icon_number"
-        app:layout_constraintTop_toBottomOf="@+id/input_number" />
-
-        <TextView
-            android:id="@+id/hint_number"
+        <ImageView
+            android:id="@+id/icon_home"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/number_contact_overview"
-            android:textSize="18sp"
-            android:textColor="@color/text"
-            app:layout_constraintBottom_toTopOf="@+id/input_number"
-            app:layout_constraintStart_toStartOf="@+id/input_number" />
+            android:layout_marginTop="32dp"
+            android:src="@drawable/ic_home"
+            app:layout_constraintStart_toStartOf="@+id/icon_home_phone"
+            app:layout_constraintTop_toBottomOf="@+id/tiet_home_phone_layout" />
 
-        <TextView
-            android:id="@+id/guide_count_number"
+        <ImageView
+            android:id="@+id/icon_mail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="@+id/input_number"
-            app:layout_constraintTop_toBottomOf="@+id/input_number"
-            android:text="@string/guideline_number" />
-
-        <TextView
-            android:id="@+id/guide_count_home_phone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="@+id/input_home_phone"
-            app:layout_constraintTop_toBottomOf="@+id/input_home_phone"
-            android:text="@string/guideline_number" />
-
-    <TextView
-        android:id="@+id/icon_home"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="64dp"
-        android:background="@drawable/ic_home"
-        app:layout_constraintStart_toStartOf="@+id/icon_home_phone"
-        app:layout_constraintTop_toBottomOf="@+id/input_home_phone" />
-
-        <TextView
-            android:id="@+id/hint_home"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/address_contact_overview"
-            android:textSize="18sp"
-            android:textColor="@color/text"
-            app:layout_constraintBottom_toTopOf="@+id/input_home"
-            app:layout_constraintStart_toStartOf="@+id/input_home" />
-
-        <TextView
-            android:id="@+id/hint_home_phone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/phone_contact_overview"
-            android:textSize="18sp"
-            android:textColor="@color/text"
-            app:layout_constraintBottom_toTopOf="@+id/input_home_phone"
-            app:layout_constraintStart_toStartOf="@+id/input_home_phone" />
-
-    <TextView
-        android:id="@+id/icon_mail"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="64dp"
-        android:background="@drawable/ic_email"
-        app:layout_constraintStart_toStartOf="@+id/icon_home"
-        app:layout_constraintTop_toBottomOf="@+id/input_home" />
-
-        <TextView
-            android:id="@+id/hint_mail"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/email_contact_overview"
-            android:textSize="18sp"
-            android:textColor="@color/text"
-            app:layout_constraintBottom_toTopOf="@+id/input_mail"
-            app:layout_constraintStart_toStartOf="@+id/input_mail" />
+            android:layout_marginTop="32dp"
+            android:src="@drawable/ic_email"
+            app:layout_constraintStart_toStartOf="@+id/icon_home"
+            app:layout_constraintTop_toBottomOf="@+id/tiet_home_layout" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

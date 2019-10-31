@@ -36,4 +36,6 @@
     <string name="whastapp_pop">Enviar WhastApp</string>
     <string name="call_to">Llamar</string>
     <string name="mail_to">Enviar Correo</string>
+    <string name="overflow_chars">Se ha sobrepasado el límite de caracteres.</string>
+    <string name="error_field">Campo no válido.</string>
 </resources>

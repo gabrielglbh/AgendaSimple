@@ -14,7 +14,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ContactOverview" />
+            android:name=".ContactOverview"
+            android:theme="@style/NoActionBar"/>
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop">

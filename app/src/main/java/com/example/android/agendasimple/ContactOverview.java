@@ -3,43 +3,46 @@ package com.example.android.agendasimple;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
-import android.content.Context;
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
-import android.view.KeyEvent;
+import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.inputmethod.EditorInfo;
+import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Random;
+import java.util.regex.Pattern;
 
 public class ContactOverview extends AppCompatActivity {
 
-    private TextView nameHint, numberHint, phoneHint, homeHint, emailHint;
-    private EditText editName, editNumber, editPhone, editHome, editEmail;
-    private TextView nameClear, numberClear, phoneClear, homeClear, emailClear;
-    private TextView guideName, guideNumber, guidePhone;
-    private TextView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon;
+    private TextInputEditText inputName, inputNumber, inputPhone, inputHome, inputEmail;
+    private TextInputLayout layoutName, layoutNumber, layoutPhone;
+    private FloatingActionButton favContact;
+    private AppBarLayout appbar;
+
+    private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon;
     private Toast mToast;
-    private Menu menu;
     private AlertDialog alert;
 
     private ContactEntity contact;
@@ -47,6 +50,9 @@ public class ContactOverview extends AppCompatActivity {
     private String NUMBER, FAVOURITE = "1";
 
     private boolean isLikedPressed = false;
+    private boolean isOverflown = false;
+
+    private Pattern namePattern = Pattern.compile("[a-zA-Z]+");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,54 +89,46 @@ public class ContactOverview extends AppCompatActivity {
      *            0 = Se rellenan al entrar a la actividad desde un contacto ya existente
      *            1 = Se quedan vacios para poder añadir un contacto
      *
-     * Se crean y establecen numerosos eventos para embellecer la UI como:
-     *            el uso de IME Options para pasar a otro EditText (setHierarchyBetweenEditTextsOnImeOpts),
-     *            el recuento de letras permitidas por campo (setHandlersOfTextOnChange),
-     *            el cambio de color del label de cada EditText al estar activo (setEditHints) o
-     *            la administración y visibilidad de los botones para eliminar texto (setClearButtons).
+     * Se crea la administración y visibilidad de los botones para eliminar texto (setClearButtons).
+     * Se crea el TextWatcher para los contadores de los campos de name, phone y number.
+     * Se crea el manejo del FAB.
      *
      * Si se accede a esta actividad para hacer un update del contacto, los colores de los iconos y
      * la actionBar/statusBar se cambian al mismo que la burbuja de MainActivity relativa al contacto.
      * (setUIToBubbleColor)
      */
     private void setViews() {
+        inputName = findViewById(R.id.tiet_name);
+        inputNumber = findViewById(R.id.tiet_number);
+        inputPhone = findViewById(R.id.tiet_home_phone);
+        inputHome = findViewById(R.id.tiet_home);
+        inputEmail = findViewById(R.id.tiet_mail);
 
-        nameHint = findViewById(R.id.hint_name);
-        editName = findViewById(R.id.input_name);
-        guideName = findViewById(R.id.guide_count_name);
-        numberHint = findViewById(R.id.hint_number);
-        editNumber = findViewById(R.id.input_number);
-        guideNumber = findViewById(R.id.guide_count_number);
-        phoneHint = findViewById(R.id.hint_home_phone);
-        editPhone = findViewById(R.id.input_home_phone);
-        guidePhone = findViewById(R.id.guide_count_home_phone);
-        homeHint = findViewById(R.id.hint_home);
-        editHome = findViewById(R.id.input_home);
-        emailHint = findViewById(R.id.hint_mail);
-        editEmail = findViewById(R.id.input_mail);
         nameIcon = findViewById(R.id.icon_name);
         numberIcon = findViewById(R.id.icon_number);
         phoneIcon = findViewById(R.id.icon_home_phone);
         homeIcon = findViewById(R.id.icon_home);
         emailIcon = findViewById(R.id.icon_mail);
-        nameClear = findViewById(R.id.input_name_clear);
-        numberClear = findViewById(R.id.input_number_clear);
-        phoneClear = findViewById(R.id.input_home_phone_clear);
-        homeClear = findViewById(R.id.input_home_clear);
-        emailClear = findViewById(R.id.input_mail_clear);
 
-        setEditHints();
-        setHandlersOfTextOnChange();
-        setHierarchyBetweenEditTextsOnImeOpts();
-        setClearButtons();
+        appbar = findViewById(R.id.appBarLayout);
+
+        layoutName = findViewById(R.id.tiet_name_layout);
+        layoutNumber = findViewById(R.id.tiet_number_layout);
+        layoutPhone = findViewById(R.id.tiet_home_phone_layout);
+
+        favContact = findViewById(R.id.floating_share);
+
+        setTextWatchers(inputName, layoutName);
+        setTextWatchers(inputNumber, layoutNumber);
+        setTextWatchers(inputPhone, layoutPhone);
 
         if (mode == 0) {
             setTitle(getString(R.string.modify_contact_title));
             contact = MainActivity.sql.getContact(NUMBER);
             setContact();
+            setFAB();
         } else {
             setTitle(getString(R.string.contact_overview_label));
-            editName.requestFocus();
         }
     }
 
@@ -142,96 +140,78 @@ public class ContactOverview extends AppCompatActivity {
             Window w = getWindow();
             w.setStatusBarColor(color);
 
-            setUIToBubbleColor(nameIcon, R.drawable.ic_account, color);
-            setUIToBubbleColor(numberIcon, R.drawable.ic_smartphone, color);
-            setUIToBubbleColor(phoneIcon, R.drawable.ic_call, color);
-            setUIToBubbleColor(homeIcon, R.drawable.ic_home, color);
-            setUIToBubbleColor(emailIcon, R.drawable.ic_email, color);
+            setUIToBubbleColor(nameIcon, color);
+            setUIToBubbleColor(numberIcon, color);
+            setUIToBubbleColor(phoneIcon, color);
+            setUIToBubbleColor(homeIcon, color);
+            setUIToBubbleColor(emailIcon, color);
         }
 
-        editName.setText(contact.getNAME());
-        editNumber.setText(contact.getPHONE_NUMBER());
-        editPhone.setText(contact.getPHONE());
-        editHome.setText(contact.getHOME_ADDRESS());
-        editEmail.setText(contact.getEMAIL());
+        appbar.setBackgroundColor(color);
+
+        inputName.setText(contact.getNAME());
+        inputNumber.setText(contact.getPHONE_NUMBER());
+        inputPhone.setText(contact.getPHONE());
+        inputHome.setText(contact.getHOME_ADDRESS());
+        inputEmail.setText(contact.getEMAIL());
     }
 
-    // Start of UI and UX methods
+    private void setFAB() {
+        if (mode == 0) {
+            if (contact.getFAVOURITE().equals("0")) {
+                favContact.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
+                FAVOURITE = "0";
+                isLikedPressed = true;
+            } else {
+                favContact.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
+                FAVOURITE = "1";
+            }
+        }
 
-    private void setUIToBubbleColor(TextView t, int drawable, int color) {
-        Drawable ic_name = ContextCompat.getDrawable(this, drawable);
-        ic_name.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-        t.setBackground(ic_name);
-    }
+        favContact.setScaleX(0);
+        favContact.setScaleY(0);
 
-    private void setEditHints() {
-        setOnFocusChangeListeners(editName, nameHint);
-        setOnFocusChangeListeners(editNumber, numberHint);
-        setOnFocusChangeListeners(editPhone, phoneHint);
-        setOnFocusChangeListeners(editHome, homeHint);
-        setOnFocusChangeListeners(editEmail, emailHint);
-    }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            final Interpolator interpolator = AnimationUtils.loadInterpolator(getBaseContext(), android.R.interpolator.fast_out_slow_in);
+            favContact.animate()
+                    .scaleX(1)
+                    .scaleY(1)
+                    .setInterpolator(interpolator)
+                    .setDuration(600);
+        }
 
-    private void setOnFocusChangeListeners(EditText e, final TextView hint) {
-        e.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        favContact.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onFocusChange(View view, boolean focused) {
-                if (focused) hint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.colorAccent));
-                else hint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.text));
+            public void onClick(View view) {
+                if (!isLikedPressed) {
+                    favContact.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
+                    FAVOURITE = "0";
+                    isLikedPressed = true;
+                } else {
+                    favContact.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
+                    FAVOURITE = "1";
+                    isLikedPressed = false;
+                }
             }
         });
     }
 
-    private void setHandlersOfTextOnChange() {
-        setOnTextChangeListeners(editName, editNumber, guideName, nameClear);
-        setOnTextChangeListeners(editNumber, editPhone, guideNumber, numberClear);
-        setOnTextChangeListeners(editPhone, editHome, guidePhone, phoneClear);
-        setOnTextChangeListeners(editHome, null, null, homeClear);
-        setOnTextChangeListeners(editEmail, null, null, emailClear);
+    private void setUIToBubbleColor(ImageView t, int color) {
+        DrawableCompat.setTint(t.getDrawable(), color);
     }
 
-    private void setOnTextChangeListeners(final EditText initial, final EditText next, final TextView t,
-                                          final TextView clear) {
-        initial.addTextChangedListener(new TextWatcher() {
+    private void setTextWatchers(final TextInputEditText text, final TextInputLayout layout) {
+        text.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                int curr = initial.getText().toString().length();
-                String count;
-                if (curr != 0) {
-                    clear.setVisibility(View.VISIBLE);
-                    if (initial == editName) {
-                        if (curr <= 20) {
-                            count = curr + "/20";
-                            t.setText(count);
-                        } else {
-                            initial.setText(initial.getText().toString().substring(0, curr - 1));
-                            initial.clearFocus();
-                            next.requestFocus();
-                        }
-                    } else if (initial == editNumber || initial == editPhone) {
-                        if (curr <= 12) {
-                            count = curr + "/12";
-                            t.setText(count);
-                        } else {
-                            initial.setText(initial.getText().toString().substring(0, curr - 1));
-                            initial.clearFocus();
-                            next.requestFocus();
-                        }
-                    }
+                if (charSequence.length() >= layout.getCounterMaxLength()) {
+                    isOverflown = true;
+                    text.setError(getString(R.string.overflow_chars));
                 } else {
-                    clear.setVisibility(View.GONE);
-                    if (initial == editName) {
-                        count = getString(R.string.guideline_name);
-                        t.setText(count);
-                    } else if (initial == editNumber || initial == editPhone){
-                        count = getString(R.string.guideline_number);
-                        t.setText(count);
-                    }
+                    isOverflown = false;
                 }
             }
 
@@ -240,76 +220,9 @@ public class ContactOverview extends AppCompatActivity {
         });
     }
 
-    private void setHierarchyBetweenEditTextsOnImeOpts() {
-        setOnEditorActionListeners(editName, editNumber);
-        setOnEditorActionListeners(editNumber, editPhone);
-        setOnEditorActionListeners(editPhone, editHome);
-        setOnEditorActionListeners(editHome, editEmail);
-        setOnEditorActionListeners(editEmail, null);
-    }
-
-    private void setOnEditorActionListeners(final TextView focused, final TextView next) {
-        if (focused != editEmail) {
-            focused.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                    if (i == EditorInfo.IME_ACTION_DONE) {
-                        focused.clearFocus();
-                        next.requestFocus();
-                        return true;
-                    }
-                    return false;
-                }
-            });
-        } else {
-            focused.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                    if (i == EditorInfo.IME_ACTION_DONE) {
-                        focused.clearFocus();
-                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(editEmail.getWindowToken(), 0);
-                        return true;
-                    }
-                    return false;
-                }
-            });
-        }
-    }
-
-    private void setClearButtons() {
-        setOnClickListenersClear(nameClear, editName);
-        setOnClickListenersClear(numberClear, editNumber);
-        setOnClickListenersClear(phoneClear, editPhone);
-        setOnClickListenersClear(homeClear, editHome);
-        setOnClickListenersClear(emailClear, editEmail);
-    }
-
-    private void setOnClickListenersClear(final TextView clearButton, final TextView text) {
-        clearButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                text.setText("");
-            }
-        });
-    }
-
-    // End of UI and UX methods
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.contact_overview_menu, menu);
-        this.menu = menu;
-        if (mode == 0) {
-            if (contact.getFAVOURITE().equals("0")) {
-                menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart_filled));
-                FAVOURITE = "0";
-                isLikedPressed = true;
-            } else {
-                menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart));
-                FAVOURITE = "1";
-            }
-        }
         return true;
     }
 
@@ -324,17 +237,22 @@ public class ContactOverview extends AppCompatActivity {
                     validateAndUpdateContact();
                 }
                 break;
-            case R.id.menu_favorite:
-                if (!isLikedPressed) {
-                    menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart_filled));
-                    FAVOURITE = "0";
-                    isLikedPressed = true;
-                } else {
-                    menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart));
-                    FAVOURITE = "1";
-                    isLikedPressed = false;
+        }
+        return true;
+    }
+
+    /**
+     * validateTextFields: Validación de los campos de Name y Email.
+     * */
+    private boolean validateTextFields(String name, String email) {
+        if (name != null && email != null) {
+            if (!namePattern.matcher(name).matches()) {
+                inputName.setError(getString(R.string.error_field));
+                if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    inputEmail.setError(getString(R.string.error_field));
                 }
-                break;
+                return false;
+            }
         }
         return true;
     }
@@ -346,28 +264,30 @@ public class ContactOverview extends AppCompatActivity {
      *      Si el contacto es válido --> INSERT
      * */
     private void validateAndInsertContact() {
-        String name = editName.getText().toString();
-        String number = editNumber.getText().toString();
-        String phone = editPhone.getText().toString();
-        String address = editHome.getText().toString();
-        String email = editEmail.getText().toString();
+        hideKeyboard();
+
+        String name = inputName.getText().toString();
+        String number = inputNumber.getText().toString();
+        String phone = inputPhone.getText().toString();
+        String address = inputHome.getText().toString();
+        String email = inputEmail.getText().toString();
         Random r = new Random();
 
-        if (editName.getText().toString().trim().isEmpty() ||
-                editNumber.getText().toString().trim().isEmpty()) {
-            createDialog(getString(R.string.invalid_insertion_1));
-        }
-        else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
-                address.trim().isEmpty() && email.trim().isEmpty()) {
-            finish();
-        }
-        else {
-            ContactEntity c = new ContactEntity(name, number, phone, address, email,
-                    MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE);
-            if (MainActivity.sql.insertContact(c)) {
+        if (validateTextFields(name, email) && !isOverflown) {
+            if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
+                    address.trim().isEmpty() && email.trim().isEmpty()) {
                 finish();
+            } else if (inputName.getText().toString().trim().isEmpty() ||
+                    inputNumber.getText().toString().trim().isEmpty()) {
+                createDialog(getString(R.string.invalid_insertion_1));
             } else {
-                createDialog(getString(R.string.insertion_failed));
+                ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                        MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE);
+                if (MainActivity.sql.insertContact(c)) {
+                    finish();
+                } else {
+                    createDialog(getString(R.string.insertion_failed));
+                }
             }
         }
     }
@@ -384,36 +304,19 @@ public class ContactOverview extends AppCompatActivity {
      *                      - No: DELETE & UPDATE
      * */
     private void validateAndUpdateContact() {
-        String name = editName.getText().toString();
-        String number = editNumber.getText().toString();
-        String phone = editPhone.getText().toString();
-        String address = editHome.getText().toString();
-        String email = editEmail.getText().toString();
+        hideKeyboard();
 
-        if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
-            contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
-            contact.getEMAIL().equals(email)) {
-            if (!FAVOURITE.equals(contact.getFAVOURITE())) {
-                ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                if (MainActivity.sql.updateContact(c)) {
-                    finish();
-                } else {
-                    makeToast(getString(R.string.update_failed));
-                }
-            } else {
-                finish();
-            }
-        } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
-                address.trim().isEmpty() && email.trim().isEmpty()) {
-            if(!MainActivity.sql.deleteContact(NUMBER)) {
-                makeToast(getString(R.string.deletion_failed));
-            }
-            finish();
-        } else {
-            if (name.trim().isEmpty() || number.trim().isEmpty()) {
-                createDialog(getString(R.string.invalid_insertion_1));
-            } else {
-                if (MainActivity.sql.getContact(number) != null) {
+        String name = inputName.getText().toString();
+        String number = inputNumber.getText().toString();
+        String phone = inputPhone.getText().toString();
+        String address = inputHome.getText().toString();
+        String email = inputEmail.getText().toString();
+
+        if (validateTextFields(name, email) && !isOverflown) {
+            if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
+                    contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
+                    contact.getEMAIL().equals(email)) {
+                if (!FAVOURITE.equals(contact.getFAVOURITE())) {
                     ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
                     if (MainActivity.sql.updateContact(c)) {
                         finish();
@@ -421,19 +324,45 @@ public class ContactOverview extends AppCompatActivity {
                         makeToast(getString(R.string.update_failed));
                     }
                 } else {
-                    if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+                    finish();
+                }
+            } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
+                    address.trim().isEmpty() && email.trim().isEmpty()) {
+                if (!MainActivity.sql.deleteContact(NUMBER)) {
+                    makeToast(getString(R.string.deletion_failed));
+                }
+                finish();
+            } else {
+                if (name.trim().isEmpty() || number.trim().isEmpty()) {
+                    createDialog(getString(R.string.invalid_insertion_1));
+                } else {
+                    if (MainActivity.sql.getContact(number) != null) {
                         ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                        if (MainActivity.sql.insertContact(c)) {
+                        if (MainActivity.sql.updateContact(c)) {
                             finish();
                         } else {
-                            makeToast(getString(R.string.insertion_failed));
+                            makeToast(getString(R.string.update_failed));
                         }
                     } else {
-                        makeToast(getString(R.string.deletion_failed));
+                        if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+                            ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
+                            if (MainActivity.sql.insertContact(c)) {
+                                finish();
+                            } else {
+                                makeToast(getString(R.string.insertion_failed));
+                            }
+                        } else {
+                            makeToast(getString(R.string.deletion_failed));
+                        }
                     }
                 }
             }
         }
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
     }
 
     private void makeToast(String msg) {
