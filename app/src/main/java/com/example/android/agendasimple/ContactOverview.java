@@ -4,20 +4,26 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -40,16 +46,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Random;
 import java.util.regex.Pattern;
 
@@ -72,6 +73,8 @@ public class ContactOverview extends AppCompatActivity {
     private String NUMBER, FAVOURITE = "1";
     private final int RESULT_LOAD_IMG = 123;
 
+    private final String BUNDLE_LIKE = "ISLIKEPRESSED";
+    private final String BUNDLE_OVERFLOWN = "ISOVERFLOWN";
     private boolean isLikedPressed = false;
     private boolean isOverflown = false;
 
@@ -93,6 +96,18 @@ public class ContactOverview extends AppCompatActivity {
         else {
             setViews();
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        setSharedPreferences();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        getSharedPreferences();
     }
 
     @Override
@@ -121,6 +136,8 @@ public class ContactOverview extends AppCompatActivity {
             } else {
                 menu.getItem(0).setVisible(false);
             }
+        } else {
+            menu.getItem(0).setVisible(false);
         }
         return true;
     }
@@ -150,6 +167,9 @@ public class ContactOverview extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * Recoge la imagen de la galería
+     * */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -159,16 +179,32 @@ public class ContactOverview extends AppCompatActivity {
                 final Uri imageUri = data.getData();
                 final InputStream imageStream = getContentResolver().openInputStream(imageUri);
                 final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
-                headerImage.setImageBitmap(selectedImage);
+                headerImage.setImageBitmap(rotate(selectedImage, 90));
                 toolbar.setBackgroundColor(Color.TRANSPARENT);
                 menu.getItem(0).setVisible(true);
-            } catch (FileNotFoundException | NullPointerException e) {
+            } catch (NullPointerException | IOException e) {
                 e.printStackTrace();
                 makeToast(getString(R.string.insertion_image_error));
             }
         } else {
             makeToast(getString(R.string.insertion_image_error));
         }
+    }
+
+    private void setSharedPreferences() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putBoolean(BUNDLE_LIKE, isLikedPressed);
+        editor.putBoolean(BUNDLE_OVERFLOWN, isOverflown);
+        editor.apply();
+    }
+
+    private void getSharedPreferences() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        isLikedPressed = sp.getBoolean(BUNDLE_LIKE, false);
+        if (isLikedPressed) FAVOURITE = "0";
+        else FAVOURITE = "1";
+        isOverflown = sp.getBoolean(BUNDLE_OVERFLOWN, false);
     }
 
     /**
@@ -224,6 +260,12 @@ public class ContactOverview extends AppCompatActivity {
             setContact();
         } else {
             collapsingToolbar.setTitle(getString(R.string.contact_overview_label));
+            final int color = ContextCompat.getColor(this, R.color.colorPrimary);
+            setUIToBubbleColor(nameIcon, color);
+            setUIToBubbleColor(numberIcon, color);
+            setUIToBubbleColor(phoneIcon, color);
+            setUIToBubbleColor(homeIcon, color);
+            setUIToBubbleColor(emailIcon, color);
         }
     }
 
@@ -245,7 +287,7 @@ public class ContactOverview extends AppCompatActivity {
         appbar.setBackgroundColor(color);
         collapsingToolbar.setContentScrimColor(color);
 
-        if (getImageFromStorage() != null) {
+        if (bitmap != null) {
             headerImage.setImageBitmap(bitmap);
             toolbar.setBackgroundColor(Color.TRANSPARENT);
         } else {
@@ -315,17 +357,26 @@ public class ContactOverview extends AppCompatActivity {
     /**
      * validateTextFields: Validación de los campos de Name y Email.
      * */
-    private boolean validateTextFields(String name, String email) {
-        if (name != null && email != null) {
-            if (!namePattern.matcher(name).matches()) {
-                inputName.setError(getString(R.string.error_field));
-                if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    inputEmail.setError(getString(R.string.error_field));
-                }
-                return false;
-            }
-        }
-        return true;
+    private boolean validateTextFields(String name, String email, String number) {
+        boolean n, num, em;
+
+        if (name.trim().isEmpty() && !namePattern.matcher(name).matches()) {
+            inputName.setError(getString(R.string.error_field));
+            n = false;
+        } else { n = true; }
+
+        if (number.trim().isEmpty()) {
+            inputNumber.setError(getString(R.string.error_field));
+            num = false;
+        } else { num = true; }
+
+        if (!email.trim().isEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            inputEmail.setError(getString(R.string.error_field));
+            em = false;
+        } else { em = true; }
+
+        hideKeyboard();
+        return n && num && em;
     }
 
     /**
@@ -344,7 +395,7 @@ public class ContactOverview extends AppCompatActivity {
         String email = inputEmail.getText().toString();
         Random r = new Random();
 
-        if (validateTextFields(name, email) && !isOverflown) {
+        if (validateTextFields(name, email, number) && !isOverflown) {
             if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                     address.trim().isEmpty() && email.trim().isEmpty()) {
                 finish();
@@ -358,7 +409,8 @@ public class ContactOverview extends AppCompatActivity {
                     Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
                     saveImageToStorage(bitmap);
                     insert(c);
-                } catch (NullPointerException err) {
+                } catch (Exception e) {
+                    removeImageStorage();
                     insert(c);
                 }
             }
@@ -385,7 +437,7 @@ public class ContactOverview extends AppCompatActivity {
         String address = inputHome.getText().toString();
         String email = inputEmail.getText().toString();
 
-        if (validateTextFields(name, email) && !isOverflown) {
+        if (validateTextFields(name, email, number) && !isOverflown) {
             if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
                     contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
                     contact.getEMAIL().equals(email)) {
@@ -395,7 +447,8 @@ public class ContactOverview extends AppCompatActivity {
                         Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
                         saveImageToStorage(bitmap);
                         update(c);
-                    } catch (NullPointerException err) {
+                    } catch (Exception e) {
+                        removeImageStorage();
                         update(c);
                     }
                 } else {
@@ -403,7 +456,8 @@ public class ContactOverview extends AppCompatActivity {
                         Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
                         saveImageToStorage(bitmap);
                         finish();
-                    } catch (NullPointerException err) {
+                    } catch (Exception e) {
+                        removeImageStorage();
                         finish();
                     }
                 }
@@ -427,7 +481,8 @@ public class ContactOverview extends AppCompatActivity {
                             Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
                             saveImageToStorage(bitmap);
                             update(c);
-                        } catch (NullPointerException err) {
+                        } catch (Exception e) {
+                            removeImageStorage();
                             update(c);
                         }
                     } else {
@@ -440,7 +495,8 @@ public class ContactOverview extends AppCompatActivity {
                                     Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
                                     saveImageToStorage(bitmap);
                                     insert(c);
-                                } catch (NullPointerException err) {
+                                } catch (Exception e) {
+                                    removeImageStorage();
                                     insert(c);
                                 }
                             }
@@ -453,7 +509,11 @@ public class ContactOverview extends AppCompatActivity {
         }
     }
 
-    private void saveImageToStorage(Bitmap bitmap) {
+    /**
+     * Métodos para guardar, recoger y eliminar la imagen del storage
+     * */
+    // TODO: Permisos
+    private void saveImageToStorage(final Bitmap bitmap) {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
@@ -462,17 +522,17 @@ public class ContactOverview extends AppCompatActivity {
                 try {
                     File file = new File(dir, inputNumber.getText().toString() + "_" + inputName.getText().toString() + ".png");
                     FileOutputStream out = new FileOutputStream(file);
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
                     out.flush();
                     out.close();
                 } catch (IOException err) {
-                    Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+                    makeToast(getString(R.string.export_to_SD));
                 }
             } else {
-                Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+                makeToast(getString(R.string.export_to_SD));
             }
         } else {
-            Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+            makeToast(getString(R.string.export_to_SD));
         }
     }
 
@@ -484,10 +544,10 @@ public class ContactOverview extends AppCompatActivity {
                 File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
                 return BitmapFactory.decodeFile(file.getPath());
             } else {
-                Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+                makeToast(getString(R.string.import_to_SD));
             }
         } else {
-            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+            makeToast(getString(R.string.import_to_SD));
         }
         return null;
     }
@@ -502,18 +562,26 @@ public class ContactOverview extends AppCompatActivity {
                 collapsingToolbar.setContentScrimColor(Color.parseColor(contact.getCOLOR_BUBBLE()));
                 menu.getItem(0).setVisible(false);
                 return file.delete();
-            } else {
-                Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
             }
-        } else {
-            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
         }
         return false;
     }
 
+    /**
+     * Métodos auxiliares para la validación de errores:
+     *
+     *  En los campos,
+     *  En la inserción, modificación y actualización
+     *
+     * También maneja:
+     *
+     *  El cierre del teclado virtual
+     *  La creación de toasts y alertDialogs
+     *  El check de permisos
+     *  Y la rotación de las imágenes
+     * */
     private void checkErrors() {
-        if (inputName.getError() != null || inputEmail.getError() != null ||
-                inputNumber.getError() != null || inputPhone.getError() != null) {
+        if (inputName.getError() != null || inputNumber.getError() != null) {
             createDialog(getString(R.string.error_on_back));
         } else {
             savingContact.setVisibility(View.VISIBLE);
@@ -573,5 +641,11 @@ public class ContactOverview extends AppCompatActivity {
         });
         alert = builder.create();
         alert.show();
+    }
+
+    private Bitmap rotate(Bitmap bitmap, float degrees) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degrees);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 }

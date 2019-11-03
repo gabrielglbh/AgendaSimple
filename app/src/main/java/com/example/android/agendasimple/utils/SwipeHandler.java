@@ -1,4 +1,4 @@
-package com.example.android.agendasimple;
+package com.example.android.agendasimple.utils;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -8,6 +8,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.example.android.agendasimple.AgendaAdapter;
+import com.example.android.agendasimple.MainActivity;
+import com.example.android.agendasimple.R;
 import com.example.android.agendasimple.sql.ContactEntity;
 
 import java.util.ArrayList;
