@@ -46,4 +46,8 @@
     <string name="error_on_back" translatable="true">The contact information is not valid.</string>
     <string name="remove_image" translatable="true">Remove image</string>
     <string name="error_delete_img" translatable="true">Something wrong occurred while deleting the image.</string>
+    <string name="see_contact_sheet" translatable="true">See Contact</string>
+    <string name="favourite_sheet" translatable="true">Favourite</string>
+    <string name="delete_contact_sheet" translatable="true">Delete Contact</string>
+    <string name="delete_fav_sheet" translatable="true">Delete Favourite</string>
 </resources>

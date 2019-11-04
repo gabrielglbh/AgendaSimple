@@ -18,10 +18,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
@@ -29,17 +28,18 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.RecyclerView;
-import de.hdodenhof.circleimageview.CircleImageView;
 
 public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
     private ContactClickListener listener;
     private Context ctx;
+    private BottomSheetBehavior bsb;
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
-    public AgendaAdapter(ContactClickListener listener, Context ctx) {
+    public AgendaAdapter(ContactClickListener listener, Context ctx, BottomSheetBehavior bsb) {
         this.listener = listener;
         this.ctx = ctx;
+        this.bsb = bsb;
     }
 
     @NonNull
@@ -59,7 +59,6 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     public void onBindViewHolder(@NonNull Contact holder, int i) {
         final int position = holder.getAdapterPosition();
         final ContactEntity c = contacts.get(position);
-        // TODO: Añadir variable a la base de datos para decir si tiene imagen o no y evitar errores
         final Bitmap bitmap = isImageInContact(c.getPHONE_NUMBER(), c.getNAME());
 
         DrawableCompat.setTint(holder.icon_contact.getDrawable(), Color.parseColor(c.getCOLOR_BUBBLE()));
@@ -90,12 +89,15 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
                     public boolean onMenuItemClick(MenuItem item) {
                         switch (item.getItemId()) {
                             case R.id.whatsapp_to:
+                                closeBottomSheet();
                                 openWhatsappConversation(position, view.getContext());
                                 break;
                             case R.id.call_to:
+                                closeBottomSheet();
                                 callDial(position, view.getContext());
                                 break;
                             case R.id.mail_to:
+                                closeBottomSheet();
                                 sendMailTo(position, view.getContext());
                                 break;
                         }
@@ -205,7 +207,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), ctx.getString(R.string.app_name));
             if (dir.exists()) {
                 File file = new File(dir, number + "_" + name + ".png");
-                return BitmapFactory.decodeFile(file.getPath());
+                if (file.exists()) return BitmapFactory.decodeFile(file.getPath());
             } else {
                 Toast.makeText(ctx, ctx.getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
             }
@@ -215,11 +217,20 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         return null;
     }
 
-    public interface ContactClickListener {
-        void onContactClicked(String number);
+    private void closeBottomSheet() {
+        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+        }
     }
 
-    class Contact extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public interface ContactClickListener {
+        void onContactClicked(String number);
+        void onLongContactClicked(String number, String name, String phone,
+                                  String home, String email, String bubble,
+                                  String favorite, int position);
+    }
+
+    class Contact extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
         TextView initial_contact, name_contact, number_contact, open_menu;
         ImageView icon_contact, fav;
@@ -227,6 +238,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         public Contact(@NonNull View itemView) {
             super(itemView);
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
             icon_contact = itemView.findViewById(R.id.icon_contact);
             initial_contact = itemView.findViewById(R.id.initial_contact);
             name_contact = itemView.findViewById(R.id.name_contact);
@@ -239,6 +251,19 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         public void onClick(View view) {
             String num = contacts.get(getAdapterPosition()).getPHONE_NUMBER();
             listener.onContactClicked(num);
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            String num = contacts.get(getAdapterPosition()).getPHONE_NUMBER();
+            String name = contacts.get(getAdapterPosition()).getNAME();
+            String phone = contacts.get(getAdapterPosition()).getPHONE();
+            String home = contacts.get(getAdapterPosition()).getHOME_ADDRESS();
+            String email = contacts.get(getAdapterPosition()).getEMAIL();
+            String favorite = contacts.get(getAdapterPosition()).getFAVOURITE();
+            String bubble = contacts.get(getAdapterPosition()).getCOLOR_BUBBLE();
+            listener.onLongContactClicked(num, name, phone, home, email, bubble, favorite, getAdapterPosition());
+            return true;
         }
     }
 

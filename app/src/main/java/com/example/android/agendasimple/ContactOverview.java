@@ -73,8 +73,6 @@ public class ContactOverview extends AppCompatActivity {
     private String NUMBER, FAVOURITE = "1";
     private final int RESULT_LOAD_IMG = 123;
 
-    private final String BUNDLE_LIKE = "ISLIKEPRESSED";
-    private final String BUNDLE_OVERFLOWN = "ISOVERFLOWN";
     private boolean isLikedPressed = false;
     private boolean isOverflown = false;
 
@@ -96,18 +94,6 @@ public class ContactOverview extends AppCompatActivity {
         else {
             setViews();
         }
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        setSharedPreferences();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        getSharedPreferences();
     }
 
     @Override
@@ -189,22 +175,6 @@ public class ContactOverview extends AppCompatActivity {
         } else {
             makeToast(getString(R.string.insertion_image_error));
         }
-    }
-
-    private void setSharedPreferences() {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putBoolean(BUNDLE_LIKE, isLikedPressed);
-        editor.putBoolean(BUNDLE_OVERFLOWN, isOverflown);
-        editor.apply();
-    }
-
-    private void getSharedPreferences() {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        isLikedPressed = sp.getBoolean(BUNDLE_LIKE, false);
-        if (isLikedPressed) FAVOURITE = "0";
-        else FAVOURITE = "1";
-        isOverflown = sp.getBoolean(BUNDLE_OVERFLOWN, false);
     }
 
     /**
@@ -512,7 +482,6 @@ public class ContactOverview extends AppCompatActivity {
     /**
      * Métodos para guardar, recoger y eliminar la imagen del storage
      * */
-    // TODO: Permisos
     private void saveImageToStorage(final Bitmap bitmap) {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
@@ -542,7 +511,7 @@ public class ContactOverview extends AppCompatActivity {
             File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
             if (dir.exists()) {
                 File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
-                return BitmapFactory.decodeFile(file.getPath());
+                if (file.exists()) return BitmapFactory.decodeFile(file.getPath());
             } else {
                 makeToast(getString(R.string.import_to_SD));
             }

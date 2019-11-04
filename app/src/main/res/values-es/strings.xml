@@ -42,4 +42,8 @@
     <string name="error_on_back">La información el contacto no es válida.</string>
     <string name="remove_image">Eliminar imagen</string>
     <string name="error_delete_img">Algo ha salido mal durante el borrado de la imagen.</string>
+    <string name="see_contact_sheet">Ver Contacto</string>
+    <string name="favourite_sheet">Favorito</string>
+    <string name="delete_contact_sheet">Eliminar Contacto</string>
+    <string name="delete_fav_sheet">Eliminar Favorito</string>
 </resources>
