@@ -19,4 +19,8 @@
         <item name="android:textColor">@color/title</item>
     </style>
 
+    <style name="PickerDialogTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
 </resources>

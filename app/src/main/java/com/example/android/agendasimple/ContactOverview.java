@@ -4,29 +4,25 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import android.app.Activity;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,8 +31,12 @@ import android.view.Window;
 import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
@@ -47,10 +47,10 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Calendar;
 import java.util.Random;
 import java.util.regex.Pattern;
 
@@ -62,9 +62,11 @@ public class ContactOverview extends AppCompatActivity {
     private CollapsingToolbarLayout collapsingToolbar;
     private Toolbar toolbar;
 
-    private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon, headerImage;
+    private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon, headerImage, bookmarkIcon;
+    private TextView inputDate, date_display, time_display;
+    private Button add_scheduled, cancel_scheduled;
     private Toast mToast;
-    private AlertDialog alert;
+    private AlertDialog alert, alarmBuilder;
     private Menu menu;
     private ProgressBar savingContact;
 
@@ -72,6 +74,7 @@ public class ContactOverview extends AppCompatActivity {
     private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
     private String NUMBER, FAVOURITE = "1";
     private final int RESULT_LOAD_IMG = 123;
+    private String timeToDisplay, dateToDisplay;
 
     private boolean isLikedPressed = false;
     private boolean isOverflown = false;
@@ -186,6 +189,7 @@ public class ContactOverview extends AppCompatActivity {
      * Se crea el TextWatcher para los contadores de los campos de name, phone y number.
      * Se crea el manejo del FAB.
      * Se customiza el AppBar y el CollapseActionView.
+     * Se maneja el click del botón de añadir cita.
      *
      * Si se accede a esta actividad para hacer un update del contacto, los colores de los iconos y
      * la actionBar/statusBar se cambian al mismo que la burbuja de MainActivity relativa al contacto.
@@ -197,12 +201,14 @@ public class ContactOverview extends AppCompatActivity {
         inputPhone = findViewById(R.id.tiet_home_phone);
         inputHome = findViewById(R.id.tiet_home);
         inputEmail = findViewById(R.id.tiet_mail);
+        inputDate = findViewById(R.id.add_date);
 
         nameIcon = findViewById(R.id.icon_name);
         numberIcon = findViewById(R.id.icon_number);
         phoneIcon = findViewById(R.id.icon_home_phone);
         homeIcon = findViewById(R.id.icon_home);
         emailIcon = findViewById(R.id.icon_mail);
+        bookmarkIcon = findViewById(R.id.icon_date);
 
         appbar = findViewById(R.id.appBarLayout);
         collapsingToolbar = findViewById(R.id.collapsingToolbar);
@@ -212,6 +218,7 @@ public class ContactOverview extends AppCompatActivity {
         savingContact = findViewById(R.id.savingContact);
 
         setAppBar();
+        createScheduledDateDialog();
 
         final TextInputLayout layoutName = findViewById(R.id.tiet_name_layout);
         final TextInputLayout layoutNumber = findViewById(R.id.tiet_number_layout);
@@ -236,6 +243,7 @@ public class ContactOverview extends AppCompatActivity {
             setUIToBubbleColor(phoneIcon, color);
             setUIToBubbleColor(homeIcon, color);
             setUIToBubbleColor(emailIcon, color);
+            setUIToBubbleColor(bookmarkIcon, color);
         }
     }
 
@@ -252,6 +260,7 @@ public class ContactOverview extends AppCompatActivity {
             setUIToBubbleColor(phoneIcon, color);
             setUIToBubbleColor(homeIcon, color);
             setUIToBubbleColor(emailIcon, color);
+            setUIToBubbleColor(bookmarkIcon, color);
         }
 
         appbar.setBackgroundColor(color);
@@ -322,6 +331,101 @@ public class ContactOverview extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable editable) { }
         });
+    }
+
+    /**
+     * Métodos para la programación de la elección y display de la cita con un contacto:
+     * Dialog, DatePicker y TimePicker
+     * */
+    private void createScheduledDateDialog() {
+        inputDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                View customView = getLayoutInflater().inflate(R.layout.create_alert_dialog, null);
+                time_display = customView.findViewById(R.id.et_show_time);
+                date_display = customView.findViewById(R.id.et_show_date);
+                add_scheduled = customView.findViewById(R.id.add_button);
+                cancel_scheduled = customView.findViewById(R.id.button_cancel);
+
+                if (timeToDisplay != null && dateToDisplay != null) {
+                    add_scheduled.setText(getString(R.string.modify_scheduled_date));
+                    cancel_scheduled.setVisibility(View.VISIBLE);
+                    time_display.setText(timeToDisplay);
+                    time_display.setTextColor(Color.BLACK);
+                    date_display.setText(dateToDisplay);
+                    date_display.setTextColor(Color.BLACK);
+                } else {
+                    add_scheduled.setText(getString(R.string.finish_scheduled_date));
+                    cancel_scheduled.setVisibility(View.GONE);
+                }
+
+                AlertDialog.Builder alarm = new AlertDialog.Builder(ContactOverview.this)
+                        .setView(customView);
+                alarmBuilder = alarm.create();
+                alarmBuilder.show();
+            }
+        });
+    }
+
+    public void openDatePickerDialog(View view) {
+        DatePickerDialog mDatePicker;
+        Calendar mcurrentDate = Calendar.getInstance();
+        final int mYear = mcurrentDate.get(Calendar.YEAR);
+        final int mMonth = mcurrentDate.get(Calendar.MONTH);
+        final int mDay = mcurrentDate.get(Calendar.DAY_OF_MONTH);
+
+        mDatePicker = new DatePickerDialog(ContactOverview.this, R.style.PickerDialogTheme,
+                new DatePickerDialog.OnDateSetListener() {
+                    public void onDateSet(DatePicker datepicker, int selectedyear,
+                                          int selectedmonth, int selectedday) {
+                        String date = selectedday + "/" +
+                                (selectedmonth+1) + "/" +
+                                selectedyear;
+                        date_display.setText(date);
+                        date_display.setTextColor(Color.BLACK);
+                        dateToDisplay = date;
+                    }
+                }, mYear, mMonth, mDay);
+        mDatePicker.show();
+    }
+
+    public void openTimePickerDialog(View view) {
+        TimePickerDialog mTimePicker;
+        Calendar mcurrentTime = Calendar.getInstance();
+        final int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
+        final int minute = mcurrentTime.get(Calendar.MINUTE);
+
+        mTimePicker = new TimePickerDialog(this, R.style.PickerDialogTheme,
+                new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker timePicker, int hourSel, int minuteSel) {
+                        String text = hourSel + ":";
+                        if (minuteSel >= 0 && minuteSel <= 9) text = text.concat("0" + minuteSel);
+                        else text = text.concat(Integer.toString(minuteSel));
+                        time_display.setText(text);
+                        time_display.setTextColor(Color.BLACK);
+                        timeToDisplay = text;
+                    }
+                }, hour, minute, true);
+        mTimePicker.show();
+    }
+
+    public void addDate(View view) {
+        if (timeToDisplay != null && dateToDisplay != null) {
+            alarmBuilder.dismiss();
+            String schedule = getString(R.string.date_programmed) + ":\n" +
+                    dateToDisplay + " " + getString(R.string.at_time) + " " + timeToDisplay;
+            inputDate.setText(schedule);
+        } else {
+            makeToast(getString(R.string.error_field));
+        }
+    }
+
+    public void cancelDate(View view) {
+        alarmBuilder.dismiss();
+        timeToDisplay = null;
+        dateToDisplay = null;
+        inputDate.setText(getString(R.string.schedule_day));
     }
 
     /**

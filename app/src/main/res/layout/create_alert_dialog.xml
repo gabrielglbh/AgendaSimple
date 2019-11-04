@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/add_date"
+        android:textSize="22sp"
+        android:textColor="@color/text"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:layout_marginBottom="15dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/select_date"
+        android:textSize="18sp"
+        android:layout_marginStart="15dp"
+        android:layout_marginBottom="6dp"
+        android:textColor="@color/text"
+        android:layout_gravity="start"
+        android:gravity="start"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="15dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/et_show_date"
+            android:layout_marginStart="15dp"
+            android:hint="@string/date_format"
+            android:textSize="18sp"
+            android:layout_weight="2" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_calendar"
+            android:tint="@color/colorAccent"
+            android:layout_marginEnd="15dp"
+            android:onClick="openDatePickerDialog"
+            android:layout_marginStart="10dp"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/select_time"
+        android:textSize="18sp"
+        android:layout_marginStart="15dp"
+        android:layout_marginBottom="6dp"
+        android:textColor="@color/text"
+        android:layout_gravity="start"
+        android:gravity="start"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="10dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/et_show_time"
+            android:layout_marginStart="15dp"
+            android:hint="@string/format_time"
+            android:textSize="18sp"
+            android:layout_weight="2"/>
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_time"
+            android:layout_marginEnd="15dp"
+            android:onClick="openTimePickerDialog"
+            android:layout_marginStart="10dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:layout_marginTop="15dp"
+        android:gravity="center">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/round_square_button"
+            android:text="@string/cancel_scheduled_date"
+            android:textSize="15sp"
+            android:id="@+id/button_cancel"
+            android:visibility="gone"
+            android:textColor="@color/title"
+            android:layout_gravity="center"
+            android:onClick="cancelDate"
+            android:layout_marginEnd="50dp"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/add_button"
+            android:background="@drawable/round_square_button"
+            android:text="@string/finish_scheduled_date"
+            android:textSize="15sp"
+            android:textColor="@color/title"
+            android:layout_gravity="center"
+            android:onClick="addDate" />
+
+    </LinearLayout>
+
+
+</LinearLayout>
