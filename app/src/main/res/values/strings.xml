@@ -13,13 +13,12 @@
     <string name="phone_contact_overview" translatable="true">Phone</string>
     <string name="title_save_contact_overview" translatable="true">Save Contact</string>
     <string name="modify_contact_title" translatable="true">Modify Contact</string>
-    <string name="guideline_number" translatable="false">0/12</string>
-    <string name="guideline_name" translatable="false">0/20</string>
     <string name="positive_dialog" translatable="true">Yes</string>
     <string name="negative_dialog" translatable="false">No</string>
 
     <string name="invalid_insertion_1" translatable="true">Contact must have a name and a number.</string>
     <string name="insertion_failed" translatable="true">The phone number is already saved.</string>
+    <string name="insertion_image_error" translatable="true">Image not loaded.</string>
     <string name="deletion_failed" translatable="true">Something occurred, deletion failed.</string>
     <string name="update_failed" translatable="true">Something occurred, update failed.</string>
     <string name="update_equal" translatable="true">Changes were discarded.</string>
@@ -31,6 +30,8 @@
     <string name="import_to_SD" translatable="true">Something went wrong while importing from SD Card.</string>
     <string name="success_import_to" translatable="true">Contacts were successfully imported.</string>
     <string name="file_sd" translatable="false">contacts.cnt</string>
+
+
     <string name="favorite_contact" translatable="true">Favourite</string>
     <string name="no_dialog" translatable="false">No</string>
     <string name="yes_dialog" translatable="true">Yes</string>
@@ -38,8 +39,33 @@
     <string name="no_cont_to_export" translatable="true">You do not have any contacts to export.</string>
     <string name="no_cont_to_import" translatable="true">No contacts were imported.</string>
     <string name="chooser_email" translatable="true">Email via…</string>
+
     <string name="email_field_empty" translatable="true">Email field is empty.</string>
     <string name="whastapp_pop" translatable="true">Send WhastApp</string>
     <string name="call_to" translatable="true">Call</string>
     <string name="mail_to" translatable="true">Send Mail</string>
+    <string name="overflow_chars" translatable="true">The character limit has been surpassed.</string>
+    <string name="error_field" translatable="true">Invalid field.</string>
+    <string name="error_on_back" translatable="true">The contact information is not valid.</string>
+
+    <string name="remove_image" translatable="true">Remove image</string>
+    <string name="error_delete_img" translatable="true">Something wrong occurred while deleting the image.</string>
+
+    <string name="see_contact_sheet" translatable="true">See Contact</string>
+    <string name="favourite_sheet" translatable="true">Favourite</string>
+    <string name="delete_contact_sheet" translatable="true">Delete Contact</string>
+    <string name="delete_fav_sheet" translatable="true">Delete Favourite</string>
+
+    <string name="add_date" translatable="true">Add Date</string>
+    <string name="date_sheet" translatable="true">Date</string>
+    <string name="date_programmed" translatable="true">Scheduled Date</string>
+    <string name="schedule_day" translatable="true">Schedule a date</string>
+    <string name="select_date" translatable="true">Select Date</string>
+    <string name="date_format" translatable="false">dd/mm/yyyy</string>
+    <string name="select_time" translatable="true">Select Time</string>
+    <string name="format_time" translatable="false">hh:mm</string>
+    <string name="cancel_scheduled_date" translatable="true">Cancel</string>
+    <string name="finish_scheduled_date" translatable="true">Add</string>
+    <string name="modify_scheduled_date" translatable="true">Modify</string>
+    <string name="at_time" translatable="false">\u0040</string>
 </resources>

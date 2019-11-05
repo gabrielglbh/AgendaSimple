@@ -2,6 +2,7 @@ package com.example.android.agendasimple;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -17,16 +18,24 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
 import com.example.android.agendasimple.sql.DatabaseSQL;
+import com.example.android.agendasimple.utils.SwipeHandler;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
@@ -50,6 +59,11 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private SearchView searchWidget;
     public static DatabaseSQL sql;
     private ItemTouchHelper touchHelper;
+
+    private LinearLayout bottomSheet;
+    private Button view_button, fav_button, del_button;
+    private TextView title_bottom_sheet, date_bottom_sheet;
+    private BottomSheetBehavior bsb;
 
     // ID que se pasa a ContactOverview para saber si se está modificando el contacto o añadiendo uno nuevo
     public static final String OVERVIEW_MODE = "OVERVIEW_MODE";
@@ -86,8 +100,16 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
         sql = DatabaseSQL.getInstance(this);
 
+        bottomSheet = findViewById(R.id.bottomSheet);
+        title_bottom_sheet = findViewById(R.id.title_bottom_sheet);
+        view_button = findViewById(R.id.button_see);
+        fav_button = findViewById(R.id.button_favourite);
+        del_button = findViewById(R.id.button_delete);
+        date_bottom_sheet = findViewById(R.id.has_date_bottom_sheet);
+        bsb = BottomSheetBehavior.from(bottomSheet);
+
         setRecyclerView();
-        setFAB();
+        setFloatingActionButton();
     }
 
     /**
@@ -101,19 +123,13 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         super.onResume();
     }
 
-    /**
-     * checkPermits: Método que verifica si se han permitido los permisos necesarios.
-     *
-     **/
-    private boolean checkPermits(String permission){
-        if (Build.VERSION.SDK_INT >= 6) {
-            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                return true;
-            }
+    @Override
+    public void onBackPressed() {
+        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
         } else {
-            return false;
+            super.onBackPressed();
         }
-        return false;
     }
 
     @Override
@@ -144,46 +160,80 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     }
 
     /**
-     * setRecyclerView: Se cargan todos los contactos con getAllContacts en el RecyclerView, y se
-     * ancla el itemTouchHelper para la eliminación de contactos al RecyclerView
-     * */
-    private void setRecyclerView() {
-        rv = findViewById(R.id.recycler_view_contacts);
-        contacts = sql.getAllContacts();
-
-        adapter = new AgendaAdapter(this, getApplicationContext());
-        adapter.setContactList(contacts);
-
-        LinearLayoutManager lm = new LinearLayoutManager(this);
-        rv.setLayoutManager(lm);
-        rv.setHasFixedSize(false);
-        rv.setAdapter(adapter);
-
-        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter));
-        touchHelper.attachToRecyclerView(rv);
-    }
-
-    private void setFAB() {
-        addContact = findViewById(R.id.fab_add_contact);
-        addContact.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                startActivity(goTo);
-            }
-        });
-    }
-
-    /**
      * onContactClicked: Handler para el click de un contacto para pasar a ContactOverview
      * @param num: PHONE_NUMBER del contacto en la posición clickada del RecyclerView
      * */
     @Override
     public void onContactClicked(String num) {
+        closeBottomSheet();
         Intent goTo = new Intent(this, ContactOverview.class);
         goTo.putExtra(OVERVIEW_MODE, MODE);
         goTo.putExtra(NUMBER_OF_CONTACTS, num);
         startActivity(goTo);
+    }
+
+    /**
+     * onLongContactClicked: Expande el bottom sheet para acciones recurrentes con los contactos
+     * @param number: PHONE_NUMBER del contacto en la posición clickada del RecyclerView
+     * @param name: NAME del contacto en la posición clickada del RecyclerView
+     * @param phone: PHONE del contacto en la posición clickada del RecyclerView
+     * @param home: HOME_ADDRESS del contacto en la posición clickada del RecyclerView
+     * @param email: EMAIL del contacto en la posición clickada del RecyclerView
+     * @param bubble: COLOR_BUBBLE del contacto en la posición clickada del RecyclerView
+     * @param favorite: FAVOURITE del contacto en la posición clickada del RecyclerView
+     * @param position: Posición del contacto en el RecyclerView
+     * */
+    @Override
+    public void onLongContactClicked(final String number, final String name, final String phone,
+                                     final String home, final String email, final String bubble,
+                                     final String favorite, final String date, final int position) {
+        bsb.setState(BottomSheetBehavior.STATE_EXPANDED);
+        title_bottom_sheet.setText(name);
+        if (favorite.equals("1")) {
+            fav_button.setText(getString(R.string.favourite_sheet));
+        } else {
+            fav_button.setText(getString(R.string.delete_fav_sheet));
+        }
+
+        if (!date.equals(getString(R.string.schedule_day))) {
+            date_bottom_sheet.setVisibility(View.VISIBLE);
+            String text = getString(R.string.date_sheet) + ": " + date;
+            date_bottom_sheet.setText(text);
+        } else {
+            date_bottom_sheet.setVisibility(View.GONE);
+        }
+
+        view_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+                onContactClicked(number);
+            }
+        });
+        fav_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final ContactEntity c;
+                bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+                if (favorite.equals("1")) {
+                    c = new ContactEntity(name, number, phone, home, email, bubble, "0", date);
+                } else {
+                    c = new ContactEntity(name, number, phone, home, email, bubble, "1", date);
+                }
+                sql.updateContact(c);
+                contacts = sql.getAllContacts();
+                adapter.setContactList(contacts);
+            }
+        });
+        del_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+                sql.deleteContact(number);
+                contacts = sql.getAllContacts();
+                adapter.setContactList(contacts);
+            }
+        });
     }
 
     /**
@@ -201,6 +251,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         m.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
             @Override
             public boolean onMenuItemActionExpand(MenuItem menuItem) {
+                closeBottomSheet();
                 openKeyboard();
                 return true;
             }
@@ -216,6 +267,118 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         searchWidget = (SearchView) m.getActionView();
         setSearchWidget();
         return true;
+    }
+
+    /**
+     * onOptionsItemSelected: Se administran las opciones del menú, en este caso la exportación
+     * de contactos a o desde la tarjeta SD de todos los contactos
+     * Se verifica en cada botón si los permisos están correctamente permitidos
+     *
+     * @param item: item seleccionado del menu
+     * */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.export_to_contacts:
+                closeBottomSheet();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkPermits(permissions[0])) {
+                        ActivityCompat.requestPermissions(this, new String[]{permissions[0]}, CODE_WRITE_ES);
+                    } else {
+                        exportToSD();
+                    }
+                } else {
+                    exportToSD();
+                }
+                break;
+            case R.id.export_from_contacts:
+                closeBottomSheet();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkPermits(permissions[1])) {
+                        ActivityCompat.requestPermissions(this, new String[]{permissions[1]}, CODE_READ_ES);
+                    } else {
+                        sql.deleteAllContacts();
+                        importFromSD();
+                    }
+                } else {
+                    sql.deleteAllContacts();
+                    importFromSD();
+                }
+                break;
+            case R.id.export_from_content_provider:
+                closeBottomSheet();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkPermits(permissions[2])) {
+                        ActivityCompat.requestPermissions(this, new String[]{permissions[2]}, CODE_READ_CONTACT);
+                    } else {
+                        sql.deleteAllContacts();
+                        importFromContacts();
+                    }
+                } else {
+                    sql.deleteAllContacts();
+                    importFromContacts();
+                }
+                break;
+        }
+        return true;
+    }
+
+    /**
+     * checkPermits: Método que verifica si se han permitido los permisos necesarios.
+     *
+     **/
+    private boolean checkPermits(String permission){
+        if (Build.VERSION.SDK_INT >= 6) {
+            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+        return false;
+    }
+
+    /**
+     * setRecyclerView: Se cargan todos los contactos con getAllContacts en el RecyclerView, y se
+     * ancla el itemTouchHelper para la eliminación de contactos al RecyclerView
+     * */
+    private void setRecyclerView() {
+        rv = findViewById(R.id.recycler_view_contacts);
+        contacts = sql.getAllContacts();
+
+        adapter = new AgendaAdapter(this, getApplicationContext(), bsb);
+        adapter.setContactList(contacts);
+
+        LinearLayoutManager lm = new LinearLayoutManager(this);
+        rv.setLayoutManager(lm);
+        rv.setHasFixedSize(false);
+        rv.setAdapter(adapter);
+
+        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter, bsb));
+        touchHelper.attachToRecyclerView(rv);
+    }
+
+    private void setFloatingActionButton() {
+        addContact = findViewById(R.id.fab_add_contact);
+        addContact.setScaleX(0);
+        addContact.setScaleY(0);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            final Interpolator interpolator = AnimationUtils.loadInterpolator(getBaseContext(), android.R.interpolator.fast_out_slow_in);
+            addContact.animate()
+                    .scaleX(1)
+                    .scaleY(1)
+                    .setInterpolator(interpolator)
+                    .setDuration(600);
+        }
+
+        addContact.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                startActivity(goTo);
+            }
+        });
     }
 
     /**
@@ -250,57 +413,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     }
 
     /**
-     * onOptionsItemSelected: Se administran las opciones del menú, en este caso la exportación
-     * de contactos a o desde la tarjeta SD de todos los contactos
-     * Se verifica en cada botón si los permisos están correctamente permitidos
-     *
-     * @param item: item seleccionado del menu
-     * */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.export_to_contacts:
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[0])) {
-                        ActivityCompat.requestPermissions(this, new String[]{permissions[0]}, CODE_WRITE_ES);
-                    } else {
-                        exportToSD();
-                    }
-                } else {
-                    exportToSD();
-                }
-                break;
-            case R.id.export_from_contacts:
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[1])) {
-                        ActivityCompat.requestPermissions(this, new String[]{permissions[1]}, CODE_READ_ES);
-                    } else {
-                        sql.deleteAllContacts();
-                        importFromSD();
-                    }
-                } else {
-                    sql.deleteAllContacts();
-                    importFromSD();
-                }
-                break;
-            case R.id.export_from_content_provider:
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[2])) {
-                        ActivityCompat.requestPermissions(this, new String[]{permissions[2]}, CODE_READ_CONTACT);
-                    } else {
-                        sql.deleteAllContacts();
-                        importFromContacts();
-                    }
-                } else {
-                    sql.deleteAllContacts();
-                    importFromContacts();
-                }
-                break;
-        }
-        return true;
-    }
-
-    /**
      * importFromSD: Recoge el PATH al archivo contacts.cnt de la SD del teléfono y se lee el archivo.
      * Además se parsea el String devuelto.
      * */
@@ -331,6 +443,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * parseJsonAndPopulateRecyclerView: Parsea el String que contiene el JSON con todos los contactos y
      * popula el RecyclerView con los mismos.
      * Se elimna la tabla de CONTACTS y se popula de nuevo con cada contacto importado.
+     * No se importan las citas.
      * */
     private void parseJsonAndPopulateRecyclerView(String jsonObj) {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
@@ -351,7 +464,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                 String bubble = colors[r.nextInt(colors.length)];
                 String favourite = info.getString(favouriteJSON);
 
-                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite);
+                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite, getString(R.string.schedule_day));
                 contacts.add(c);
                 sql.insertContact(c);
             }
@@ -503,7 +616,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         "",
                         "",
                         colors[r.nextInt(colors.length)],
-                        "1"
+                        "1",
+                        getString(R.string.schedule_day)
                 );
                 contacts.add(c);
                 try {
@@ -529,6 +643,12 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             searchWidget.clearFocus();
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(searchWidget.getWindowToken(), 0);
+        }
+    }
+
+    private void closeBottomSheet() {
+        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
         }
     }
 }

@@ -3,37 +3,43 @@ package com.example.android.agendasimple;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
+import java.io.File;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
-import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
     private ContactClickListener listener;
     private Context ctx;
+    private BottomSheetBehavior bsb;
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
-    public AgendaAdapter(ContactClickListener listener, Context ctx) {
+    public AgendaAdapter(ContactClickListener listener, Context ctx, BottomSheetBehavior bsb) {
         this.listener = listener;
         this.ctx = ctx;
+        this.bsb = bsb;
     }
 
     @NonNull
@@ -52,15 +58,29 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     @Override
     public void onBindViewHolder(@NonNull Contact holder, int i) {
         final int position = holder.getAdapterPosition();
-        Drawable icon = ContextCompat.getDrawable(ctx, R.drawable.background_circle);
-        icon.setColorFilter(Color.parseColor(contacts.get(position).getCOLOR_BUBBLE()), PorterDuff.Mode.SRC_ATOP);
-        holder.icon_contact.setBackground(icon);
+        final ContactEntity c = contacts.get(position);
+        final Bitmap bitmap = isImageInContact(c.getPHONE_NUMBER(), c.getNAME());
 
-        holder.name_contact.setText(contacts.get(position).getNAME());
-        holder.number_contact.setText(contacts.get(position).getPHONE_NUMBER());
-        holder.initial_contact.setText(contacts.get(position).getNAME().substring(0, 1));
+        DrawableCompat.setTint(holder.icon_contact.getDrawable(), Color.parseColor(c.getCOLOR_BUBBLE()));
+        if (bitmap != null) {
+            holder.setIsRecyclable(false);
+            holder.icon_contact.setImageBitmap(bitmap);
+            holder.initial_contact.setVisibility(View.GONE);
+        } else {
+            holder.initial_contact.setVisibility(View.VISIBLE);
+        }
 
-        if (contacts.get(position).getFAVOURITE().equals("0")) {
+        if (!c.getDATE().equals(ctx.getString(R.string.schedule_day))) {
+            holder.has_date.setVisibility(View.VISIBLE);
+        } else {
+            holder.has_date.setVisibility(View.GONE);
+        }
+
+        holder.name_contact.setText(c.getNAME());
+        holder.number_contact.setText(c.getPHONE_NUMBER());
+        holder.initial_contact.setText(c.getNAME().substring(0, 1));
+
+        if (c.getFAVOURITE().equals("0")) {
             holder.fav.setVisibility(View.VISIBLE);
         } else {
             holder.fav.setVisibility(View.GONE);
@@ -75,12 +95,15 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
                     public boolean onMenuItemClick(MenuItem item) {
                         switch (item.getItemId()) {
                             case R.id.whatsapp_to:
+                                closeBottomSheet();
                                 openWhatsappConversation(position, view.getContext());
                                 break;
                             case R.id.call_to:
+                                closeBottomSheet();
                                 callDial(position, view.getContext());
                                 break;
                             case R.id.mail_to:
+                                closeBottomSheet();
                                 sendMailTo(position, view.getContext());
                                 break;
                         }
@@ -178,22 +201,56 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
     public ArrayList<ContactEntity> getContactList() { return this.contacts; }
 
-    public interface ContactClickListener {
-        void onContactClicked(String number);
+    /**
+     * isImageInContact: Hace retrieve de la imagen asociada al contacto
+     * @param number: número del contacto
+     * @param name: nombre del contacto
+     * @return Bitmap de la imagen
+     * */
+    private Bitmap isImageInContact(String number, String name) {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), ctx.getString(R.string.app_name));
+            if (dir.exists()) {
+                File file = new File(dir, number + "_" + name + ".png");
+                if (file.exists()) return BitmapFactory.decodeFile(file.getPath());
+            } else {
+                Toast.makeText(ctx, ctx.getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(ctx, ctx.getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+        }
+        return null;
     }
 
-    class Contact extends RecyclerView.ViewHolder implements View.OnClickListener {
+    private void closeBottomSheet() {
+        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+        }
+    }
 
-        TextView icon_contact, initial_contact, name_contact, number_contact, fav, open_menu;
+    public interface ContactClickListener {
+        void onContactClicked(String number);
+        void onLongContactClicked(String number, String name, String phone,
+                                  String home, String email, String bubble,
+                                  String favorite, String date, int position);
+    }
+
+    class Contact extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+
+        TextView initial_contact, name_contact, number_contact, open_menu;
+        ImageView icon_contact, fav, has_date;
 
         public Contact(@NonNull View itemView) {
             super(itemView);
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
             icon_contact = itemView.findViewById(R.id.icon_contact);
             initial_contact = itemView.findViewById(R.id.initial_contact);
             name_contact = itemView.findViewById(R.id.name_contact);
             number_contact = itemView.findViewById(R.id.number_contact);
             fav = itemView.findViewById(R.id.favorite_rv);
+            has_date = itemView.findViewById(R.id.date_rv);
             open_menu = itemView.findViewById(R.id.open_menu);
         }
 
@@ -201,6 +258,20 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         public void onClick(View view) {
             String num = contacts.get(getAdapterPosition()).getPHONE_NUMBER();
             listener.onContactClicked(num);
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            String num = contacts.get(getAdapterPosition()).getPHONE_NUMBER();
+            String name = contacts.get(getAdapterPosition()).getNAME();
+            String phone = contacts.get(getAdapterPosition()).getPHONE();
+            String home = contacts.get(getAdapterPosition()).getHOME_ADDRESS();
+            String email = contacts.get(getAdapterPosition()).getEMAIL();
+            String favorite = contacts.get(getAdapterPosition()).getFAVOURITE();
+            String bubble = contacts.get(getAdapterPosition()).getCOLOR_BUBBLE();
+            String date = contacts.get(getAdapterPosition()).getDATE();
+            listener.onLongContactClicked(num, name, phone, home, email, bubble, favorite, date, getAdapterPosition());
+            return true;
         }
     }
 

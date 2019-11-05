@@ -1,60 +1,91 @@
 package com.example.android.agendasimple;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
-import android.content.Context;
+import android.app.Activity;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
+import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.inputmethod.EditorInfo;
+import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Calendar;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 public class ContactOverview extends AppCompatActivity {
 
-    private TextView nameHint, numberHint, phoneHint, homeHint, emailHint;
-    private EditText editName, editNumber, editPhone, editHome, editEmail;
-    private TextView nameClear, numberClear, phoneClear, homeClear, emailClear;
-    private TextView guideName, guideNumber, guidePhone;
-    private TextView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon;
+    private TextInputEditText inputName, inputNumber, inputPhone, inputHome, inputEmail;
+    private FloatingActionButton checkContact;
+    private AppBarLayout appbar;
+    private CollapsingToolbarLayout collapsingToolbar;
+    private Toolbar toolbar;
+
+    private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon, headerImage, bookmarkIcon;
+    private TextView inputDate, date_display, time_display;
+    private Button add_scheduled, cancel_scheduled;
     private Toast mToast;
+    private AlertDialog alert, alarmBuilder;
     private Menu menu;
-    private AlertDialog alert;
+    private ProgressBar savingContact;
 
     private ContactEntity contact;
     private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
     private String NUMBER, FAVOURITE = "1";
+    private final int RESULT_LOAD_IMG = 123;
+    private String timeToDisplay, dateToDisplay;
 
     private boolean isLikedPressed = false;
+    private boolean isOverflown = false;
+
+    private Pattern namePattern = Pattern.compile("[A-Za-zñáéíóúÑÁÉÍÓÚ A-Za-z]+");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_overview);
-
-        getSupportActionBar().setHomeButtonEnabled(true);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Intent i = getIntent();
         if (i.hasExtra(MainActivity.OVERVIEW_MODE)) {
@@ -69,232 +100,13 @@ public class ContactOverview extends AppCompatActivity {
         }
     }
 
+    /**
+     * onBackPressed: Funcionalidad de validación de los campos al pulsar el botón de hardware 'atrás'
+     * */
     @Override
     public void onBackPressed() {
-        if (mode == 1) {
-            validateAndInsertContact();
-        } else {
-            validateAndUpdateContact();
-        }
+        checkErrors();
     }
-
-    /**
-     * setViews: Configura las vistas iniciales
-     *            0 = Se rellenan al entrar a la actividad desde un contacto ya existente
-     *            1 = Se quedan vacios para poder añadir un contacto
-     *
-     * Se crean y establecen numerosos eventos para embellecer la UI como:
-     *            el uso de IME Options para pasar a otro EditText (setHierarchyBetweenEditTextsOnImeOpts),
-     *            el recuento de letras permitidas por campo (setHandlersOfTextOnChange),
-     *            el cambio de color del label de cada EditText al estar activo (setEditHints) o
-     *            la administración y visibilidad de los botones para eliminar texto (setClearButtons).
-     *
-     * Si se accede a esta actividad para hacer un update del contacto, los colores de los iconos y
-     * la actionBar/statusBar se cambian al mismo que la burbuja de MainActivity relativa al contacto.
-     * (setUIToBubbleColor)
-     */
-    private void setViews() {
-
-        nameHint = findViewById(R.id.hint_name);
-        editName = findViewById(R.id.input_name);
-        guideName = findViewById(R.id.guide_count_name);
-        numberHint = findViewById(R.id.hint_number);
-        editNumber = findViewById(R.id.input_number);
-        guideNumber = findViewById(R.id.guide_count_number);
-        phoneHint = findViewById(R.id.hint_home_phone);
-        editPhone = findViewById(R.id.input_home_phone);
-        guidePhone = findViewById(R.id.guide_count_home_phone);
-        homeHint = findViewById(R.id.hint_home);
-        editHome = findViewById(R.id.input_home);
-        emailHint = findViewById(R.id.hint_mail);
-        editEmail = findViewById(R.id.input_mail);
-        nameIcon = findViewById(R.id.icon_name);
-        numberIcon = findViewById(R.id.icon_number);
-        phoneIcon = findViewById(R.id.icon_home_phone);
-        homeIcon = findViewById(R.id.icon_home);
-        emailIcon = findViewById(R.id.icon_mail);
-        nameClear = findViewById(R.id.input_name_clear);
-        numberClear = findViewById(R.id.input_number_clear);
-        phoneClear = findViewById(R.id.input_home_phone_clear);
-        homeClear = findViewById(R.id.input_home_clear);
-        emailClear = findViewById(R.id.input_mail_clear);
-
-        setEditHints();
-        setHandlersOfTextOnChange();
-        setHierarchyBetweenEditTextsOnImeOpts();
-        setClearButtons();
-
-        if (mode == 0) {
-            setTitle(getString(R.string.modify_contact_title));
-            contact = MainActivity.sql.getContact(NUMBER);
-            setContact();
-        } else {
-            setTitle(getString(R.string.contact_overview_label));
-            editName.requestFocus();
-        }
-    }
-
-    private void setContact() {
-        int color = Color.parseColor(contact.getCOLOR_BUBBLE());
-
-        if (Build.VERSION.SDK_INT >= 21) {
-            getSupportActionBar().setBackgroundDrawable(new ColorDrawable(color));
-            Window w = getWindow();
-            w.setStatusBarColor(color);
-
-            setUIToBubbleColor(nameIcon, R.drawable.ic_account, color);
-            setUIToBubbleColor(numberIcon, R.drawable.ic_smartphone, color);
-            setUIToBubbleColor(phoneIcon, R.drawable.ic_call, color);
-            setUIToBubbleColor(homeIcon, R.drawable.ic_home, color);
-            setUIToBubbleColor(emailIcon, R.drawable.ic_email, color);
-        }
-
-        editName.setText(contact.getNAME());
-        editNumber.setText(contact.getPHONE_NUMBER());
-        editPhone.setText(contact.getPHONE());
-        editHome.setText(contact.getHOME_ADDRESS());
-        editEmail.setText(contact.getEMAIL());
-    }
-
-    // Start of UI and UX methods
-
-    private void setUIToBubbleColor(TextView t, int drawable, int color) {
-        Drawable ic_name = ContextCompat.getDrawable(this, drawable);
-        ic_name.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-        t.setBackground(ic_name);
-    }
-
-    private void setEditHints() {
-        setOnFocusChangeListeners(editName, nameHint);
-        setOnFocusChangeListeners(editNumber, numberHint);
-        setOnFocusChangeListeners(editPhone, phoneHint);
-        setOnFocusChangeListeners(editHome, homeHint);
-        setOnFocusChangeListeners(editEmail, emailHint);
-    }
-
-    private void setOnFocusChangeListeners(EditText e, final TextView hint) {
-        e.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean focused) {
-                if (focused) hint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.colorAccent));
-                else hint.setTextColor(ContextCompat.getColor(getApplicationContext(),
-                        R.color.text));
-            }
-        });
-    }
-
-    private void setHandlersOfTextOnChange() {
-        setOnTextChangeListeners(editName, editNumber, guideName, nameClear);
-        setOnTextChangeListeners(editNumber, editPhone, guideNumber, numberClear);
-        setOnTextChangeListeners(editPhone, editHome, guidePhone, phoneClear);
-        setOnTextChangeListeners(editHome, null, null, homeClear);
-        setOnTextChangeListeners(editEmail, null, null, emailClear);
-    }
-
-    private void setOnTextChangeListeners(final EditText initial, final EditText next, final TextView t,
-                                          final TextView clear) {
-        initial.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                int curr = initial.getText().toString().length();
-                String count;
-                if (curr != 0) {
-                    clear.setVisibility(View.VISIBLE);
-                    if (initial == editName) {
-                        if (curr <= 20) {
-                            count = curr + "/20";
-                            t.setText(count);
-                        } else {
-                            initial.setText(initial.getText().toString().substring(0, curr - 1));
-                            initial.clearFocus();
-                            next.requestFocus();
-                        }
-                    } else if (initial == editNumber || initial == editPhone) {
-                        if (curr <= 12) {
-                            count = curr + "/12";
-                            t.setText(count);
-                        } else {
-                            initial.setText(initial.getText().toString().substring(0, curr - 1));
-                            initial.clearFocus();
-                            next.requestFocus();
-                        }
-                    }
-                } else {
-                    clear.setVisibility(View.GONE);
-                    if (initial == editName) {
-                        count = getString(R.string.guideline_name);
-                        t.setText(count);
-                    } else if (initial == editNumber || initial == editPhone){
-                        count = getString(R.string.guideline_number);
-                        t.setText(count);
-                    }
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) { }
-        });
-    }
-
-    private void setHierarchyBetweenEditTextsOnImeOpts() {
-        setOnEditorActionListeners(editName, editNumber);
-        setOnEditorActionListeners(editNumber, editPhone);
-        setOnEditorActionListeners(editPhone, editHome);
-        setOnEditorActionListeners(editHome, editEmail);
-        setOnEditorActionListeners(editEmail, null);
-    }
-
-    private void setOnEditorActionListeners(final TextView focused, final TextView next) {
-        if (focused != editEmail) {
-            focused.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                    if (i == EditorInfo.IME_ACTION_DONE) {
-                        focused.clearFocus();
-                        next.requestFocus();
-                        return true;
-                    }
-                    return false;
-                }
-            });
-        } else {
-            focused.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                    if (i == EditorInfo.IME_ACTION_DONE) {
-                        focused.clearFocus();
-                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(editEmail.getWindowToken(), 0);
-                        return true;
-                    }
-                    return false;
-                }
-            });
-        }
-    }
-
-    private void setClearButtons() {
-        setOnClickListenersClear(nameClear, editName);
-        setOnClickListenersClear(numberClear, editNumber);
-        setOnClickListenersClear(phoneClear, editPhone);
-        setOnClickListenersClear(homeClear, editHome);
-        setOnClickListenersClear(emailClear, editEmail);
-    }
-
-    private void setOnClickListenersClear(final TextView clearButton, final TextView text) {
-        clearButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                text.setText("");
-            }
-        });
-    }
-
-    // End of UI and UX methods
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -302,13 +114,23 @@ public class ContactOverview extends AppCompatActivity {
         this.menu = menu;
         if (mode == 0) {
             if (contact.getFAVOURITE().equals("0")) {
-                menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart_filled));
+                menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
                 FAVOURITE = "0";
                 isLikedPressed = true;
             } else {
-                menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart));
+                menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
                 FAVOURITE = "1";
             }
+        }
+
+        if (mode == 0) {
+            if (getImageFromStorage() != null) {
+                menu.getItem(0).setVisible(true);
+            } else {
+                menu.getItem(0).setVisible(false);
+            }
+        } else {
+            menu.getItem(0).setVisible(false);
         }
         return true;
     }
@@ -318,25 +140,358 @@ public class ContactOverview extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
             case R.id.menu_save:
-                if (mode == 1) {
-                    validateAndInsertContact();
-                } else {
-                    validateAndUpdateContact();
-                }
+                checkErrors();
                 break;
-            case R.id.menu_favorite:
+            case R.id.menu_fav:
                 if (!isLikedPressed) {
-                    menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart_filled));
+                    menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
                     FAVOURITE = "0";
                     isLikedPressed = true;
                 } else {
-                    menu.getItem(0).setIcon(ContextCompat.getDrawable(this, R.drawable.ic_heart));
+                    menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
                     FAVOURITE = "1";
                     isLikedPressed = false;
                 }
                 break;
+            case R.id.menu_remove_img:
+                removeImageStorage();
+                break;
         }
         return true;
+    }
+
+    /**
+     * onActivityResult: Recoge la imagen de la galería
+     * */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK && requestCode == RESULT_LOAD_IMG) {
+            try {
+                final Uri imageUri = data.getData();
+                final InputStream imageStream = getContentResolver().openInputStream(imageUri);
+                final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+                headerImage.setImageBitmap(rotate(selectedImage, 90));
+                toolbar.setBackgroundColor(Color.TRANSPARENT);
+                menu.getItem(0).setVisible(true);
+            } catch (NullPointerException | IOException e) {
+                e.printStackTrace();
+                makeToast(getString(R.string.insertion_image_error));
+            }
+        } else {
+            makeToast(getString(R.string.insertion_image_error));
+        }
+    }
+
+    /**
+     * setViews: Busca y configura los elementos de la vista actual
+     */
+    private void setViews() {
+        inputName = findViewById(R.id.tiet_name);
+        inputNumber = findViewById(R.id.tiet_number);
+        inputPhone = findViewById(R.id.tiet_home_phone);
+        inputHome = findViewById(R.id.tiet_home);
+        inputEmail = findViewById(R.id.tiet_mail);
+        inputDate = findViewById(R.id.add_date);
+
+        nameIcon = findViewById(R.id.icon_name);
+        numberIcon = findViewById(R.id.icon_number);
+        phoneIcon = findViewById(R.id.icon_home_phone);
+        homeIcon = findViewById(R.id.icon_home);
+        emailIcon = findViewById(R.id.icon_mail);
+        bookmarkIcon = findViewById(R.id.icon_date);
+
+        appbar = findViewById(R.id.appBarLayout);
+        collapsingToolbar = findViewById(R.id.collapsingToolbar);
+        toolbar = findViewById(R.id.toolbar);
+
+        headerImage = findViewById(R.id.headerImage);
+        savingContact = findViewById(R.id.savingContact);
+
+        setAppBar();
+        createScheduledDateDialog();
+
+        final TextInputLayout layoutName = findViewById(R.id.tiet_name_layout);
+        final TextInputLayout layoutNumber = findViewById(R.id.tiet_number_layout);
+        final TextInputLayout layoutPhone = findViewById(R.id.tiet_home_phone_layout);
+
+        checkContact = findViewById(R.id.floating_share);
+
+        setTextWatchers(inputName, layoutName);
+        setTextWatchers(inputNumber, layoutNumber);
+        setTextWatchers(inputPhone, layoutPhone);
+        setFloatingActionButton();
+
+        if (mode == 0) {
+            collapsingToolbar.setTitle(getString(R.string.modify_contact_title));
+            contact = MainActivity.sql.getContact(NUMBER);
+            setContact();
+        } else {
+            collapsingToolbar.setTitle(getString(R.string.contact_overview_label));
+            final int color = ContextCompat.getColor(this, R.color.colorPrimary);
+            setUIToBubbleColor(nameIcon, color);
+            setUIToBubbleColor(numberIcon, color);
+            setUIToBubbleColor(phoneIcon, color);
+            setUIToBubbleColor(homeIcon, color);
+            setUIToBubbleColor(emailIcon, color);
+            setUIToBubbleColor(bookmarkIcon, color);
+        }
+    }
+
+    /**
+     * setContact: Para cuando se quiera modificar un contacto, se llama a esta función y se rellenan
+     * los campos que estén disponibles del contacto
+     * */
+    private void setContact() {
+        final int color = Color.parseColor(contact.getCOLOR_BUBBLE());
+        final Bitmap bitmap = getImageFromStorage();
+
+        if (Build.VERSION.SDK_INT >= 21) {
+            Window w = getWindow();
+            w.setStatusBarColor(color);
+
+            setUIToBubbleColor(nameIcon, color);
+            setUIToBubbleColor(numberIcon, color);
+            setUIToBubbleColor(phoneIcon, color);
+            setUIToBubbleColor(homeIcon, color);
+            setUIToBubbleColor(emailIcon, color);
+            setUIToBubbleColor(bookmarkIcon, color);
+        }
+
+        appbar.setBackgroundColor(color);
+        collapsingToolbar.setContentScrimColor(color);
+
+        if (bitmap != null) {
+            headerImage.setImageBitmap(bitmap);
+            toolbar.setBackgroundColor(Color.TRANSPARENT);
+        } else {
+            toolbar.setBackgroundColor(color);
+        }
+
+        inputName.setText(contact.getNAME());
+        inputNumber.setText(contact.getPHONE_NUMBER());
+        inputPhone.setText(contact.getPHONE());
+        inputHome.setText(contact.getHOME_ADDRESS());
+        inputEmail.setText(contact.getEMAIL());
+        inputDate.setText(contact.getDATE());
+        if (!inputDate.getText().toString().equals(getString(R.string.schedule_day))) {
+            timeToDisplay = contact.getDATE().substring(inputDate.getText().length() - 5);
+            dateToDisplay = contact.getDATE().substring(0, inputDate.getText().length() - 7);
+        }
+    }
+
+    /**
+     * setAppBar: Configuración de la toolbar de Material
+     * */
+    private void setAppBar() {
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDefaultDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    /**
+     * setFloatingActionButton: Configuración y animación del FAB de agregar imagen de contacto
+     * */
+    private void setFloatingActionButton() {
+        checkContact.setScaleX(0);
+        checkContact.setScaleY(0);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            final Interpolator interpolator = AnimationUtils.loadInterpolator(getBaseContext(), android.R.interpolator.fast_out_slow_in);
+            checkContact.animate()
+                    .scaleX(1)
+                    .scaleY(1)
+                    .setInterpolator(interpolator)
+                    .setDuration(600);
+        }
+
+        checkContact.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideKeyboard();
+                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                photoPickerIntent.setType("image/*");
+                startActivityForResult(photoPickerIntent, RESULT_LOAD_IMG);
+            }
+        });
+    }
+
+    /**
+     * setUIToBubbleColor: Cambio de color de los iconos en base al BUBBLE_COLOR del contacto asignado
+     * aleatoriamente en su creación
+     * @param color: Color a pintar
+     * @param t: ImageView conteniendo el icono a colorear
+     */
+    private void setUIToBubbleColor(ImageView t, int color) {
+        DrawableCompat.setTint(t.getDrawable(), color);
+    }
+
+    /**
+     * setTextWatchers: Evento para manejar el error en los campos de NAME, NUMBER y PHONE_NUMBER si
+     * hay un número de caracteres erróneo
+     * @param text: Texto de donde escuchar el contador del texto
+     * @param layout: Layout que contiene a text que contiene el número máximo válido de caracteres
+     * */
+    private void setTextWatchers(final TextInputEditText text, final TextInputLayout layout) {
+        text.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (charSequence.length() > layout.getCounterMaxLength()) {
+                    isOverflown = true;
+                    text.setError(getString(R.string.overflow_chars));
+                } else {
+                    isOverflown = false;
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) { }
+        });
+    }
+
+    /**
+     * createScheduledDateDialog: Creación del custom dialog para la adición de una cita con un contacto
+     * */
+    private void createScheduledDateDialog() {
+        inputDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideKeyboard();
+
+                View customView = getLayoutInflater().inflate(R.layout.create_alert_dialog, null);
+                time_display = customView.findViewById(R.id.et_show_time);
+                date_display = customView.findViewById(R.id.et_show_date);
+                add_scheduled = customView.findViewById(R.id.add_button);
+                cancel_scheduled = customView.findViewById(R.id.button_cancel);
+
+                if (timeToDisplay != null && dateToDisplay != null) {
+                    add_scheduled.setText(getString(R.string.modify_scheduled_date));
+                    cancel_scheduled.setVisibility(View.VISIBLE);
+                    time_display.setText(timeToDisplay);
+                    time_display.setTextColor(Color.BLACK);
+                    date_display.setText(dateToDisplay);
+                    date_display.setTextColor(Color.BLACK);
+                } else {
+                    add_scheduled.setText(getString(R.string.finish_scheduled_date));
+                    cancel_scheduled.setVisibility(View.GONE);
+                }
+
+                AlertDialog.Builder alarm = new AlertDialog.Builder(ContactOverview.this)
+                        .setView(customView);
+                alarmBuilder = alarm.create();
+                alarmBuilder.show();
+            }
+        });
+    }
+
+    /**
+     * openDatePickerDialog: Abre el DatePicker con la fecha actual y guarda la fecha seleccionada
+     * */
+    public void openDatePickerDialog(View view) {
+        DatePickerDialog mDatePicker;
+        Calendar mcurrentDate = Calendar.getInstance();
+        final int mYear = mcurrentDate.get(Calendar.YEAR);
+        final int mMonth = mcurrentDate.get(Calendar.MONTH);
+        final int mDay = mcurrentDate.get(Calendar.DAY_OF_MONTH);
+
+        mDatePicker = new DatePickerDialog(ContactOverview.this, R.style.PickerDialogTheme,
+                new DatePickerDialog.OnDateSetListener() {
+                    public void onDateSet(DatePicker datepicker, int selectedyear,
+                                          int selectedmonth, int selectedday) {
+                        String day = "0";
+                        if (selectedday <= 9) day = day + selectedday;
+                        else day = Integer.toString(selectedday);
+
+                        String date = day + "/" +
+                                (selectedmonth+1) + "/" +
+                                selectedyear;
+                        date_display.setText(date);
+                        date_display.setTextColor(Color.BLACK);
+                        dateToDisplay = date;
+                    }
+                }, mYear, mMonth, mDay);
+        mDatePicker.show();
+    }
+
+    /**
+     * openTimePickerDialog: Abre el TimePicker con la hora actual y guarda la hora seleccionada
+     * */
+    public void openTimePickerDialog(View view) {
+        TimePickerDialog mTimePicker;
+        Calendar mcurrentTime = Calendar.getInstance();
+        final int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
+        final int minute = mcurrentTime.get(Calendar.MINUTE);
+
+        mTimePicker = new TimePickerDialog(this, R.style.PickerDialogTheme,
+                new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker timePicker, int hourSel, int minuteSel) {
+                        String min = "0", hour = "0";
+                        if (hourSel >= 0 && hourSel <= 9) hour = hour + hourSel;
+                        else hour = Integer.toString(hourSel);
+                        if (minuteSel >= 0 && minuteSel <= 9) min = min + minuteSel;
+                        else min = Integer.toString(minuteSel);
+
+                        String text = hour + ":" + min;
+                        time_display.setText(text);
+                        time_display.setTextColor(Color.BLACK);
+                        timeToDisplay = text;
+                    }
+                }, hour, minute, true);
+        mTimePicker.show();
+    }
+
+    /**
+     * addDate: Añade o modifica la cita rellenada
+     * */
+    public void addDate(View view) {
+        if (timeToDisplay != null && dateToDisplay != null) {
+            alarmBuilder.dismiss();
+            String schedule = dateToDisplay + " " + getString(R.string.at_time) + " " + timeToDisplay;
+            inputDate.setText(schedule);
+        } else {
+            makeToast(getString(R.string.error_field));
+        }
+    }
+
+    /**
+     * cancelDate: Elimina la cita
+     * */
+    public void cancelDate(View view) {
+        alarmBuilder.dismiss();
+        timeToDisplay = null;
+        dateToDisplay = null;
+        inputDate.setText(getString(R.string.schedule_day));
+    }
+
+    /**
+     * validateTextFields: Validación de los campos de NAME, EMAIL y NUMBER. NAME y NUMBER son los únicos
+     * obligatorios.
+     * */
+    private boolean validateTextFields(String name, String email, String number) {
+        boolean n, num, em;
+
+        if (name.trim().isEmpty() && !namePattern.matcher(name).matches()) {
+            inputName.setError(getString(R.string.error_field));
+            n = false;
+        } else { n = true; }
+
+        if (number.trim().isEmpty()) {
+            inputNumber.setError(getString(R.string.error_field));
+            num = false;
+        } else { num = true; }
+
+        if (!email.trim().isEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            inputEmail.setError(getString(R.string.error_field));
+            em = false;
+        } else { em = true; }
+
+        hideKeyboard();
+        return n && num && em;
     }
 
     /**
@@ -346,26 +501,35 @@ public class ContactOverview extends AppCompatActivity {
      *      Si el contacto es válido --> INSERT
      * */
     private void validateAndInsertContact() {
-        String name = editName.getText().toString();
-        String number = editNumber.getText().toString();
-        String phone = editPhone.getText().toString();
-        String address = editHome.getText().toString();
-        String email = editEmail.getText().toString();
+        hideKeyboard();
+
+        String name = inputName.getText().toString();
+        String number = inputNumber.getText().toString();
+        String phone = inputPhone.getText().toString();
+        String address = inputHome.getText().toString();
+        String email = inputEmail.getText().toString();
+        String date = inputDate.getText().toString();
         Random r = new Random();
 
-        if (editName.getText().toString().trim().isEmpty() ||
-                editNumber.getText().toString().trim().isEmpty()) {
-            createDialog(getString(R.string.invalid_insertion_1));
-        }
-        else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
-                address.trim().isEmpty() && email.trim().isEmpty()) {
-            finish();
-        }
-        else {
-            ContactEntity c = new ContactEntity(name, number, phone, address, email,
-                    MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE);
-            MainActivity.sql.insertContact(c);
-            finish();
+        if (validateTextFields(name, email, number) && !isOverflown) {
+            if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
+                    address.trim().isEmpty() && email.trim().isEmpty()) {
+                finish();
+            } else if (inputName.getText().toString().trim().isEmpty() ||
+                    inputNumber.getText().toString().trim().isEmpty()) {
+                createDialog(getString(R.string.invalid_insertion_1));
+            } else {
+                String scheduledDate = checkIsDate(date);
+                ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                        MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE, scheduledDate);
+                try {
+                    Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
+                    saveImageToStorage(bitmap);
+                    insert(c);
+                } catch (Exception e) {
+                    insert(c);
+                }
+            }
         }
     }
 
@@ -381,42 +545,209 @@ public class ContactOverview extends AppCompatActivity {
      *                      - No: DELETE & UPDATE
      * */
     private void validateAndUpdateContact() {
-        String name = editName.getText().toString();
-        String number = editNumber.getText().toString();
-        String phone = editPhone.getText().toString();
-        String address = editHome.getText().toString();
-        String email = editEmail.getText().toString();
+        hideKeyboard();
 
-        if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
-            contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
-            contact.getEMAIL().equals(email)) {
-            if (!FAVOURITE.equals(contact.getFAVOURITE())) {
-                ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                MainActivity.sql.updateContact(c);
-                finish();
-            } else {
-                finish();
-            }
-        } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
-                address.trim().isEmpty() && email.trim().isEmpty()) {
-            MainActivity.sql.deleteContact(NUMBER);
-            finish();
-        } else {
-            if (name.trim().isEmpty() || number.trim().isEmpty()) {
-                createDialog(getString(R.string.invalid_insertion_1));
-            } else {
-                if (MainActivity.sql.getContact(number) != null) {
-                    ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                    MainActivity.sql.updateContact(c);
-                    finish();
+        String name = inputName.getText().toString();
+        String number = inputNumber.getText().toString();
+        String phone = inputPhone.getText().toString();
+        String address = inputHome.getText().toString();
+        String email = inputEmail.getText().toString();
+        String date = inputDate.getText().toString();
+
+        if (validateTextFields(name, email, number) && !isOverflown) {
+            if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
+                    contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
+                    contact.getEMAIL().equals(email)) {
+                if (!FAVOURITE.equals(contact.getFAVOURITE())) {
+                    String scheduledDate = checkIsDate(date);
+                    ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                            contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
+                    isOkForUpdate(c);
                 } else {
-                    MainActivity.sql.deleteContact(contact.getPHONE_NUMBER());
-                    ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                    MainActivity.sql.insertContact(c);
-                    finish();
+                    String scheduledDate = checkIsDate(date);
+                    ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                            contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
+                    isOkForUpdate(c);
+                }
+            } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
+                    address.trim().isEmpty() && email.trim().isEmpty()) {
+                if (!MainActivity.sql.deleteContact(NUMBER)) {
+                    makeToast(getString(R.string.deletion_failed));
+                } else {
+                    if (!removeImageStorage()) {
+                        Toast.makeText(this, R.string.error_delete_img, Toast.LENGTH_SHORT).show();
+                    }
+                }
+                finish();
+            } else {
+                if (name.trim().isEmpty() || number.trim().isEmpty()) {
+                    createDialog(getString(R.string.invalid_insertion_1));
+                } else {
+                    if (MainActivity.sql.getContact(number) != null) {
+                        String scheduledDate = checkIsDate(date);
+                        ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                                contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
+                        isOkForUpdate(c);
+                    } else {
+                        if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+                            if (!removeImageStorage()) {
+                                Toast.makeText(this, R.string.error_delete_img, Toast.LENGTH_SHORT).show();
+                            } else {
+                                String scheduledDate = checkIsDate(date);
+                                ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                                        contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
+                                try {
+                                    Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
+                                    saveImageToStorage(bitmap);
+                                    insert(c);
+                                } catch (Exception e) {
+                                    removeImageStorage();
+                                    insert(c);
+                                }
+                            }
+                        } else {
+                            makeToast(getString(R.string.deletion_failed));
+                        }
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Métodos para guardar, recoger y eliminar la imagen del storage
+     * */
+    private void saveImageToStorage(final Bitmap bitmap) {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            boolean isDirCreated = dir.mkdir();
+            if (dir.exists() || isDirCreated) {
+                try {
+                    File file = new File(dir, inputNumber.getText().toString() + "_" + inputName.getText().toString() + ".png");
+                    FileOutputStream out = new FileOutputStream(file);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                    out.flush();
+                    out.close();
+                } catch (IOException err) {
+                    makeToast(getString(R.string.export_to_SD));
+                }
+            } else {
+                makeToast(getString(R.string.export_to_SD));
+            }
+        } else {
+            makeToast(getString(R.string.export_to_SD));
+        }
+    }
+
+    private Bitmap getImageFromStorage() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            if (dir.exists()) {
+                File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
+                if (file.exists()) return BitmapFactory.decodeFile(file.getPath());
+            } else {
+                makeToast(getString(R.string.import_to_SD));
+            }
+        } else {
+            makeToast(getString(R.string.import_to_SD));
+        }
+        return null;
+    }
+
+    private boolean removeImageStorage() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            if (dir.exists()) {
+                File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
+                headerImage.setImageBitmap(null);
+                collapsingToolbar.setContentScrimColor(Color.parseColor(contact.getCOLOR_BUBBLE()));
+                menu.getItem(0).setVisible(false);
+                return file.delete();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * checkErrors: Validación de errores en base a los textWatchers y Patterns.
+     * */
+    private void checkErrors() {
+        if (inputName.getError() != null || inputNumber.getError() != null) {
+            createDialog(getString(R.string.error_on_back));
+        } else {
+            savingContact.setVisibility(View.VISIBLE);
+            if (mode == 1) {
+                validateAndInsertContact();
+            } else {
+                validateAndUpdateContact();
+            }
+            savingContact.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * checkIsDate: Verificador de si hay una nueva cita o no
+     * @param date: Fecha y hora de la cita
+     * */
+    private String checkIsDate(String date) {
+        String s = getString(R.string.schedule_day);
+        if (!date.equals(getString(R.string.schedule_day))) {
+            s = date;
+        }
+        return s;
+    }
+
+    /**
+     * isOkForUpdate: Update de un contacto con su imagen de contacto
+     * @param c: Contacto completo modificado
+     * */
+    private void isOkForUpdate(ContactEntity c) {
+        try {
+            Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
+            saveImageToStorage(bitmap);
+            update(c);
+        } catch (Exception e) {
+            removeImageStorage();
+            update(c);
+        }
+    }
+
+    private void insert(ContactEntity c) {
+        if (MainActivity.sql.insertContact(c)) {
+            finish();
+        } else {
+            createDialog(getString(R.string.insertion_failed));
+        }
+    }
+
+    private void update(ContactEntity c) {
+        if (MainActivity.sql.updateContact(c)) {
+            finish();
+        } else {
+            makeToast(getString(R.string.update_failed));
+        }
+    }
+
+    private void hideKeyboard() {
+        inputName.clearFocus();
+        inputNumber.clearFocus();
+        inputPhone.clearFocus();
+        inputHome.clearFocus();
+        inputEmail.clearFocus();
+
+        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(findViewById(android.R.id.content).getWindowToken(), 0);
+    }
+
+    private void makeToast(String msg) {
+        if (mToast != null) {
+            mToast.cancel();
+        }
+        mToast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
+        mToast.show();
     }
 
     private void createDialog(String title) {
@@ -437,5 +768,17 @@ public class ContactOverview extends AppCompatActivity {
         });
         alert = builder.create();
         alert.show();
+    }
+
+    /**
+     * rotate: Rotación de la imagen de la galería en base a unos grados
+     * @param bitmap: Imagen de la galería
+     * @param degrees: Grados a rotar
+     * @return: Nuevo bitmap (imagen) rotada
+     * */
+    private Bitmap rotate(Bitmap bitmap, float degrees) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degrees);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 }

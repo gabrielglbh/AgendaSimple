@@ -18,6 +18,7 @@
     <string name="insertion_failed">El número introducido ya está guardado.</string>
     <string name="deletion_failed">Algo ha salido mal, eliminación fallida.</string>
     <string name="update_failed">Algo ha salido mal, modificación fallida.</string>
+    <string name="insertion_image_error">Imagen no cargada.</string>
     <string name="update_equal">Cambios descartados.</string>
     <string name="empty_update">Contacto vacío descartado.</string>
     <string name="invalid_phone_call">Número de teléfono inválido.</string>
@@ -26,14 +27,36 @@
     <string name="success_export_to">Los contactos han sido exportados correctamente.</string>
     <string name="import_to_SD">Algo ha salido mal durante la importación desde la tarjeta SD.</string>
     <string name="success_import_to">Los contactos han sido importados correctamente.</string>
+
     <string name="favorite_contact">Favorito</string>
     <string name="yes_dialog">Sí</string>
     <string name="msg_dialog">¿Quieres descartar el contacto?</string>
     <string name="no_cont_to_export">No tienes contactos para exportar.</string>
     <string name="no_cont_to_import">Ningún contacto ha sido importado.</string>
+
     <string name="chooser_email">Email vía…</string>
     <string name="email_field_empty">El campo de email está vacío.</string>
     <string name="whastapp_pop">Enviar WhastApp</string>
     <string name="call_to">Llamar</string>
     <string name="mail_to">Enviar Correo</string>
+    <string name="overflow_chars">Se ha sobrepasado el límite de caracteres.</string>
+    <string name="error_field">Campo no válido.</string>
+    <string name="error_on_back">La información el contacto no es válida.</string>
+
+    <string name="remove_image">Eliminar imagen</string>
+    <string name="error_delete_img">Algo ha salido mal durante el borrado de la imagen.</string>
+    <string name="see_contact_sheet">Ver Contacto</string>
+    <string name="favourite_sheet">Favorito</string>
+    <string name="delete_contact_sheet">Eliminar Contacto</string>
+    <string name="delete_fav_sheet">Eliminar Favorito</string>
+
+    <string name="add_date">Añadir Cita</string>
+    <string name="date_sheet">Cita</string>
+    <string name="date_programmed">Cita Programada</string>
+    <string name="schedule_day">Programa una cita</string>
+    <string name="select_date">Selecciona Fecha</string>
+    <string name="select_time">Selecciona Hora</string>
+    <string name="cancel_scheduled_date">Cancelar</string>
+    <string name="finish_scheduled_date">Añadir</string>
+    <string name="modify_scheduled_date">Modificar</string>
 </resources>
