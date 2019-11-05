@@ -309,6 +309,7 @@ public class ContactOverview extends AppCompatActivity {
         checkContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                hideKeyboard();
                 Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
                 photoPickerIntent.setType("image/*");
                 startActivityForResult(photoPickerIntent, RESULT_LOAD_IMG);
@@ -359,6 +360,8 @@ public class ContactOverview extends AppCompatActivity {
         inputDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                hideKeyboard();
+
                 View customView = getLayoutInflater().inflate(R.layout.create_alert_dialog, null);
                 time_display = customView.findViewById(R.id.et_show_time);
                 date_display = customView.findViewById(R.id.et_show_date);
@@ -729,8 +732,14 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     private void hideKeyboard() {
+        inputName.clearFocus();
+        inputNumber.clearFocus();
+        inputPhone.clearFocus();
+        inputHome.clearFocus();
+        inputEmail.clearFocus();
+
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+        imm.hideSoftInputFromWindow(findViewById(android.R.id.content).getWindowToken(), 0);
     }
 
     private void makeToast(String msg) {
