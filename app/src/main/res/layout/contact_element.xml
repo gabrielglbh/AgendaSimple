@@ -11,12 +11,12 @@
     android:paddingTop="15dp">
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/icon_contact_card"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:id="@+id/icon_contact_card"
         android:layout_centerHorizontal="true"
-        app:cardElevation="0dp"
         app:cardCornerRadius="28dp"
+        app:cardElevation="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -100,12 +100,12 @@
         app:layout_constraintTop_toTopOf="@+id/icon_contact_card" />
 
     <ImageView
-        android:id="@+id/has_date"
+        android:id="@+id/date_rv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:src="@drawable/ic_calendar"
-        android:tint="@color/colorAccent"
+        android:src="@drawable/ic_date"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/number_contact"
         app:layout_constraintStart_toEndOf="@+id/number_contact"
         app:layout_constraintTop_toBottomOf="@+id/name_contact" />

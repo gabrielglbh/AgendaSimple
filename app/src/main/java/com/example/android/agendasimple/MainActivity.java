@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
     private LinearLayout bottomSheet;
     private Button view_button, fav_button, del_button;
-    private TextView title_bottom_sheet;
+    private TextView title_bottom_sheet, date_bottom_sheet;
     private BottomSheetBehavior bsb;
 
     // ID que se pasa a ContactOverview para saber si se está modificando el contacto o añadiendo uno nuevo
@@ -105,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         view_button = findViewById(R.id.button_see);
         fav_button = findViewById(R.id.button_favourite);
         del_button = findViewById(R.id.button_delete);
+        date_bottom_sheet = findViewById(R.id.has_date_bottom_sheet);
         bsb = BottomSheetBehavior.from(bottomSheet);
 
         setRecyclerView();
@@ -198,6 +199,14 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             fav_button.setText(getString(R.string.favourite_sheet));
         } else {
             fav_button.setText(getString(R.string.delete_fav_sheet));
+        }
+
+        if (!date.equals(getString(R.string.schedule_day))) {
+            date_bottom_sheet.setVisibility(View.VISIBLE);
+            String text = getString(R.string.date_sheet) + ": " + date;
+            date_bottom_sheet.setText(text);
+        } else {
+            date_bottom_sheet.setVisibility(View.GONE);
         }
 
         view_button.setOnClickListener(new View.OnClickListener() {

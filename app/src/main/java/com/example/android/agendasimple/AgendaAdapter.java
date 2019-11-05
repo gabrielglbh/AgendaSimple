@@ -250,8 +250,8 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             name_contact = itemView.findViewById(R.id.name_contact);
             number_contact = itemView.findViewById(R.id.number_contact);
             fav = itemView.findViewById(R.id.favorite_rv);
+            has_date = itemView.findViewById(R.id.date_rv);
             open_menu = itemView.findViewById(R.id.open_menu);
-            has_date = itemView.findViewById(R.id.has_date);
         }
 
         @Override

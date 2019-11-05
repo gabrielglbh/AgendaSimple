@@ -275,8 +275,10 @@ public class ContactOverview extends AppCompatActivity {
         inputHome.setText(contact.getHOME_ADDRESS());
         inputEmail.setText(contact.getEMAIL());
         inputDate.setText(contact.getDATE());
-        timeToDisplay = contact.getDATE().substring(inputDate.getText().length() - 5);
-        dateToDisplay = contact.getDATE().substring(0, inputDate.getText().length() - 7);
+        if (!inputDate.getText().toString().equals(getString(R.string.schedule_day))) {
+            timeToDisplay = contact.getDATE().substring(inputDate.getText().length() - 5);
+            dateToDisplay = contact.getDATE().substring(0, inputDate.getText().length() - 7);
+        }
     }
 
     /**

@@ -51,6 +51,7 @@
     <string name="delete_fav_sheet">Eliminar Favorito</string>
 
     <string name="add_date">Añadir Cita</string>
+    <string name="date_sheet">Cita</string>
     <string name="date_programmed">Cita Programada</string>
     <string name="schedule_day">Programa una cita</string>
     <string name="select_date">Selecciona Fecha</string>

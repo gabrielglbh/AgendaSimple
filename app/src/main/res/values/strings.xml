@@ -57,6 +57,7 @@
     <string name="delete_fav_sheet" translatable="true">Delete Favourite</string>
 
     <string name="add_date" translatable="true">Add Date</string>
+    <string name="date_sheet" translatable="true">Date</string>
     <string name="date_programmed" translatable="true">Scheduled Date</string>
     <string name="schedule_day" translatable="true">Schedule a date</string>
     <string name="select_date" translatable="true">Select Date</string>
