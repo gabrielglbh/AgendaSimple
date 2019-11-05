@@ -70,6 +70,12 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             holder.initial_contact.setVisibility(View.VISIBLE);
         }
 
+        if (!c.getDATE().equals(ctx.getString(R.string.schedule_day))) {
+            holder.has_date.setVisibility(View.VISIBLE);
+        } else {
+            holder.has_date.setVisibility(View.GONE);
+        }
+
         holder.name_contact.setText(c.getNAME());
         holder.number_contact.setText(c.getPHONE_NUMBER());
         holder.initial_contact.setText(c.getNAME().substring(0, 1));
@@ -227,13 +233,13 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         void onContactClicked(String number);
         void onLongContactClicked(String number, String name, String phone,
                                   String home, String email, String bubble,
-                                  String favorite, int position);
+                                  String favorite, String date, int position);
     }
 
     class Contact extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
         TextView initial_contact, name_contact, number_contact, open_menu;
-        ImageView icon_contact, fav;
+        ImageView icon_contact, fav, has_date;
 
         public Contact(@NonNull View itemView) {
             super(itemView);
@@ -245,6 +251,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             number_contact = itemView.findViewById(R.id.number_contact);
             fav = itemView.findViewById(R.id.favorite_rv);
             open_menu = itemView.findViewById(R.id.open_menu);
+            has_date = itemView.findViewById(R.id.has_date);
         }
 
         @Override
@@ -262,7 +269,8 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             String email = contacts.get(getAdapterPosition()).getEMAIL();
             String favorite = contacts.get(getAdapterPosition()).getFAVOURITE();
             String bubble = contacts.get(getAdapterPosition()).getCOLOR_BUBBLE();
-            listener.onLongContactClicked(num, name, phone, home, email, bubble, favorite, getAdapterPosition());
+            String date = contacts.get(getAdapterPosition()).getDATE();
+            listener.onLongContactClicked(num, name, phone, home, email, bubble, favorite, date, getAdapterPosition());
             return true;
         }
     }

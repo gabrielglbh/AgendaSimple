@@ -2,8 +2,10 @@ package com.example.android.agendasimple.utils;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -12,7 +14,9 @@ import com.example.android.agendasimple.AgendaAdapter;
 import com.example.android.agendasimple.MainActivity;
 import com.example.android.agendasimple.R;
 import com.example.android.agendasimple.sql.ContactEntity;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
@@ -26,10 +30,12 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
     private Drawable icon;
     private ColorDrawable background;
     private Context ctx;
+    private BottomSheetBehavior bsb;
 
-    public SwipeHandler(Context ctx, AgendaAdapter adapter) {
+    public SwipeHandler(Context ctx, AgendaAdapter adapter, BottomSheetBehavior bsb) {
         this.adapter = adapter;
         this.ctx = ctx;
+        this.bsb = bsb;
         icon = ContextCompat.getDrawable(ctx, R.drawable.ic_delete);
         background = new ColorDrawable(ContextCompat.getColor(ctx, R.color.danger));
     }
@@ -60,9 +66,13 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
         int position = viewHolder.getAdapterPosition();
         ArrayList<ContactEntity> contacts = adapter.getContactList();
         ContactEntity contact = contacts.get(viewHolder.getAdapterPosition());
+        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+        }
         if(!MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
             Toast.makeText(ctx, ctx.getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
         } else {
+            removeImageStorage(contact.getPHONE_NUMBER(), contact.getNAME());
             contacts.remove(position);
             adapter.setContactList(contacts);
         }
@@ -108,5 +118,17 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
         }
         background.draw(c);
         icon.draw(c);
+    }
+
+    private boolean removeImageStorage(String number, String name) {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), ctx.getString(R.string.app_name));
+            if (dir.exists()) {
+                File file = new File(dir, number + "_" + name + ".png");
+                return file.delete();
+            }
+        }
+        return false;
     }
 }

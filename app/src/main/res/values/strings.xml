@@ -66,5 +66,5 @@
     <string name="cancel_scheduled_date" translatable="true">Cancel</string>
     <string name="finish_scheduled_date" translatable="true">Add</string>
     <string name="modify_scheduled_date" translatable="true">Modify</string>
-    <string name="at_time" translatable="true">at</string>
+    <string name="at_time" translatable="false">\u0040</string>
 </resources>

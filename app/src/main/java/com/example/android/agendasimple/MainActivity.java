@@ -191,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     @Override
     public void onLongContactClicked(final String number, final String name, final String phone,
                                      final String home, final String email, final String bubble,
-                                     final String favorite, final int position) {
+                                     final String favorite, final String date, final int position) {
         bsb.setState(BottomSheetBehavior.STATE_EXPANDED);
         title_bottom_sheet.setText(name);
         if (favorite.equals("1")) {
@@ -213,9 +213,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                 final ContactEntity c;
                 bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
                 if (favorite.equals("1")) {
-                    c = new ContactEntity(name, number, phone, home, email, bubble, "0");
+                    c = new ContactEntity(name, number, phone, home, email, bubble, "0", date);
                 } else {
-                    c = new ContactEntity(name, number, phone, home, email, bubble, "1");
+                    c = new ContactEntity(name, number, phone, home, email, bubble, "1", date);
                 }
                 sql.updateContact(c);
                 contacts = sql.getAllContacts();
@@ -363,7 +363,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         rv.setHasFixedSize(false);
         rv.setAdapter(adapter);
 
-        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter));
+        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter, bsb));
         touchHelper.attachToRecyclerView(rv);
     }
 
@@ -452,6 +452,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * parseJsonAndPopulateRecyclerView: Parsea el String que contiene el JSON con todos los contactos y
      * popula el RecyclerView con los mismos.
      * Se elimna la tabla de CONTACTS y se popula de nuevo con cada contacto importado.
+     * No se importan las citas.
      * */
     private void parseJsonAndPopulateRecyclerView(String jsonObj) {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
@@ -472,7 +473,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                 String bubble = colors[r.nextInt(colors.length)];
                 String favourite = info.getString(favouriteJSON);
 
-                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite);
+                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite, getString(R.string.schedule_day));
                 contacts.add(c);
                 if (!sql.insertContact(c)) {
                     Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
@@ -626,7 +627,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         "",
                         "",
                         colors[r.nextInt(colors.length)],
-                        "1"
+                        "1",
+                        getString(R.string.schedule_day)
                 );
                 contacts.add(c);
                 if(!sql.insertContact(c)) {

@@ -9,9 +9,10 @@ public class ContactEntity {
     private String EMAIL;
     private String COLOR_BUBBLE;
     private String FAVOURITE; // 0 si es favorito, 1 si no
+    private String DATE; // Si no hay citas = getString(R.string.schedule_day)
 
     public ContactEntity(String NAME, String PHONE_NUMBER, String PHONE, String HOME_ADDRESS,
-                         String EMAIL, String COLOR_BUBBLE, String FAVOURITE) {
+                         String EMAIL, String COLOR_BUBBLE, String FAVOURITE, String DATE) {
         setNAME(NAME);
         setPHONE_NUMBER(PHONE_NUMBER);
         setPHONE(PHONE);
@@ -19,6 +20,7 @@ public class ContactEntity {
         setEMAIL(EMAIL);
         setCOLOR_BUBBLE(COLOR_BUBBLE);
         setFAVOURITE(FAVOURITE);
+        setDATE(DATE);
     }
 
     public String getNAME() {
@@ -49,6 +51,10 @@ public class ContactEntity {
         return FAVOURITE;
     }
 
+    public String getDATE() {
+        return DATE;
+    }
+
     private void setNAME(String NAME) {
         this.NAME = NAME;
     }
@@ -75,5 +81,9 @@ public class ContactEntity {
 
     private void setFAVOURITE(String FAVOURITE) {
         this.FAVOURITE = FAVOURITE;
+    }
+
+    public void setDATE(String DATE) {
+        this.DATE = DATE;
     }
 }

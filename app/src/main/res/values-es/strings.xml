@@ -58,5 +58,4 @@
     <string name="cancel_scheduled_date">Cancelar</string>
     <string name="finish_scheduled_date">Añadir</string>
     <string name="modify_scheduled_date">Modificar</string>
-    <string name="at_time">a las</string>
 </resources>

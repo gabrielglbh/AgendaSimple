@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -99,6 +100,9 @@ public class ContactOverview extends AppCompatActivity {
         }
     }
 
+    /**
+     * onBackPressed: Funcionalidad de validación de los campos al pulsar el botón de hardware 'atrás'
+     * */
     @Override
     public void onBackPressed() {
         checkErrors();
@@ -157,7 +161,7 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     /**
-     * Recoge la imagen de la galería
+     * onActivityResult: Recoge la imagen de la galería
      * */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -181,19 +185,7 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     /**
-     * setViews: Configura las vistas iniciales
-     *            0 = Se rellenan al entrar a la actividad desde un contacto ya existente
-     *            1 = Se quedan vacios para poder añadir un contacto
-     *
-     * Se crea la administración y visibilidad de los botones para eliminar texto (setClearButtons).
-     * Se crea el TextWatcher para los contadores de los campos de name, phone y number.
-     * Se crea el manejo del FAB.
-     * Se customiza el AppBar y el CollapseActionView.
-     * Se maneja el click del botón de añadir cita.
-     *
-     * Si se accede a esta actividad para hacer un update del contacto, los colores de los iconos y
-     * la actionBar/statusBar se cambian al mismo que la burbuja de MainActivity relativa al contacto.
-     * (setUIToBubbleColor)
+     * setViews: Busca y configura los elementos de la vista actual
      */
     private void setViews() {
         inputName = findViewById(R.id.tiet_name);
@@ -247,6 +239,10 @@ public class ContactOverview extends AppCompatActivity {
         }
     }
 
+    /**
+     * setContact: Para cuando se quiera modificar un contacto, se llama a esta función y se rellenan
+     * los campos que estén disponibles del contacto
+     * */
     private void setContact() {
         final int color = Color.parseColor(contact.getCOLOR_BUBBLE());
         final Bitmap bitmap = getImageFromStorage();
@@ -278,14 +274,23 @@ public class ContactOverview extends AppCompatActivity {
         inputPhone.setText(contact.getPHONE());
         inputHome.setText(contact.getHOME_ADDRESS());
         inputEmail.setText(contact.getEMAIL());
+        inputDate.setText(contact.getDATE());
+        timeToDisplay = contact.getDATE().substring(inputDate.getText().length() - 5);
+        dateToDisplay = contact.getDATE().substring(0, inputDate.getText().length() - 7);
     }
 
+    /**
+     * setAppBar: Configuración de la toolbar de Material
+     * */
     private void setAppBar() {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDefaultDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
+    /**
+     * setFloatingActionButton: Configuración y animación del FAB de agregar imagen de contacto
+     * */
     private void setFloatingActionButton() {
         checkContact.setScaleX(0);
         checkContact.setScaleY(0);
@@ -309,10 +314,22 @@ public class ContactOverview extends AppCompatActivity {
         });
     }
 
+    /**
+     * setUIToBubbleColor: Cambio de color de los iconos en base al BUBBLE_COLOR del contacto asignado
+     * aleatoriamente en su creación
+     * @param color: Color a pintar
+     * @param t: ImageView conteniendo el icono a colorear
+     */
     private void setUIToBubbleColor(ImageView t, int color) {
         DrawableCompat.setTint(t.getDrawable(), color);
     }
 
+    /**
+     * setTextWatchers: Evento para manejar el error en los campos de NAME, NUMBER y PHONE_NUMBER si
+     * hay un número de caracteres erróneo
+     * @param text: Texto de donde escuchar el contador del texto
+     * @param layout: Layout que contiene a text que contiene el número máximo válido de caracteres
+     * */
     private void setTextWatchers(final TextInputEditText text, final TextInputLayout layout) {
         text.addTextChangedListener(new TextWatcher() {
             @Override
@@ -334,8 +351,7 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     /**
-     * Métodos para la programación de la elección y display de la cita con un contacto:
-     * Dialog, DatePicker y TimePicker
+     * createScheduledDateDialog: Creación del custom dialog para la adición de una cita con un contacto
      * */
     private void createScheduledDateDialog() {
         inputDate.setOnClickListener(new View.OnClickListener() {
@@ -367,6 +383,9 @@ public class ContactOverview extends AppCompatActivity {
         });
     }
 
+    /**
+     * openDatePickerDialog: Abre el DatePicker con la fecha actual y guarda la fecha seleccionada
+     * */
     public void openDatePickerDialog(View view) {
         DatePickerDialog mDatePicker;
         Calendar mcurrentDate = Calendar.getInstance();
@@ -378,7 +397,11 @@ public class ContactOverview extends AppCompatActivity {
                 new DatePickerDialog.OnDateSetListener() {
                     public void onDateSet(DatePicker datepicker, int selectedyear,
                                           int selectedmonth, int selectedday) {
-                        String date = selectedday + "/" +
+                        String day = "0";
+                        if (selectedday <= 9) day = day + selectedday;
+                        else day = Integer.toString(selectedday);
+
+                        String date = day + "/" +
                                 (selectedmonth+1) + "/" +
                                 selectedyear;
                         date_display.setText(date);
@@ -389,6 +412,9 @@ public class ContactOverview extends AppCompatActivity {
         mDatePicker.show();
     }
 
+    /**
+     * openTimePickerDialog: Abre el TimePicker con la hora actual y guarda la hora seleccionada
+     * */
     public void openTimePickerDialog(View view) {
         TimePickerDialog mTimePicker;
         Calendar mcurrentTime = Calendar.getInstance();
@@ -399,9 +425,13 @@ public class ContactOverview extends AppCompatActivity {
                 new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker timePicker, int hourSel, int minuteSel) {
-                        String text = hourSel + ":";
-                        if (minuteSel >= 0 && minuteSel <= 9) text = text.concat("0" + minuteSel);
-                        else text = text.concat(Integer.toString(minuteSel));
+                        String min = "0", hour = "0";
+                        if (hourSel >= 0 && hourSel <= 9) hour = hour + hourSel;
+                        else hour = Integer.toString(hourSel);
+                        if (minuteSel >= 0 && minuteSel <= 9) min = min + minuteSel;
+                        else min = Integer.toString(minuteSel);
+
+                        String text = hour + ":" + min;
                         time_display.setText(text);
                         time_display.setTextColor(Color.BLACK);
                         timeToDisplay = text;
@@ -410,17 +440,22 @@ public class ContactOverview extends AppCompatActivity {
         mTimePicker.show();
     }
 
+    /**
+     * addDate: Añade o modifica la cita rellenada
+     * */
     public void addDate(View view) {
         if (timeToDisplay != null && dateToDisplay != null) {
             alarmBuilder.dismiss();
-            String schedule = getString(R.string.date_programmed) + ":\n" +
-                    dateToDisplay + " " + getString(R.string.at_time) + " " + timeToDisplay;
+            String schedule = dateToDisplay + " " + getString(R.string.at_time) + " " + timeToDisplay;
             inputDate.setText(schedule);
         } else {
             makeToast(getString(R.string.error_field));
         }
     }
 
+    /**
+     * cancelDate: Elimina la cita
+     * */
     public void cancelDate(View view) {
         alarmBuilder.dismiss();
         timeToDisplay = null;
@@ -429,7 +464,8 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     /**
-     * validateTextFields: Validación de los campos de Name y Email.
+     * validateTextFields: Validación de los campos de NAME, EMAIL y NUMBER. NAME y NUMBER son los únicos
+     * obligatorios.
      * */
     private boolean validateTextFields(String name, String email, String number) {
         boolean n, num, em;
@@ -467,6 +503,7 @@ public class ContactOverview extends AppCompatActivity {
         String phone = inputPhone.getText().toString();
         String address = inputHome.getText().toString();
         String email = inputEmail.getText().toString();
+        String date = inputDate.getText().toString();
         Random r = new Random();
 
         if (validateTextFields(name, email, number) && !isOverflown) {
@@ -477,14 +514,14 @@ public class ContactOverview extends AppCompatActivity {
                     inputNumber.getText().toString().trim().isEmpty()) {
                 createDialog(getString(R.string.invalid_insertion_1));
             } else {
+                String scheduledDate = checkIsDate(date);
                 ContactEntity c = new ContactEntity(name, number, phone, address, email,
-                        MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE);
+                        MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE, scheduledDate);
                 try {
                     Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
                     saveImageToStorage(bitmap);
                     insert(c);
                 } catch (Exception e) {
-                    removeImageStorage();
                     insert(c);
                 }
             }
@@ -510,30 +547,22 @@ public class ContactOverview extends AppCompatActivity {
         String phone = inputPhone.getText().toString();
         String address = inputHome.getText().toString();
         String email = inputEmail.getText().toString();
+        String date = inputDate.getText().toString();
 
         if (validateTextFields(name, email, number) && !isOverflown) {
             if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
                     contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
                     contact.getEMAIL().equals(email)) {
                 if (!FAVOURITE.equals(contact.getFAVOURITE())) {
-                    ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                    try {
-                        Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
-                        saveImageToStorage(bitmap);
-                        update(c);
-                    } catch (Exception e) {
-                        removeImageStorage();
-                        update(c);
-                    }
+                    String scheduledDate = checkIsDate(date);
+                    ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                            contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
+                    isOkForUpdate(c);
                 } else {
-                    try {
-                        Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
-                        saveImageToStorage(bitmap);
-                        finish();
-                    } catch (Exception e) {
-                        removeImageStorage();
-                        finish();
-                    }
+                    String scheduledDate = checkIsDate(date);
+                    ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                            contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
+                    isOkForUpdate(c);
                 }
             } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                     address.trim().isEmpty() && email.trim().isEmpty()) {
@@ -550,21 +579,18 @@ public class ContactOverview extends AppCompatActivity {
                     createDialog(getString(R.string.invalid_insertion_1));
                 } else {
                     if (MainActivity.sql.getContact(number) != null) {
-                        ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
-                        try {
-                            Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
-                            saveImageToStorage(bitmap);
-                            update(c);
-                        } catch (Exception e) {
-                            removeImageStorage();
-                            update(c);
-                        }
+                        String scheduledDate = checkIsDate(date);
+                        ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                                contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
+                        isOkForUpdate(c);
                     } else {
                         if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
                             if (!removeImageStorage()) {
                                 Toast.makeText(this, R.string.error_delete_img, Toast.LENGTH_SHORT).show();
                             } else {
-                                ContactEntity c = new ContactEntity(name, number, phone, address, email, contact.getCOLOR_BUBBLE(), FAVOURITE);
+                                String scheduledDate = checkIsDate(date);
+                                ContactEntity c = new ContactEntity(name, number, phone, address, email,
+                                        contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
                                 try {
                                     Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
                                     saveImageToStorage(bitmap);
@@ -641,17 +667,7 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     /**
-     * Métodos auxiliares para la validación de errores:
-     *
-     *  En los campos,
-     *  En la inserción, modificación y actualización
-     *
-     * También maneja:
-     *
-     *  El cierre del teclado virtual
-     *  La creación de toasts y alertDialogs
-     *  El check de permisos
-     *  Y la rotación de las imágenes
+     * checkErrors: Validación de errores en base a los textWatchers y Patterns.
      * */
     private void checkErrors() {
         if (inputName.getError() != null || inputNumber.getError() != null) {
@@ -664,6 +680,33 @@ public class ContactOverview extends AppCompatActivity {
                 validateAndUpdateContact();
             }
             savingContact.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * checkIsDate: Verificador de si hay una nueva cita o no
+     * @param date: Fecha y hora de la cita
+     * */
+    private String checkIsDate(String date) {
+        String s = getString(R.string.schedule_day);
+        if (!date.equals(getString(R.string.schedule_day))) {
+            s = date;
+        }
+        return s;
+    }
+
+    /**
+     * isOkForUpdate: Update de un contacto con su imagen de contacto
+     * @param c: Contacto completo modificado
+     * */
+    private void isOkForUpdate(ContactEntity c) {
+        try {
+            Bitmap bitmap = ((BitmapDrawable) headerImage.getDrawable()).getBitmap();
+            saveImageToStorage(bitmap);
+            update(c);
+        } catch (Exception e) {
+            removeImageStorage();
+            update(c);
         }
     }
 
@@ -716,6 +759,12 @@ public class ContactOverview extends AppCompatActivity {
         alert.show();
     }
 
+    /**
+     * rotate: Rotación de la imagen de la galería en base a unos grados
+     * @param bitmap: Imagen de la galería
+     * @param degrees: Grados a rotar
+     * @return: Nuevo bitmap (imagen) rotada
+     * */
     private Bitmap rotate(Bitmap bitmap, float degrees) {
         Matrix matrix = new Matrix();
         matrix.postRotate(degrees);
