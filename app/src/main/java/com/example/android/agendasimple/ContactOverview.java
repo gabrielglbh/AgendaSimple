@@ -620,11 +620,11 @@ public class ContactOverview extends AppCompatActivity {
     private void saveImageToStorage(final Bitmap bitmap) {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.file_path_contact_images));
             boolean isDirCreated = dir.mkdir();
             if (dir.exists() || isDirCreated) {
                 try {
-                    File file = new File(dir, inputNumber.getText().toString() + "_" + inputName.getText().toString() + ".png");
+                    File file = new File(dir, inputNumber.getText().toString() + ".png");
                     FileOutputStream out = new FileOutputStream(file);
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
                     out.flush();
@@ -643,9 +643,9 @@ public class ContactOverview extends AppCompatActivity {
     private Bitmap getImageFromStorage() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.file_path_contact_images));
             if (dir.exists()) {
-                File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
+                File file = new File(dir, contact.getPHONE_NUMBER() + ".png");
                 if (file.exists()) return BitmapFactory.decodeFile(file.getPath());
             } else {
                 makeToast(getString(R.string.import_to_SD));
@@ -659,9 +659,9 @@ public class ContactOverview extends AppCompatActivity {
     private boolean removeImageStorage() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.file_path_contact_images));
             if (dir.exists()) {
-                File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
+                File file = new File(dir, contact.getPHONE_NUMBER() + ".png");
                 headerImage.setImageBitmap(null);
                 collapsingToolbar.setContentScrimColor(Color.parseColor(contact.getCOLOR_BUBBLE()));
                 menu.getItem(0).setVisible(false);

@@ -59,7 +59,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     public void onBindViewHolder(@NonNull Contact holder, int i) {
         final int position = holder.getAdapterPosition();
         final ContactEntity c = contacts.get(position);
-        final String pathToBitmap = getImagePathFromContact(c.getPHONE_NUMBER(), c.getNAME());
+        final String pathToBitmap = getImagePathFromContact(c.getPHONE_NUMBER());
 
         if (pathToBitmap != null) {
             Picasso.get()
@@ -206,15 +206,14 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     /**
      * getImagePathFromContact: Hace retrieve de la imagen asociada al contacto
      * @param number: número del contacto
-     * @param name: nombre del contacto
      * @return Path de la imagen
      * */
-    private String getImagePathFromContact(String number, String name) {
+    private String getImagePathFromContact(String number) {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), ctx.getString(R.string.app_name));
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), ctx.getString(R.string.file_path_contact_images));
             if (dir.exists()) {
-                File file = new File(dir, number + "_" + name + ".png");
+                File file = new File(dir, number + ".png");
                 if (file.exists()) return file.getPath();
             } else {
                 Toast.makeText(ctx, ctx.getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();

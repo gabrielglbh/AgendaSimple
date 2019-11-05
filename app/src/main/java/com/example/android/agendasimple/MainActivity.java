@@ -71,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     // contacto seleccionado
     public static final String NUMBER_OF_CONTACTS = "NUMBER_CONTACT";
     public final int MODE = 0;
+    private boolean fromFAB = false;
 
     private final String nameJSON = "name";
     private final String numberJSON = "number";
@@ -120,6 +121,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     protected void onResume() {
         contacts = sql.getAllContacts();
         adapter.setContactList(contacts);
+        fromFAB = false;
         super.onResume();
     }
 
@@ -138,7 +140,11 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         switch (requestCode) {
             case CODE_WRITE_ES: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    exportToSD();
+                    if (fromFAB) {
+                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                        startActivity(goTo);
+                    }
+                    else exportToSD();
                 }
                 break;
             }
@@ -325,7 +331,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
     /**
      * checkPermits: Método que verifica si se han permitido los permisos necesarios.
-     *
      **/
     private boolean checkPermits(String permission){
         if (Build.VERSION.SDK_INT >= 6) {
@@ -364,7 +369,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         addContact.setScaleY(0);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            final Interpolator interpolator = AnimationUtils.loadInterpolator(getBaseContext(), android.R.interpolator.fast_out_slow_in);
+            final Interpolator interpolator = AnimationUtils.loadInterpolator(getBaseContext(),
+                    android.R.interpolator.fast_out_slow_in);
             addContact.animate()
                     .scaleX(1)
                     .scaleY(1)
@@ -375,8 +381,19 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         addContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                startActivity(goTo);
+                fromFAB = true;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkPermits(permissions[0])) {
+                        ActivityCompat.requestPermissions(MainActivity.this,
+                                new String[]{permissions[0]}, CODE_WRITE_ES);
+                    } else {
+                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                        startActivity(goTo);
+                    }
+                } else {
+                    Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                    startActivity(goTo);
+                }
             }
         });
     }
