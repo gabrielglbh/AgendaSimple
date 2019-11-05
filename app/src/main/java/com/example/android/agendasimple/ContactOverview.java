@@ -571,7 +571,7 @@ public class ContactOverview extends AppCompatActivity {
                 }
             } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                     address.trim().isEmpty() && email.trim().isEmpty()) {
-                if (!MainActivity.sql.deleteContact(NUMBER)) {
+                if (MainActivity.sql.deleteContact(NUMBER) == -1) {
                     makeToast(getString(R.string.deletion_failed));
                 } else {
                     if (!removeImageStorage()) {
@@ -589,7 +589,7 @@ public class ContactOverview extends AppCompatActivity {
                                 contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
                         isOkForUpdate(c);
                     } else {
-                        if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+                        if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER()) != -1) {
                             if (!removeImageStorage()) {
                                 Toast.makeText(this, R.string.error_delete_img, Toast.LENGTH_SHORT).show();
                             } else {
@@ -716,7 +716,7 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     private void insert(ContactEntity c) {
-        if (MainActivity.sql.insertContact(c)) {
+        if (MainActivity.sql.insertContact(c) != null) {
             finish();
         } else {
             createDialog(getString(R.string.insertion_failed));
@@ -724,7 +724,7 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     private void update(ContactEntity c) {
-        if (MainActivity.sql.updateContact(c)) {
+        if (MainActivity.sql.updateContact(c) != -1) {
             finish();
         } else {
             makeToast(getString(R.string.update_failed));

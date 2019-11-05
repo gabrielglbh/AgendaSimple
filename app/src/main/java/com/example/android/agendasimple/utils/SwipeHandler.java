@@ -69,7 +69,7 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
         if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
         }
-        if(!MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+        if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER()) == -1) {
             Toast.makeText(ctx, ctx.getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
         } else {
             removeImageStorage(contact.getPHONE_NUMBER(), contact.getNAME());

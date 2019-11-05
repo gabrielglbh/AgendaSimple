@@ -40,6 +40,7 @@ public class ContactContract extends ContentProvider {
         public static final String COLUMN_5 = "EMAIL";
         public static final String COLUMN_6 = "COLOR_BUBBLE";
         public static final String COLUMN_7 = "FAVOURITE";
+        public static final String COLUMN_8 = "DATE";
 
     }
 
@@ -127,7 +128,7 @@ public class ContactContract extends ContentProvider {
         if(res > 0){
             return ContactEntry.buildGenreUri(res);
         } else{
-            throw new UnsupportedOperationException("Unable to insert rows into: " + uri);
+            return null;
         }
         /*
         if (match == ITEM_ID) {
