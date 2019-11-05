@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Environment;
@@ -19,6 +18,7 @@ import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -59,14 +59,16 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     public void onBindViewHolder(@NonNull Contact holder, int i) {
         final int position = holder.getAdapterPosition();
         final ContactEntity c = contacts.get(position);
-        final Bitmap bitmap = isImageInContact(c.getPHONE_NUMBER(), c.getNAME());
+        final String pathToBitmap = getImagePathFromContact(c.getPHONE_NUMBER(), c.getNAME());
 
-        DrawableCompat.setTint(holder.icon_contact.getDrawable(), Color.parseColor(c.getCOLOR_BUBBLE()));
-        if (bitmap != null) {
-            holder.setIsRecyclable(false);
-            holder.icon_contact.setImageBitmap(bitmap);
+        if (pathToBitmap != null) {
+            Picasso.get()
+                    .load("file://" + pathToBitmap)
+                    .config(Bitmap.Config.ARGB_8888)
+                    .into(holder.icon_contact);
             holder.initial_contact.setVisibility(View.GONE);
         } else {
+            DrawableCompat.setTint(holder.icon_contact.getDrawable(), Color.parseColor(c.getCOLOR_BUBBLE()));
             holder.initial_contact.setVisibility(View.VISIBLE);
         }
 
@@ -202,18 +204,18 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
     public ArrayList<ContactEntity> getContactList() { return this.contacts; }
 
     /**
-     * isImageInContact: Hace retrieve de la imagen asociada al contacto
+     * getImagePathFromContact: Hace retrieve de la imagen asociada al contacto
      * @param number: número del contacto
      * @param name: nombre del contacto
-     * @return Bitmap de la imagen
+     * @return Path de la imagen
      * */
-    private Bitmap isImageInContact(String number, String name) {
+    private String getImagePathFromContact(String number, String name) {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), ctx.getString(R.string.app_name));
             if (dir.exists()) {
                 File file = new File(dir, number + "_" + name + ".png");
-                if (file.exists()) return BitmapFactory.decodeFile(file.getPath());
+                if (file.exists()) return file.getPath();
             } else {
                 Toast.makeText(ctx, ctx.getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
             }
