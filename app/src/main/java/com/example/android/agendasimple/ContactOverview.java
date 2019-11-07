@@ -64,7 +64,7 @@ public class ContactOverview extends AppCompatActivity {
     private Toolbar toolbar;
 
     private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon, headerImage, bookmarkIcon;
-    private TextView inputDate, date_display, time_display;
+    private TextView inputDate, date_display, time_display, title_dialog;
     private Button add_scheduled, cancel_scheduled;
     private Toast mToast;
     private AlertDialog alert, alarmBuilder;
@@ -175,6 +175,10 @@ public class ContactOverview extends AppCompatActivity {
                 headerImage.setImageBitmap(rotate(selectedImage, 90));
                 toolbar.setBackgroundColor(Color.TRANSPARENT);
                 menu.getItem(0).setVisible(true);
+                if (Build.VERSION.SDK_INT >= 21) {
+                    Window w = getWindow();
+                    w.setStatusBarColor(Color.TRANSPARENT);
+                }
             } catch (NullPointerException | IOException e) {
                 e.printStackTrace();
                 makeToast(getString(R.string.insertion_image_error));
@@ -249,7 +253,11 @@ public class ContactOverview extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= 21) {
             Window w = getWindow();
-            w.setStatusBarColor(color);
+            if (bitmap != null) {
+                w.setStatusBarColor(Color.TRANSPARENT);
+            } else {
+                w.setStatusBarColor(color);
+            }
 
             setUIToBubbleColor(nameIcon, color);
             setUIToBubbleColor(numberIcon, color);
@@ -363,12 +371,14 @@ public class ContactOverview extends AppCompatActivity {
                 hideKeyboard();
 
                 View customView = getLayoutInflater().inflate(R.layout.create_alert_dialog, null);
+                title_dialog = customView.findViewById(R.id.title_dialog);
                 time_display = customView.findViewById(R.id.et_show_time);
                 date_display = customView.findViewById(R.id.et_show_date);
                 add_scheduled = customView.findViewById(R.id.add_button);
                 cancel_scheduled = customView.findViewById(R.id.button_cancel);
 
                 if (timeToDisplay != null && dateToDisplay != null) {
+                    title_dialog.setText(getString(R.string.modify_date));
                     add_scheduled.setText(getString(R.string.modify_scheduled_date));
                     cancel_scheduled.setVisibility(View.VISIBLE);
                     time_display.setText(timeToDisplay);
@@ -376,6 +386,7 @@ public class ContactOverview extends AppCompatActivity {
                     date_display.setText(dateToDisplay);
                     date_display.setTextColor(Color.BLACK);
                 } else {
+                    title_dialog.setText(getString(R.string.add_date));
                     add_scheduled.setText(getString(R.string.finish_scheduled_date));
                     cancel_scheduled.setVisibility(View.GONE);
                 }

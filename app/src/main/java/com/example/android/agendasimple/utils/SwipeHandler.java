@@ -74,7 +74,7 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
         } else {
             removeImageStorage(contact.getPHONE_NUMBER(), contact.getNAME());
             contacts.remove(position);
-            adapter.setContactList(contacts);
+            adapter.notifyItemRemoved(position);
         }
     }
 

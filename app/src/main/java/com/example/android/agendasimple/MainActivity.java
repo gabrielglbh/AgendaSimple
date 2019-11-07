@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private SearchView searchWidget;
     public static DatabaseSQL sql;
     private ItemTouchHelper touchHelper;
+    private Menu menu;
 
     private LinearLayout bottomSheet;
     private Button view_button, fav_button, del_button;
@@ -72,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public static final String NUMBER_OF_CONTACTS = "NUMBER_CONTACT";
     public final int MODE = 0;
     private boolean fromFAB = false;
+    private boolean getDatesContacts = false;
 
     private final String nameJSON = "name";
     private final String numberJSON = "number";
@@ -90,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private final int CODE_READ_ES = 1;
     private final int CODE_READ_CONTACT = 2;
 
-    public static String[] colors = { "#008577", "#EC8C2E", "#21A763", "#DF2D2D", "#5383D6", "#E6C815", "#E072CC" };
+    public static String[] colors;
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
@@ -98,6 +101,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        colors = new String[]{
+                "#397A74",
+                "#E4A15F",
+                "#5FCF97",
+                "#DF5353",
+                "#5383D6",
+                "#E0C95E"
+        };
 
         sql = DatabaseSQL.getInstance(this);
 
@@ -117,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * onResume: Se cargan todos los contactos con getAllContacts en el RecyclerView, añadiendo
      * los nuevos contactos posibles
      * */
+    // TODO: notifyDataSetChanged()
     @Override
     protected void onResume() {
         contacts = sql.getAllContacts();
@@ -190,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * @param position: Posición del contacto en el RecyclerView
      * */
     @Override
+    // TODO: notifyDataSetChanged()
     public void onLongContactClicked(final String number, final String name, final String phone,
                                      final String home, final String email, final String bubble,
                                      final String favorite, final String date, final int position) {
@@ -236,8 +250,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             public void onClick(View view) {
                 bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
                 sql.deleteContact(number);
-                contacts = sql.getAllContacts();
-                adapter.setContactList(contacts);
+                contacts.remove(position);
+                adapter.notifyItemRemoved(position);
             }
         });
     }
@@ -272,6 +286,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
         searchWidget = (SearchView) m.getActionView();
         setSearchWidget();
+        this.menu = menu;
         return true;
     }
 
@@ -282,6 +297,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      *
      * @param item: item seleccionado del menu
      * */
+    // TODO: notifyDataSetChanged()
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
@@ -324,6 +340,17 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                     sql.deleteAllContacts();
                     importFromContacts();
                 }
+                break;
+            case R.id.get_date_contacts:
+                if (getDatesContacts) {
+                    menu.getItem(4).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_calendar_menu));
+                    contacts = sql.getAllContacts();
+                } else {
+                    menu.getItem(4).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_contacts));
+                    contacts = sql.getDatesWithContacts();
+                }
+                getDatesContacts = !getDatesContacts;
+                adapter.setContactList(contacts);
                 break;
         }
         return true;
@@ -402,6 +429,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * setSearchWidget: Se configura el SearchView encargado de la búsqueda de contactos
      * Si no hay texto que parsear, se cargan todos los contactos
      * */
+    // TODO: notifyDataSetChanged()
     private void setSearchWidget() {
         searchWidget.setQueryHint(getString(R.string.search_contact_hint));
         searchWidget.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -462,6 +490,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * Se elimna la tabla de CONTACTS y se popula de nuevo con cada contacto importado.
      * No se importan las citas.
      * */
+    // TODO: notifyDataSetChanged()
     private void parseJsonAndPopulateRecyclerView(String jsonObj) {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
         try {
@@ -588,6 +617,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * para sacar todos los contactos del teléfono y por cada uno de ellos se guarda en el fromato
      * adecuado para su importación a la aplicación de MiAgenda.
      * */
+    // TODO: notifyDataSetChanged()
     private void importFromContacts() {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
 
@@ -667,5 +697,19 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
         }
+    }
+
+    /**
+     * getNewPositionOfContact: Método para calcular la nueva posicion del contacto en la lista.
+     * @param id: Clave identificativa del contacto
+     * @return: posición nueva
+     * */
+    private int getNewPositionOfContact(String id) {
+        for (int x = 0; x < contacts.size(); x++) {
+            if (contacts.get(x).getPHONE_NUMBER().equals(id)) {
+                return x;
+            }
+        }
+        return -1;
     }
 }

@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
 
+import com.example.android.agendasimple.R;
 import com.example.android.agendasimple.contentProvider.ContactContract.ContactEntry;
 
 import java.util.ArrayList;
@@ -215,6 +216,38 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         Uri uri = ContactEntry.CONTENT_URI;
         ContentResolver cr = context.getContentResolver();
         Cursor c = cr.query(uri, null, ContactEntry.COLUMN_1 + " LIKE ?", new String[] { QUERY + "%" }, null);
+
+        if (c.getCount() > 0) {
+            ArrayList<ContactEntity> contacts = new ArrayList<>();
+            while (c.moveToNext()) {
+                contacts.add(new ContactEntity(
+                        c.getString(c.getColumnIndex(COLUMN_1)),
+                        c.getString(c.getColumnIndex(COLUMN_2)),
+                        c.getString(c.getColumnIndex(COLUMN_3)),
+                        c.getString(c.getColumnIndex(COLUMN_4)),
+                        c.getString(c.getColumnIndex(COLUMN_5)),
+                        c.getString(c.getColumnIndex(COLUMN_6)),
+                        c.getString(c.getColumnIndex(COLUMN_7)),
+                        c.getString(c.getColumnIndex(COLUMN_8))
+                ));
+            }
+            c.close();
+            return contacts;
+        } else {
+            c.close();
+            return null;
+        }
+    }
+
+    /**
+     * getDatesWithContacts: Query para cargar todos los contactos que tengan una cita programada
+     * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
+     * */
+    public ArrayList<ContactEntity> getDatesWithContacts(){
+        Uri uri = ContactEntry.CONTENT_URI;
+        ContentResolver cr = context.getContentResolver();
+        Cursor c = cr.query(uri, null, ContactEntry.COLUMN_8 + " NOT LIKE ?",
+                new String[] { "%" + context.getString(R.string.schedule_day) + "%" }, null);
 
         if (c.getCount() > 0) {
             ArrayList<ContactEntity> contacts = new ArrayList<>();

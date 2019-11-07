@@ -69,4 +69,6 @@
     <string name="finish_scheduled_date" translatable="true">Add</string>
     <string name="modify_scheduled_date" translatable="true">Modify</string>
     <string name="at_time" translatable="false">\u0040</string>
+    <string name="modify_date" translatable="true">Modify Date</string>
+    <string name="current_dates_menu" translatable="true">Current Dates</string>
 </resources>
