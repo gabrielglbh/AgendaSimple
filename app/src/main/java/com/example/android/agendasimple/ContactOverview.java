@@ -299,6 +299,29 @@ public class ContactOverview extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDefaultDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            boolean isShow = false;
+            int scrollRange = -1;
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if (scrollRange == -1) scrollRange = appBarLayout.getTotalScrollRange();
+
+                if (scrollRange + verticalOffset == 0) {
+                    isShow = true;
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        Window w = getWindow();
+                        w.setStatusBarColor(Color.parseColor(contact.getCOLOR_BUBBLE()));
+                    }
+                } else if (isShow) {
+                    isShow = false;
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        Window w = getWindow();
+                        w.setStatusBarColor(Color.TRANSPARENT);
+                    }
+                }
+            }
+        });
     }
 
     /**
