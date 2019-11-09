@@ -6,12 +6,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.exifinterface.media.ExifInterface;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -21,6 +23,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -172,7 +175,7 @@ public class ContactOverview extends AppCompatActivity {
                 final Uri imageUri = data.getData();
                 final InputStream imageStream = getContentResolver().openInputStream(imageUri);
                 final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
-                headerImage.setImageBitmap(rotate(selectedImage, 90));
+                headerImage.setImageBitmap(rotate(selectedImage, getRealPathFromURI(imageUri)));
                 toolbar.setBackgroundColor(Color.TRANSPARENT);
                 menu.getItem(0).setVisible(true);
                 if (Build.VERSION.SDK_INT >= 21) {
@@ -784,12 +787,48 @@ public class ContactOverview extends AppCompatActivity {
     /**
      * rotate: Rotación de la imagen de la galería en base a unos grados
      * @param bitmap: Imagen de la galería
-     * @param degrees: Grados a rotar
-     * @return: Nuevo bitmap (imagen) rotada
+     * @param path: Path de la imagen seleccionada
+     * @return Nuevo bitmap (imagen) rotada
      * */
-    private Bitmap rotate(Bitmap bitmap, float degrees) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(degrees);
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    private Bitmap rotate(Bitmap bitmap, String path) {
+        try {
+            ExifInterface info = new ExifInterface(path);
+            int orientation = info.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            Matrix matrix = new Matrix();
+
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.postRotate(90f);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.postRotate(180f);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.postRotate(270f);
+                    break;
+            }
+
+            return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        } catch (IOException err) {
+            err.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * getRealPathFromURI: Identifica el URI real de la imagen seleccionada
+     * @param contentURI: Uri recogido del intent
+     * @return URI real
+     * */
+    public String getRealPathFromURI(Uri contentURI) {
+        String res = null;
+        String[] proj = { MediaStore.Images.Media.DATA };
+        Cursor cursor = getContentResolver().query(contentURI, proj, null, null, null);
+        if(cursor.moveToFirst()){
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            res = cursor.getString(column_index);
+        }
+        cursor.close();
+        return res;
     }
 }
