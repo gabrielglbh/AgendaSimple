@@ -685,10 +685,10 @@ public class ContactOverview extends AppCompatActivity {
                 File file = new File(dir, contact.getPHONE_NUMBER() + ".png");
                 if (file.exists()) return BitmapFactory.decodeFile(file.getPath());
             } else {
-                makeToast(getString(R.string.import_to_SD));
+                return null;
             }
         } else {
-            makeToast(getString(R.string.import_to_SD));
+            return null;
         }
         return null;
     }

@@ -2,9 +2,11 @@ package com.example.android.agendasimple;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,7 +21,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
 import android.text.InputType;
-import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,6 +40,7 @@ import com.example.android.agendasimple.sql.DatabaseSQL;
 import com.example.android.agendasimple.utils.SwipeHandler;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -61,6 +64,10 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public static DatabaseSQL sql;
     private ItemTouchHelper touchHelper;
     private Menu menu;
+
+    private Toolbar toolbar;
+    private DrawerLayout drawer;
+    private NavigationView navigation;
 
     private LinearLayout bottomSheet;
     private Button view_button, fav_button, del_button;
@@ -118,9 +125,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         view_button = findViewById(R.id.button_see);
         fav_button = findViewById(R.id.button_favourite);
         del_button = findViewById(R.id.button_delete);
+
         date_bottom_sheet = findViewById(R.id.has_date_bottom_sheet);
         bsb = BottomSheetBehavior.from(bottomSheet);
 
+        toolbar = findViewById(R.id.toolbar_main);
+        drawer = findViewById(R.id.drawer);
+        navigation = findViewById(R.id.navigation_menu);
+
+        setAppBarAndNavMenu();
         setRecyclerView();
         setFloatingActionButton();
     }
@@ -142,6 +155,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public void onBackPressed() {
         if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+        } else if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
         }
@@ -300,58 +315,16 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     // TODO: notifyDataSetChanged()
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.export_to_contacts:
-                closeBottomSheet();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[0])) {
-                        ActivityCompat.requestPermissions(this, new String[]{permissions[0]}, CODE_WRITE_ES);
-                    } else {
-                        exportToSD();
-                    }
-                } else {
-                    exportToSD();
-                }
-                break;
-            case R.id.export_from_contacts:
-                closeBottomSheet();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[1])) {
-                        ActivityCompat.requestPermissions(this, new String[]{permissions[1]}, CODE_READ_ES);
-                    } else {
-                        sql.deleteAllContacts();
-                        importFromSD();
-                    }
-                } else {
-                    sql.deleteAllContacts();
-                    importFromSD();
-                }
-                break;
-            case R.id.export_from_content_provider:
-                closeBottomSheet();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[2])) {
-                        ActivityCompat.requestPermissions(this, new String[]{permissions[2]}, CODE_READ_CONTACT);
-                    } else {
-                        sql.deleteAllContacts();
-                        importFromContacts();
-                    }
-                } else {
-                    sql.deleteAllContacts();
-                    importFromContacts();
-                }
-                break;
-            case R.id.get_date_contacts:
-                if (getDatesContacts) {
-                    menu.getItem(4).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_calendar_menu));
-                    contacts = sql.getAllContacts();
-                } else {
-                    menu.getItem(4).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_contacts));
-                    contacts = sql.getDatesWithContacts();
-                }
-                getDatesContacts = !getDatesContacts;
-                adapter.setContactList(contacts);
-                break;
+        if (item.getItemId() == R.id.get_date_contacts){
+            if (getDatesContacts) {
+                menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_calendar_menu));
+                contacts = sql.getAllContacts();
+            } else {
+                menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_contacts));
+                contacts = sql.getDatesWithContacts();
+            }
+            getDatesContacts = !getDatesContacts;
+            adapter.setContactList(contacts);
         }
         return true;
     }
@@ -368,6 +341,70 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             return false;
         }
         return false;
+    }
+
+    public void openNavigationMenu(View v) {
+        drawer.openDrawer(GravityCompat.START);
+    }
+
+    private void setAppBarAndNavMenu() {
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("");
+
+        navigation.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.export_to_contacts:
+                        closeBottomSheet();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (checkPermits(permissions[0])) {
+                                ActivityCompat.requestPermissions(MainActivity.this,
+                                        new String[]{permissions[0]}, CODE_WRITE_ES);
+                            } else {
+                                exportToSD();
+                            }
+                        } else {
+                            exportToSD();
+                        }
+                        drawer.closeDrawer(GravityCompat.START);
+                        break;
+                    case R.id.export_from_contacts:
+                        closeBottomSheet();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (checkPermits(permissions[1])) {
+                                ActivityCompat.requestPermissions(MainActivity.this,
+                                        new String[]{permissions[1]}, CODE_READ_ES);
+                            } else {
+                                sql.deleteAllContacts();
+                                importFromSD();
+                            }
+                        } else {
+                            sql.deleteAllContacts();
+                            importFromSD();
+                        }
+                        drawer.closeDrawer(GravityCompat.START);
+                        break;
+                    case R.id.export_from_content_provider:
+                        closeBottomSheet();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (checkPermits(permissions[2])) {
+                                ActivityCompat.requestPermissions(MainActivity.this,
+                                        new String[]{permissions[2]}, CODE_READ_CONTACT);
+                            } else {
+                                sql.deleteAllContacts();
+                                importFromContacts();
+                            }
+                        } else {
+                            sql.deleteAllContacts();
+                            importFromContacts();
+                        }
+                        drawer.closeDrawer(GravityCompat.START);
+                        break;
+                }
+                return true;
+            }
+        });
     }
 
     /**

@@ -61,4 +61,7 @@
     <string name="modify_scheduled_date">Modificar</string>
     <string name="modify_date">Modificar Cita</string>
     <string name="current_dates_menu">Citas Actuales</string>
+
+    <string name="import_export_options">Importar/Exportar</string>
+    <string name="author_label">Desarrollado por</string>
 </resources>

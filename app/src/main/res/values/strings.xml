@@ -71,4 +71,8 @@
     <string name="at_time" translatable="false">\u0040</string>
     <string name="modify_date" translatable="true">Modify Date</string>
     <string name="current_dates_menu" translatable="true">Current Dates</string>
+
+    <string name="import_export_options" translatable="true">Import/Export</string>
+    <string name="author" translatable="false">Gabriel García López</string>
+    <string name="author_label" translatable="true">Developed by</string>
 </resources>

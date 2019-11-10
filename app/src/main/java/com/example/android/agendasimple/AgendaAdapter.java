@@ -216,10 +216,10 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
                 File file = new File(dir, number + ".png");
                 if (file.exists()) return file.getPath();
             } else {
-                Toast.makeText(ctx, ctx.getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+               return null;
             }
         } else {
-            Toast.makeText(ctx, ctx.getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+            return null;
         }
         return null;
     }
