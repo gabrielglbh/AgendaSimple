@@ -12,11 +12,12 @@
         <item name="android:tint">@color/title</item>
     </style>
 
-    <!-- ContactOverview Appbar -->
+    <!-- ContactOverview and MainActivity Appbar -->
     <style name="NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogTheme</item>
     </style>
 
     <style name="titleOnMove" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
@@ -25,6 +26,17 @@
 
     <style name="PickerDialogTheme" parent="Theme.AppCompat.Light.Dialog">
         <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <!-- Bottom Sheet Dialog -->
+    <style name="AppBottomSheetDialogTheme"
+        parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/AppModalStyle</item>
+    </style>
+
+    <style name="AppModalStyle"
+        parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@drawable/bottom_sheet_style</item>
     </style>
 
 </resources>

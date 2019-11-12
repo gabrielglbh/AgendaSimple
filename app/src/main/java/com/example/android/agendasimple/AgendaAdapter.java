@@ -33,13 +33,11 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
     private ContactClickListener listener;
     private Context ctx;
-    private BottomSheetBehavior bsb;
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
-    public AgendaAdapter(ContactClickListener listener, Context ctx, BottomSheetBehavior bsb) {
+    public AgendaAdapter(ContactClickListener listener, Context ctx) {
         this.listener = listener;
         this.ctx = ctx;
-        this.bsb = bsb;
     }
 
     @NonNull
@@ -97,15 +95,12 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
                     public boolean onMenuItemClick(MenuItem item) {
                         switch (item.getItemId()) {
                             case R.id.whatsapp_to:
-                                closeBottomSheet();
                                 openWhatsappConversation(position, view.getContext());
                                 break;
                             case R.id.call_to:
-                                closeBottomSheet();
                                 callDial(position, view.getContext());
                                 break;
                             case R.id.mail_to:
-                                closeBottomSheet();
                                 sendMailTo(position, view.getContext());
                                 break;
                         }
@@ -222,12 +217,6 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             return null;
         }
         return null;
-    }
-
-    private void closeBottomSheet() {
-        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
-        }
     }
 
     public interface ContactClickListener {

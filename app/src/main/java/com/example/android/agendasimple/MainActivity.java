@@ -39,6 +39,7 @@ import com.example.android.agendasimple.sql.ContactEntity;
 import com.example.android.agendasimple.sql.DatabaseSQL;
 import com.example.android.agendasimple.utils.SwipeHandler;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
@@ -68,11 +69,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private Toolbar toolbar;
     private DrawerLayout drawer;
     private NavigationView navigation;
-
-    private LinearLayout bottomSheet;
-    private Button view_button, fav_button, del_button;
-    private TextView title_bottom_sheet, date_bottom_sheet;
-    private BottomSheetBehavior bsb;
 
     // ID que se pasa a ContactOverview para saber si se está modificando el contacto o añadiendo uno nuevo
     public static final String OVERVIEW_MODE = "OVERVIEW_MODE";
@@ -120,15 +116,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
         sql = DatabaseSQL.getInstance(this);
 
-        bottomSheet = findViewById(R.id.bottomSheet);
-        title_bottom_sheet = findViewById(R.id.title_bottom_sheet);
-        view_button = findViewById(R.id.button_see);
-        fav_button = findViewById(R.id.button_favourite);
-        del_button = findViewById(R.id.button_delete);
-
-        date_bottom_sheet = findViewById(R.id.has_date_bottom_sheet);
-        bsb = BottomSheetBehavior.from(bottomSheet);
-
         toolbar = findViewById(R.id.toolbar_main);
         drawer = findViewById(R.id.drawer);
         navigation = findViewById(R.id.navigation_menu);
@@ -153,9 +140,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
     @Override
     public void onBackPressed() {
-        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
-        } else if (drawer.isDrawerOpen(GravityCompat.START)) {
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
@@ -199,7 +184,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * */
     @Override
     public void onContactClicked(String num) {
-        closeBottomSheet();
         Intent goTo = new Intent(this, ContactOverview.class);
         goTo.putExtra(OVERVIEW_MODE, MODE);
         goTo.putExtra(NUMBER_OF_CONTACTS, num);
@@ -222,7 +206,19 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public void onLongContactClicked(final String number, final String name, final String phone,
                                      final String home, final String email, final String bubble,
                                      final String favorite, final String date, final int position) {
-        bsb.setState(BottomSheetBehavior.STATE_EXPANDED);
+        Button view_button, fav_button, del_button;
+        TextView title_bottom_sheet, date_bottom_sheet;
+
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet, null);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(view);
+
+        title_bottom_sheet = view.findViewById(R.id.title_bottom_sheet);
+        view_button = view.findViewById(R.id.button_see);
+        fav_button = view.findViewById(R.id.button_favourite);
+        del_button = view.findViewById(R.id.button_delete);
+        date_bottom_sheet = view.findViewById(R.id.has_date_bottom_sheet);
+
         title_bottom_sheet.setText(name);
         if (favorite.equals("1")) {
             fav_button.setText(getString(R.string.favourite_sheet));
@@ -241,7 +237,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         view_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
                 onContactClicked(number);
             }
         });
@@ -249,7 +244,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             @Override
             public void onClick(View view) {
                 final ContactEntity c;
-                bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
                 if (favorite.equals("1")) {
                     c = new ContactEntity(name, number, phone, home, email, bubble, "0", date);
                 } else {
@@ -263,12 +257,13 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         del_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
                 sql.deleteContact(number);
                 contacts.remove(position);
                 adapter.notifyItemRemoved(position);
             }
         });
+
+        dialog.show();
     }
 
     /**
@@ -286,7 +281,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         m.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
             @Override
             public boolean onMenuItemActionExpand(MenuItem menuItem) {
-                closeBottomSheet();
                 openKeyboard();
                 return true;
             }
@@ -356,7 +350,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
                 switch (menuItem.getItemId()) {
                     case R.id.export_to_contacts:
-                        closeBottomSheet();
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             if (checkPermits(permissions[0])) {
                                 ActivityCompat.requestPermissions(MainActivity.this,
@@ -370,7 +363,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         drawer.closeDrawer(GravityCompat.START);
                         break;
                     case R.id.export_from_contacts:
-                        closeBottomSheet();
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             if (checkPermits(permissions[1])) {
                                 ActivityCompat.requestPermissions(MainActivity.this,
@@ -386,7 +378,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         drawer.closeDrawer(GravityCompat.START);
                         break;
                     case R.id.export_from_content_provider:
-                        closeBottomSheet();
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             if (checkPermits(permissions[2])) {
                                 ActivityCompat.requestPermissions(MainActivity.this,
@@ -415,7 +406,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         rv = findViewById(R.id.recycler_view_contacts);
         contacts = sql.getAllContacts();
 
-        adapter = new AgendaAdapter(this, getApplicationContext(), bsb);
+        adapter = new AgendaAdapter(this, getApplicationContext());
         adapter.setContactList(contacts);
 
         LinearLayoutManager lm = new LinearLayoutManager(this);
@@ -423,7 +414,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         rv.setHasFixedSize(false);
         rv.setAdapter(adapter);
 
-        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter, bsb));
+        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter));
         touchHelper.attachToRecyclerView(rv);
     }
 
@@ -727,12 +718,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             searchWidget.clearFocus();
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(searchWidget.getWindowToken(), 0);
-        }
-    }
-
-    private void closeBottomSheet() {
-        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
         }
     }
 
