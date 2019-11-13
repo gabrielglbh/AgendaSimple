@@ -512,7 +512,7 @@ public class ContactOverview extends AppCompatActivity {
     private boolean validateTextFields(String name, String email, String number) {
         boolean n, num, em;
 
-        if (name.trim().isEmpty() && !namePattern.matcher(name).matches()) {
+        if (name.trim().isEmpty() || !namePattern.matcher(name).matches()) {
             inputName.setError(getString(R.string.error_field));
             n = false;
         } else { n = true; }
@@ -522,10 +522,21 @@ public class ContactOverview extends AppCompatActivity {
             num = false;
         } else { num = true; }
 
-        if (!email.trim().isEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            inputEmail.setError(getString(R.string.error_field));
-            em = false;
-        } else { em = true; }
+        if (num && n) {
+            if (!email.trim().isEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                inputEmail.setError(getString(R.string.error_field));
+                em = false;
+            } else {
+                em = true;
+            }
+        } else {
+            if (!email.trim().isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                inputEmail.setError(getString(R.string.error_field));
+                em = false;
+            } else {
+                em = true;
+            }
+        }
 
         hideKeyboard();
         return n && num && em;

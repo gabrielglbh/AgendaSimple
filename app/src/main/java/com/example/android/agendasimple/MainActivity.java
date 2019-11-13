@@ -713,6 +713,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         cursor.close();
         this.contacts = contacts;
         adapter.setContactList(contacts);
+        Toast.makeText(this, getString(R.string.success_import_to), Toast.LENGTH_SHORT).show();
     }
 
     private void openKeyboard() {
