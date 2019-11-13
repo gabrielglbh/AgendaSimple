@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public static DatabaseSQL sql;
     private ItemTouchHelper touchHelper;
     private Menu menu;
+    private BottomSheetDialog dialog;
 
     private Toolbar toolbar;
     private DrawerLayout drawer;
@@ -210,7 +211,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         TextView title_bottom_sheet, date_bottom_sheet;
 
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet, null);
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog = new BottomSheetDialog(this);
         dialog.setContentView(view);
 
         title_bottom_sheet = view.findViewById(R.id.title_bottom_sheet);
@@ -237,12 +238,14 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         view_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                dialog.dismiss();
                 onContactClicked(number);
             }
         });
         fav_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                dialog.dismiss();
                 final ContactEntity c;
                 if (favorite.equals("1")) {
                     c = new ContactEntity(name, number, phone, home, email, bubble, "0", date);
@@ -257,6 +260,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         del_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                dialog.dismiss();
                 sql.deleteContact(number);
                 contacts.remove(position);
                 adapter.notifyItemRemoved(position);
@@ -469,16 +473,20 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             @Override
             public boolean onQueryTextSubmit(String query) {
                 searchWidget.clearFocus();
-                adapter.setContactList(sql.getSearchedContacts(query));
+                adapter.setContactList(sql.getSearchedContacts(query, getDatesContacts));
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (!newText.trim().isEmpty()) {
-                    adapter.setContactList(sql.getSearchedContacts(newText));
+                    adapter.setContactList(sql.getSearchedContacts(newText, getDatesContacts));
                 } else {
-                    adapter.setContactList(sql.getAllContacts());
+                    if (!getDatesContacts) {
+                        adapter.setContactList(sql.getAllContacts());
+                    } else {
+                        adapter.setContactList(sql.getDatesWithContacts());
+                    }
                 }
                 return true;
             }

@@ -212,10 +212,17 @@ public class DatabaseSQL extends SQLiteOpenHelper {
      * @param QUERY: Texto introducido por el usuario que sirve para la WHERE clause
      * @return ArrayList de contactos con todos los campos disponibles o null si la consulta ha fallado
      * */
-    public ArrayList<ContactEntity> getSearchedContacts(String QUERY){
+    public ArrayList<ContactEntity> getSearchedContacts(String QUERY, boolean hasDatesContacts){
         Uri uri = ContactEntry.CONTENT_URI;
         ContentResolver cr = context.getContentResolver();
-        Cursor c = cr.query(uri, null, ContactEntry.COLUMN_1 + " LIKE ?", new String[] { QUERY + "%" }, null);
+        Cursor c;
+        if (hasDatesContacts) {
+            c = cr.query(uri, null, ContactEntry.COLUMN_1 + " LIKE ? AND " +
+                    ContactEntry.COLUMN_8 + " NOT LIKE ?", new String[]{QUERY + "%",
+                    "%" + context.getString(R.string.schedule_day) + "%"}, null);
+        } else {
+            c = cr.query(uri, null, ContactEntry.COLUMN_1 + " LIKE ?", new String[]{QUERY + "%"}, null);
+        }
 
         if (c.getCount() > 0) {
             ArrayList<ContactEntity> contacts = new ArrayList<>();
