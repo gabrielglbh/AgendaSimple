@@ -2,8 +2,11 @@ package com.example.android.agendasimple;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,7 +21,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
 import android.text.InputType;
-import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -36,7 +39,9 @@ import com.example.android.agendasimple.sql.ContactEntity;
 import com.example.android.agendasimple.sql.DatabaseSQL;
 import com.example.android.agendasimple.utils.SwipeHandler;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -59,11 +64,12 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private SearchView searchWidget;
     public static DatabaseSQL sql;
     private ItemTouchHelper touchHelper;
+    private Menu menu;
+    private BottomSheetDialog dialog;
 
-    private LinearLayout bottomSheet;
-    private Button view_button, fav_button, del_button;
-    private TextView title_bottom_sheet, date_bottom_sheet;
-    private BottomSheetBehavior bsb;
+    private Toolbar toolbar;
+    private DrawerLayout drawer;
+    private NavigationView navigation;
 
     // ID que se pasa a ContactOverview para saber si se está modificando el contacto o añadiendo uno nuevo
     public static final String OVERVIEW_MODE = "OVERVIEW_MODE";
@@ -71,6 +77,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     // contacto seleccionado
     public static final String NUMBER_OF_CONTACTS = "NUMBER_CONTACT";
     public final int MODE = 0;
+    private boolean fromFAB = false;
+    private boolean getDatesContacts = false;
 
     private final String nameJSON = "name";
     private final String numberJSON = "number";
@@ -89,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private final int CODE_READ_ES = 1;
     private final int CODE_READ_CONTACT = 2;
 
-    public static String[] colors = { "#008577", "#EC8C2E", "#21A763", "#DF2D2D", "#5383D6", "#E6C815", "#E072CC" };
+    public static String[] colors;
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
 
@@ -98,16 +106,22 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        colors = new String[]{
+                "#397A74",
+                "#E4A15F",
+                "#5FCF97",
+                "#DF5353",
+                "#5383D6",
+                "#E0C95E"
+        };
+
         sql = DatabaseSQL.getInstance(this);
 
-        bottomSheet = findViewById(R.id.bottomSheet);
-        title_bottom_sheet = findViewById(R.id.title_bottom_sheet);
-        view_button = findViewById(R.id.button_see);
-        fav_button = findViewById(R.id.button_favourite);
-        del_button = findViewById(R.id.button_delete);
-        date_bottom_sheet = findViewById(R.id.has_date_bottom_sheet);
-        bsb = BottomSheetBehavior.from(bottomSheet);
+        toolbar = findViewById(R.id.toolbar_main);
+        drawer = findViewById(R.id.drawer);
+        navigation = findViewById(R.id.navigation_menu);
 
+        setAppBarAndNavMenu();
         setRecyclerView();
         setFloatingActionButton();
     }
@@ -116,17 +130,19 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * onResume: Se cargan todos los contactos con getAllContacts en el RecyclerView, añadiendo
      * los nuevos contactos posibles
      * */
+    // TODO: notifyDataSetChanged()
     @Override
     protected void onResume() {
         contacts = sql.getAllContacts();
         adapter.setContactList(contacts);
+        fromFAB = false;
         super.onResume();
     }
 
     @Override
     public void onBackPressed() {
-        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
         }
@@ -138,27 +154,25 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         switch (requestCode) {
             case CODE_WRITE_ES: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    exportToSD();
+                    if (fromFAB) {
+                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                        startActivity(goTo);
+                    }
+                    else exportToSD();
                 }
                 break;
             }
             case CODE_READ_ES: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (!sql.deleteAllContacts()) {
-                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                    } else {
-                        importFromSD();
-                    }
+                    sql.deleteAllContacts();
+                    importFromSD();
                 }
                 break;
             }
             case CODE_READ_CONTACT: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (!sql.deleteAllContacts()) {
-                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                    } else {
-                        importFromContacts();
-                    }
+                    sql.deleteAllContacts();
+                    importFromContacts();
                 }
                 break;
             }
@@ -171,7 +185,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * */
     @Override
     public void onContactClicked(String num) {
-        closeBottomSheet();
         Intent goTo = new Intent(this, ContactOverview.class);
         goTo.putExtra(OVERVIEW_MODE, MODE);
         goTo.putExtra(NUMBER_OF_CONTACTS, num);
@@ -190,10 +203,23 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * @param position: Posición del contacto en el RecyclerView
      * */
     @Override
+    // TODO: notifyDataSetChanged()
     public void onLongContactClicked(final String number, final String name, final String phone,
                                      final String home, final String email, final String bubble,
                                      final String favorite, final String date, final int position) {
-        bsb.setState(BottomSheetBehavior.STATE_EXPANDED);
+        Button view_button, fav_button, del_button;
+        TextView title_bottom_sheet, date_bottom_sheet;
+
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet, null);
+        dialog = new BottomSheetDialog(this);
+        dialog.setContentView(view);
+
+        title_bottom_sheet = view.findViewById(R.id.title_bottom_sheet);
+        view_button = view.findViewById(R.id.button_see);
+        fav_button = view.findViewById(R.id.button_favourite);
+        del_button = view.findViewById(R.id.button_delete);
+        date_bottom_sheet = view.findViewById(R.id.has_date_bottom_sheet);
+
         title_bottom_sheet.setText(name);
         if (favorite.equals("1")) {
             fav_button.setText(getString(R.string.favourite_sheet));
@@ -212,15 +238,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         view_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+                dialog.dismiss();
                 onContactClicked(number);
             }
         });
         fav_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                dialog.dismiss();
                 final ContactEntity c;
-                bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
                 if (favorite.equals("1")) {
                     c = new ContactEntity(name, number, phone, home, email, bubble, "0", date);
                 } else {
@@ -234,12 +260,14 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         del_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+                dialog.dismiss();
                 sql.deleteContact(number);
-                contacts = sql.getAllContacts();
-                adapter.setContactList(contacts);
+                contacts.remove(position);
+                adapter.notifyItemRemoved(position);
             }
         });
+
+        dialog.show();
     }
 
     /**
@@ -257,7 +285,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         m.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
             @Override
             public boolean onMenuItemActionExpand(MenuItem menuItem) {
-                closeBottomSheet();
                 openKeyboard();
                 return true;
             }
@@ -272,6 +299,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
         searchWidget = (SearchView) m.getActionView();
         setSearchWidget();
+        this.menu = menu;
         return true;
     }
 
@@ -282,68 +310,25 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      *
      * @param item: item seleccionado del menu
      * */
+    // TODO: notifyDataSetChanged()
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.export_to_contacts:
-                closeBottomSheet();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[0])) {
-                        ActivityCompat.requestPermissions(this, new String[]{permissions[0]}, CODE_WRITE_ES);
-                    } else {
-                        exportToSD();
-                    }
-                } else {
-                    exportToSD();
-                }
-                break;
-            case R.id.export_from_contacts:
-                closeBottomSheet();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[1])) {
-                        ActivityCompat.requestPermissions(this, new String[]{permissions[1]}, CODE_READ_ES);
-                    } else {
-                        if (!sql.deleteAllContacts()) {
-                            Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                        } else {
-                            importFromSD();
-                        }
-                    }
-                } else {
-                    if (!sql.deleteAllContacts()) {
-                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                    } else {
-                        importFromSD();
-                    }
-                }
-                break;
-            case R.id.export_from_content_provider:
-                closeBottomSheet();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[2])) {
-                        ActivityCompat.requestPermissions(this, new String[]{permissions[2]}, CODE_READ_CONTACT);
-                    } else {
-                        if (!sql.deleteAllContacts()) {
-                            Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                        } else {
-                            importFromContacts();
-                        }
-                    }
-                } else {
-                    if (!sql.deleteAllContacts()) {
-                        Toast.makeText(this, getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
-                    } else {
-                        importFromContacts();
-                    }
-                }
-                break;
+        if (item.getItemId() == R.id.get_date_contacts){
+            if (getDatesContacts) {
+                menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_calendar_menu));
+                contacts = sql.getAllContacts();
+            } else {
+                menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_contacts));
+                contacts = sql.getDatesWithContacts();
+            }
+            getDatesContacts = !getDatesContacts;
+            adapter.setContactList(contacts);
         }
         return true;
     }
 
     /**
      * checkPermits: Método que verifica si se han permitido los permisos necesarios.
-     *
      **/
     private boolean checkPermits(String permission){
         if (Build.VERSION.SDK_INT >= 6) {
@@ -356,6 +341,67 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         return false;
     }
 
+    public void openNavigationMenu(View v) {
+        drawer.openDrawer(GravityCompat.START);
+    }
+
+    private void setAppBarAndNavMenu() {
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("");
+
+        navigation.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.export_to_contacts:
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (checkPermits(permissions[0])) {
+                                ActivityCompat.requestPermissions(MainActivity.this,
+                                        new String[]{permissions[0]}, CODE_WRITE_ES);
+                            } else {
+                                exportToSD();
+                            }
+                        } else {
+                            exportToSD();
+                        }
+                        drawer.closeDrawer(GravityCompat.START);
+                        break;
+                    case R.id.export_from_contacts:
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (checkPermits(permissions[1])) {
+                                ActivityCompat.requestPermissions(MainActivity.this,
+                                        new String[]{permissions[1]}, CODE_READ_ES);
+                            } else {
+                                sql.deleteAllContacts();
+                                importFromSD();
+                            }
+                        } else {
+                            sql.deleteAllContacts();
+                            importFromSD();
+                        }
+                        drawer.closeDrawer(GravityCompat.START);
+                        break;
+                    case R.id.export_from_content_provider:
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            if (checkPermits(permissions[2])) {
+                                ActivityCompat.requestPermissions(MainActivity.this,
+                                        new String[]{permissions[2]}, CODE_READ_CONTACT);
+                            } else {
+                                sql.deleteAllContacts();
+                                importFromContacts();
+                            }
+                        } else {
+                            sql.deleteAllContacts();
+                            importFromContacts();
+                        }
+                        drawer.closeDrawer(GravityCompat.START);
+                        break;
+                }
+                return true;
+            }
+        });
+    }
+
     /**
      * setRecyclerView: Se cargan todos los contactos con getAllContacts en el RecyclerView, y se
      * ancla el itemTouchHelper para la eliminación de contactos al RecyclerView
@@ -364,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         rv = findViewById(R.id.recycler_view_contacts);
         contacts = sql.getAllContacts();
 
-        adapter = new AgendaAdapter(this, getApplicationContext(), bsb);
+        adapter = new AgendaAdapter(this, getApplicationContext());
         adapter.setContactList(contacts);
 
         LinearLayoutManager lm = new LinearLayoutManager(this);
@@ -372,7 +418,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         rv.setHasFixedSize(false);
         rv.setAdapter(adapter);
 
-        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter, bsb));
+        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter));
         touchHelper.attachToRecyclerView(rv);
     }
 
@@ -382,7 +428,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         addContact.setScaleY(0);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            final Interpolator interpolator = AnimationUtils.loadInterpolator(getBaseContext(), android.R.interpolator.fast_out_slow_in);
+            final Interpolator interpolator = AnimationUtils.loadInterpolator(getBaseContext(),
+                    android.R.interpolator.fast_out_slow_in);
             addContact.animate()
                     .scaleX(1)
                     .scaleY(1)
@@ -393,8 +440,19 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         addContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                startActivity(goTo);
+                fromFAB = true;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkPermits(permissions[0])) {
+                        ActivityCompat.requestPermissions(MainActivity.this,
+                                new String[]{permissions[0]}, CODE_WRITE_ES);
+                    } else {
+                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                        startActivity(goTo);
+                    }
+                } else {
+                    Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                    startActivity(goTo);
+                }
             }
         });
     }
@@ -403,6 +461,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * setSearchWidget: Se configura el SearchView encargado de la búsqueda de contactos
      * Si no hay texto que parsear, se cargan todos los contactos
      * */
+    // TODO: notifyDataSetChanged()
     private void setSearchWidget() {
         searchWidget.setQueryHint(getString(R.string.search_contact_hint));
         searchWidget.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -414,16 +473,20 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             @Override
             public boolean onQueryTextSubmit(String query) {
                 searchWidget.clearFocus();
-                adapter.setContactList(sql.getSearchedContacts(query));
+                adapter.setContactList(sql.getSearchedContacts(query, getDatesContacts));
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (!newText.trim().isEmpty()) {
-                    adapter.setContactList(sql.getSearchedContacts(newText));
+                    adapter.setContactList(sql.getSearchedContacts(newText, getDatesContacts));
                 } else {
-                    adapter.setContactList(sql.getAllContacts());
+                    if (!getDatesContacts) {
+                        adapter.setContactList(sql.getAllContacts());
+                    } else {
+                        adapter.setContactList(sql.getDatesWithContacts());
+                    }
                 }
                 return true;
             }
@@ -463,6 +526,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * Se elimna la tabla de CONTACTS y se popula de nuevo con cada contacto importado.
      * No se importan las citas.
      * */
+    // TODO: notifyDataSetChanged()
     private void parseJsonAndPopulateRecyclerView(String jsonObj) {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
         try {
@@ -484,9 +548,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
                 ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite, getString(R.string.schedule_day));
                 contacts.add(c);
-                if (!sql.insertContact(c)) {
-                    Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
-                }
+                sql.insertContact(c);
             }
 
             this.contacts = contacts;
@@ -591,6 +653,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * para sacar todos los contactos del teléfono y por cada uno de ellos se guarda en el fromato
      * adecuado para su importación a la aplicación de MiAgenda.
      * */
+    // TODO: notifyDataSetChanged()
     private void importFromContacts() {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
 
@@ -640,7 +703,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         getString(R.string.schedule_day)
                 );
                 contacts.add(c);
-                if(!sql.insertContact(c)) {
+                try {
+                    sql.insertContact(c);
+                } catch (Exception err) {
                     Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
                 }
             }
@@ -664,9 +729,17 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         }
     }
 
-    private void closeBottomSheet() {
-        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
+    /**
+     * getNewPositionOfContact: Método para calcular la nueva posicion del contacto en la lista.
+     * @param id: Clave identificativa del contacto
+     * @return: posición nueva
+     * */
+    private int getNewPositionOfContact(String id) {
+        for (int x = 0; x < contacts.size(); x++) {
+            if (contacts.get(x).getPHONE_NUMBER().equals(id)) {
+                return x;
+            }
         }
+        return -1;
     }
 }

@@ -30,19 +30,17 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
     private Drawable icon;
     private ColorDrawable background;
     private Context ctx;
-    private BottomSheetBehavior bsb;
 
-    public SwipeHandler(Context ctx, AgendaAdapter adapter, BottomSheetBehavior bsb) {
+    public SwipeHandler(Context ctx, AgendaAdapter adapter) {
         this.adapter = adapter;
         this.ctx = ctx;
-        this.bsb = bsb;
         icon = ContextCompat.getDrawable(ctx, R.drawable.ic_delete);
         background = new ColorDrawable(ContextCompat.getColor(ctx, R.color.danger));
     }
 
     @Override
     public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-        return makeMovementFlags(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
+        return makeMovementFlags(0, ItemTouchHelper.LEFT);
     }
 
     @Override
@@ -66,15 +64,12 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
         int position = viewHolder.getAdapterPosition();
         ArrayList<ContactEntity> contacts = adapter.getContactList();
         ContactEntity contact = contacts.get(viewHolder.getAdapterPosition());
-        if (bsb.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-            bsb.setState(BottomSheetBehavior.STATE_HIDDEN);
-        }
-        if(!MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+        if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER()) == -1) {
             Toast.makeText(ctx, ctx.getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
         } else {
             removeImageStorage(contact.getPHONE_NUMBER(), contact.getNAME());
             contacts.remove(position);
-            adapter.setContactList(contacts);
+            adapter.notifyItemRemoved(position);
         }
     }
 

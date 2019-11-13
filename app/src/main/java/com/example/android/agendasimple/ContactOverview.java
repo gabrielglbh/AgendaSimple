@@ -6,12 +6,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.exifinterface.media.ExifInterface;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -21,6 +23,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -64,7 +67,7 @@ public class ContactOverview extends AppCompatActivity {
     private Toolbar toolbar;
 
     private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon, headerImage, bookmarkIcon;
-    private TextView inputDate, date_display, time_display;
+    private TextView inputDate, date_display, time_display, title_dialog;
     private Button add_scheduled, cancel_scheduled;
     private Toast mToast;
     private AlertDialog alert, alarmBuilder;
@@ -172,9 +175,13 @@ public class ContactOverview extends AppCompatActivity {
                 final Uri imageUri = data.getData();
                 final InputStream imageStream = getContentResolver().openInputStream(imageUri);
                 final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
-                headerImage.setImageBitmap(rotate(selectedImage, 90));
+                headerImage.setImageBitmap(rotate(selectedImage, getRealPathFromURI(imageUri)));
                 toolbar.setBackgroundColor(Color.TRANSPARENT);
                 menu.getItem(0).setVisible(true);
+                if (Build.VERSION.SDK_INT >= 21) {
+                    Window w = getWindow();
+                    w.setStatusBarColor(Color.TRANSPARENT);
+                }
             } catch (NullPointerException | IOException e) {
                 e.printStackTrace();
                 makeToast(getString(R.string.insertion_image_error));
@@ -249,7 +256,11 @@ public class ContactOverview extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= 21) {
             Window w = getWindow();
-            w.setStatusBarColor(color);
+            if (bitmap != null) {
+                w.setStatusBarColor(Color.TRANSPARENT);
+            } else {
+                w.setStatusBarColor(color);
+            }
 
             setUIToBubbleColor(nameIcon, color);
             setUIToBubbleColor(numberIcon, color);
@@ -288,6 +299,29 @@ public class ContactOverview extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDefaultDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            boolean isShow = false;
+            int scrollRange = -1;
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if (scrollRange == -1) scrollRange = appBarLayout.getTotalScrollRange();
+
+                if (scrollRange + verticalOffset == 0) {
+                    isShow = true;
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        Window w = getWindow();
+                        w.setStatusBarColor(Color.parseColor(contact.getCOLOR_BUBBLE()));
+                    }
+                } else if (isShow) {
+                    isShow = false;
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        Window w = getWindow();
+                        w.setStatusBarColor(Color.TRANSPARENT);
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -363,12 +397,14 @@ public class ContactOverview extends AppCompatActivity {
                 hideKeyboard();
 
                 View customView = getLayoutInflater().inflate(R.layout.create_alert_dialog, null);
+                title_dialog = customView.findViewById(R.id.title_dialog);
                 time_display = customView.findViewById(R.id.et_show_time);
                 date_display = customView.findViewById(R.id.et_show_date);
                 add_scheduled = customView.findViewById(R.id.add_button);
                 cancel_scheduled = customView.findViewById(R.id.button_cancel);
 
                 if (timeToDisplay != null && dateToDisplay != null) {
+                    title_dialog.setText(getString(R.string.modify_date));
                     add_scheduled.setText(getString(R.string.modify_scheduled_date));
                     cancel_scheduled.setVisibility(View.VISIBLE);
                     time_display.setText(timeToDisplay);
@@ -376,6 +412,7 @@ public class ContactOverview extends AppCompatActivity {
                     date_display.setText(dateToDisplay);
                     date_display.setTextColor(Color.BLACK);
                 } else {
+                    title_dialog.setText(getString(R.string.add_date));
                     add_scheduled.setText(getString(R.string.finish_scheduled_date));
                     cancel_scheduled.setVisibility(View.GONE);
                 }
@@ -571,7 +608,7 @@ public class ContactOverview extends AppCompatActivity {
                 }
             } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                     address.trim().isEmpty() && email.trim().isEmpty()) {
-                if (!MainActivity.sql.deleteContact(NUMBER)) {
+                if (MainActivity.sql.deleteContact(NUMBER) == -1) {
                     makeToast(getString(R.string.deletion_failed));
                 } else {
                     if (!removeImageStorage()) {
@@ -589,7 +626,7 @@ public class ContactOverview extends AppCompatActivity {
                                 contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
                         isOkForUpdate(c);
                     } else {
-                        if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER())) {
+                        if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER()) != -1) {
                             if (!removeImageStorage()) {
                                 Toast.makeText(this, R.string.error_delete_img, Toast.LENGTH_SHORT).show();
                             } else {
@@ -620,11 +657,11 @@ public class ContactOverview extends AppCompatActivity {
     private void saveImageToStorage(final Bitmap bitmap) {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.file_path_contact_images));
             boolean isDirCreated = dir.mkdir();
             if (dir.exists() || isDirCreated) {
                 try {
-                    File file = new File(dir, inputNumber.getText().toString() + "_" + inputName.getText().toString() + ".png");
+                    File file = new File(dir, inputNumber.getText().toString() + ".png");
                     FileOutputStream out = new FileOutputStream(file);
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
                     out.flush();
@@ -643,15 +680,15 @@ public class ContactOverview extends AppCompatActivity {
     private Bitmap getImageFromStorage() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.file_path_contact_images));
             if (dir.exists()) {
-                File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
+                File file = new File(dir, contact.getPHONE_NUMBER() + ".png");
                 if (file.exists()) return BitmapFactory.decodeFile(file.getPath());
             } else {
-                makeToast(getString(R.string.import_to_SD));
+                return null;
             }
         } else {
-            makeToast(getString(R.string.import_to_SD));
+            return null;
         }
         return null;
     }
@@ -659,9 +696,9 @@ public class ContactOverview extends AppCompatActivity {
     private boolean removeImageStorage() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.file_path_contact_images));
             if (dir.exists()) {
-                File file = new File(dir, contact.getPHONE_NUMBER() + "_" + contact.getNAME() + ".png");
+                File file = new File(dir, contact.getPHONE_NUMBER() + ".png");
                 headerImage.setImageBitmap(null);
                 collapsingToolbar.setContentScrimColor(Color.parseColor(contact.getCOLOR_BUBBLE()));
                 menu.getItem(0).setVisible(false);
@@ -716,7 +753,7 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     private void insert(ContactEntity c) {
-        if (MainActivity.sql.insertContact(c)) {
+        if (MainActivity.sql.insertContact(c) != null) {
             finish();
         } else {
             createDialog(getString(R.string.insertion_failed));
@@ -724,7 +761,7 @@ public class ContactOverview extends AppCompatActivity {
     }
 
     private void update(ContactEntity c) {
-        if (MainActivity.sql.updateContact(c)) {
+        if (MainActivity.sql.updateContact(c) != -1) {
             finish();
         } else {
             makeToast(getString(R.string.update_failed));
@@ -773,12 +810,48 @@ public class ContactOverview extends AppCompatActivity {
     /**
      * rotate: Rotación de la imagen de la galería en base a unos grados
      * @param bitmap: Imagen de la galería
-     * @param degrees: Grados a rotar
-     * @return: Nuevo bitmap (imagen) rotada
+     * @param path: Path de la imagen seleccionada
+     * @return Nuevo bitmap (imagen) rotada
      * */
-    private Bitmap rotate(Bitmap bitmap, float degrees) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(degrees);
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    private Bitmap rotate(Bitmap bitmap, String path) {
+        try {
+            ExifInterface info = new ExifInterface(path);
+            int orientation = info.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            Matrix matrix = new Matrix();
+
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.postRotate(90f);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.postRotate(180f);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.postRotate(270f);
+                    break;
+            }
+
+            return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        } catch (IOException err) {
+            err.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * getRealPathFromURI: Identifica el URI real de la imagen seleccionada
+     * @param contentURI: Uri recogido del intent
+     * @return URI real
+     * */
+    public String getRealPathFromURI(Uri contentURI) {
+        String res = null;
+        String[] proj = { MediaStore.Images.Media.DATA };
+        Cursor cursor = getContentResolver().query(contentURI, proj, null, null, null);
+        if(cursor.moveToFirst()){
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            res = cursor.getString(column_index);
+        }
+        cursor.close();
+        return res;
     }
 }

@@ -4,13 +4,12 @@
     <color name="colorPrimaryDark">#5383D6</color>
     <color name="colorAccent">#FFC107</color>
 
-    <color name="shape_1">#008577</color>
-    <color name="shape_2">#EC8C2E</color>
-    <color name="shape_3">#21A763</color>
-    <color name="shape_4">#DF2D2D</color>
+    <color name="shape_1">#397A74</color>
+    <color name="shape_2">#E4A15F</color>
+    <color name="shape_3">#5FCF97</color>
+    <color name="shape_4">#DF5353</color>
     <color name="shape_5">#5383D6</color>
-    <color name="shape_6">#E6C815</color>
-    <color name="shape_7">#E072CC</color>
+    <color name="shape_6">#E0C95E</color>
 
     <color name="danger">#CF2E2E</color>
     <color name="text">#242424</color>

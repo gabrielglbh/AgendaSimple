@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name" translatable="false">Agenda</string>
+    <string name="file_path_contact_images" translatable="false">Agenda/Contact_Images</string>
     <string name="search_menu" translatable="true">Search</string>
     <string name="export_from_menu" translatable="true">Import from SD Card</string>
     <string name="export_to_menu" translatable="true">Export to SD Card</string>
@@ -68,4 +69,10 @@
     <string name="finish_scheduled_date" translatable="true">Add</string>
     <string name="modify_scheduled_date" translatable="true">Modify</string>
     <string name="at_time" translatable="false">\u0040</string>
+    <string name="modify_date" translatable="true">Modify Date</string>
+    <string name="current_dates_menu" translatable="true">Current Dates</string>
+
+    <string name="import_export_options" translatable="true">Import/Export</string>
+    <string name="author" translatable="false">Gabriel García López</string>
+    <string name="author_label" translatable="true">Developed by</string>
 </resources>
