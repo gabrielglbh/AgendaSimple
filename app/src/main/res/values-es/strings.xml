@@ -64,4 +64,7 @@
 
     <string name="import_export_options">Importar/Exportar</string>
     <string name="author_label">Desarrollado por</string>
+
+    <string name="frag_contact_discarded">Contacto descartado</string>
+    <string name="frag_contact_saved">Contacto guardado</string>
 </resources>

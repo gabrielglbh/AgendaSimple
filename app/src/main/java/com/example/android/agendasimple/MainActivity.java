@@ -7,6 +7,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,6 +17,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,6 +38,7 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.android.agendasimple.fragments.ContentContactFragment;
 import com.example.android.agendasimple.sql.ContactEntity;
 import com.example.android.agendasimple.sql.DatabaseSQL;
 import com.example.android.agendasimple.utils.SwipeHandler;
@@ -79,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public final int MODE = 0;
     private boolean fromFAB = false;
     private boolean getDatesContacts = false;
+    private boolean isOnPortraitMode;
 
     private final String nameJSON = "name";
     private final String numberJSON = "number";
@@ -100,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public static String[] colors;
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
+    private ContentContactFragment fragContact;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +130,19 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         setAppBarAndNavMenu();
         setRecyclerView();
         setFloatingActionButton();
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+        int orientation = getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            fragContact = new ContentContactFragment(this, "", 1);
+            transaction.add(R.id.container_fragment_content_contact, fragContact);
+            transaction.commit();
+            isOnPortraitMode = false;
+        } else {
+            isOnPortraitMode = true;
+        }
     }
 
     /**
@@ -185,6 +204,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * */
     @Override
     public void onContactClicked(String num) {
+        // TODO: Evento para que el fragmento ponga los campos con mode 0
         Intent goTo = new Intent(this, ContactOverview.class);
         goTo.putExtra(OVERVIEW_MODE, MODE);
         goTo.putExtra(NUMBER_OF_CONTACTS, num);
@@ -446,12 +466,20 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         ActivityCompat.requestPermissions(MainActivity.this,
                                 new String[]{permissions[0]}, CODE_WRITE_ES);
                     } else {
-                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                        startActivity(goTo);
+                        if (isOnPortraitMode) {
+                            Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                            startActivity(goTo);
+                        } else {
+                            // TODO: Poner los campos en el fragmento con mode 1
+                        }
                     }
                 } else {
-                    Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                    startActivity(goTo);
+                    if (isOnPortraitMode) {
+                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                        startActivity(goTo);
+                    } else {
+                        // TODO: Poner los campos en el fragmento con mode 1
+                    }
                 }
             }
         });

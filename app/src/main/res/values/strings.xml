@@ -75,4 +75,7 @@
     <string name="import_export_options" translatable="true">Import/Export</string>
     <string name="author" translatable="false">Gabriel García López</string>
     <string name="author_label" translatable="true">Developed by</string>
+
+    <string name="frag_contact_discarded" translatable="true">Contact discarded</string>
+    <string name="frag_contact_saved" translatable="true">Contact saved</string>
 </resources>
