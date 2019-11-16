@@ -13,7 +13,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,7 +21,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.exifinterface.media.ExifInterface;
@@ -32,6 +30,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -67,12 +66,14 @@ public class ContentContactFragment extends Fragment {
     private TextInputEditText inputName, inputNumber, inputPhone, inputHome, inputEmail;
     private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon, bookmarkIcon,
                         dateDialog, timeDialog, favoriteLandscape, imgLandscape, iconPhoto,
-                        checkContact, separator;
+                        checkContact;
     private CardView cardLandscape;
     private TextView inputDate, date_display, time_display, title_dialog;
     private Button add_scheduled, cancel_scheduled;
     private Toast mToast;
     private AlertDialog alert, alarmBuilder;
+
+    private onUpdateList listener;
 
     private ContactEntity contact;
 
@@ -88,10 +89,13 @@ public class ContentContactFragment extends Fragment {
 
     private final int RESULT_LOAD_IMG = 123;
 
-    public ContentContactFragment(Context ctx, String NUMBER, int mode) {
+    public ContentContactFragment() { }
+
+    public ContentContactFragment(Context ctx, onUpdateList listener, String NUMBER, int mode) {
         this.NUMBER = NUMBER;
         this.mode = mode;
         this.ctx = ctx;
+        this.listener = listener;
 
         int orientation = ctx.getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -101,24 +105,57 @@ public class ContentContactFragment extends Fragment {
         }
     }
 
+    public interface onUpdateList {
+        void onUpdateContactToList();
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d("long", "ContentContactFragment: IS CALLED");
         View content = inflater.inflate(R.layout.content_contact_overview, container, false);
-        setViews(content);
-        createScheduledDateDialog();
 
-        final TextInputLayout layoutName = content.findViewById(R.id.tiet_name_layout);
-        final TextInputLayout layoutNumber = content.findViewById(R.id.tiet_number_layout);
-        final TextInputLayout layoutPhone = content.findViewById(R.id.tiet_home_phone_layout);
+        if (ctx != null) {
+            setViews(content);
+            createScheduledDateDialog();
 
-        setTextWatchers(inputName, layoutName);
-        setTextWatchers(inputNumber, layoutNumber);
-        setTextWatchers(inputPhone, layoutPhone);
+            final TextInputLayout layoutName = content.findViewById(R.id.tiet_name_layout);
+            final TextInputLayout layoutNumber = content.findViewById(R.id.tiet_number_layout);
+            final TextInputLayout layoutPhone = content.findViewById(R.id.tiet_home_phone_layout);
 
-        populateFragment();
+            setTextWatchers(inputName, layoutName);
+            setTextWatchers(inputNumber, layoutNumber);
+            setTextWatchers(inputPhone, layoutPhone);
+
+            populateFragment(mode, NUMBER);
+        }
 
         return content;
+    }
+
+    /**
+     * onActivityResult: Recoge la imagen de la galería
+     * */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK && requestCode == RESULT_LOAD_IMG) {
+            try {
+                final Uri imageUri = data.getData();
+                final InputStream imageStream = ctx.getContentResolver().openInputStream(imageUri);
+                final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+                imgLandscape.setImageBitmap(rotate(selectedImage, getRealPathFromURI(imageUri)));
+                iconPhoto.setVisibility(View.GONE);
+            } catch (NullPointerException | IOException e) {
+                e.printStackTrace();
+                iconPhoto.setVisibility(View.VISIBLE);
+                makeToast(getString(R.string.insertion_image_error));
+            }
+        } else {
+            iconPhoto.setVisibility(View.VISIBLE);
+            makeToast(getString(R.string.insertion_image_error));
+        }
     }
 
     /**
@@ -138,7 +175,16 @@ public class ContentContactFragment extends Fragment {
         homeIcon = content.findViewById(R.id.icon_home);
         emailIcon = content.findViewById(R.id.icon_mail);
         bookmarkIcon = content.findViewById(R.id.icon_date);
-        // TODO: Cambiar el marginTop de bookmarkIcon en landscape
+
+        ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) bookmarkIcon.getLayoutParams();
+        if (isOnPortraitMode) {
+            lp.topMargin = dpToPx(48);
+            lp.leftMargin = dpToPx(16);
+        } else {
+            lp.topMargin = dpToPx(112);
+            lp.leftMargin = dpToPx(16);
+        }
+        bookmarkIcon.setLayoutParams(lp);
 
         favoriteLandscape = content.findViewById(R.id.favorite_landscape);
         favoriteLandscape.setOnClickListener(new View.OnClickListener() {
@@ -193,23 +239,15 @@ public class ContentContactFragment extends Fragment {
 
     /**
      * populateFragment: Popula el fragmento con datos dependiendo si el contacto existe o no
+     * @param mode: Modo en el que popular el fragmento
+     * @param num: Número y clave primaria para la búsqueda del contacto
      * */
-    private void populateFragment() {
+    public void populateFragment(int mode, String num) {
+        resetView();
+        this.mode = mode;
         if (mode == 0) {
-            contact = MainActivity.sql.getContact(NUMBER);
-            if (isOnPortraitMode) {
-                ContactOverview.collapsingToolbar.setTitle(getString(R.string.modify_contact_title));
-            } else {
-                if (contact.getFAVOURITE().equals("0")) {
-                    favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_filled));
-                    FAVOURITE = "0";
-                    isLikedPressed = true;
-                } else {
-                    favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
-                    FAVOURITE = "1";
-                }
-                isLikedPressed = false;
-            }
+            if (num == null) contact = MainActivity.sql.getContact(NUMBER);
+            else contact = MainActivity.sql.getContact(num);
             setContact();
         } else {
             if (isOnPortraitMode) {
@@ -230,31 +268,6 @@ public class ContentContactFragment extends Fragment {
     }
 
     /**
-     * onActivityResult: Recoge la imagen de la galería
-     * */
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == RESULT_OK && requestCode == RESULT_LOAD_IMG) {
-            try {
-                final Uri imageUri = data.getData();
-                final InputStream imageStream = ctx.getContentResolver().openInputStream(imageUri);
-                final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
-                imgLandscape.setImageBitmap(rotate(selectedImage, getRealPathFromURI(imageUri)));
-                iconPhoto.setVisibility(View.GONE);
-            } catch (NullPointerException | IOException e) {
-                e.printStackTrace();
-                iconPhoto.setVisibility(View.VISIBLE);
-                makeToast(getString(R.string.insertion_image_error));
-            }
-        } else {
-            iconPhoto.setVisibility(View.VISIBLE);
-            makeToast(getString(R.string.insertion_image_error));
-        }
-    }
-
-    /**
      * setContact: Para cuando se quiera modificar un contacto, se llama a esta función y se rellenan
      * los campos que estén disponibles del contacto
      * */
@@ -262,12 +275,28 @@ public class ContentContactFragment extends Fragment {
         final int color = Color.parseColor(contact.getCOLOR_BUBBLE());
         final Bitmap bitmap = getImageFromStorage();
 
-        if (Build.VERSION.SDK_INT >= 21) {
-            Window w = getActivity().getWindow();
-            if (bitmap != null) {
-                w.setStatusBarColor(Color.TRANSPARENT);
+        if (isOnPortraitMode) {
+            ContactOverview.collapsingToolbar.setTitle(getString(R.string.modify_contact_title));
+        } else {
+            if (contact.getFAVOURITE().equals("0")) {
+                favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_filled));
+                FAVOURITE = "0";
+                isLikedPressed = true;
             } else {
-                w.setStatusBarColor(color);
+                favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
+                FAVOURITE = "1";
+                isLikedPressed = false;
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= 21) {
+            if (isOnPortraitMode) {
+                Window w = getActivity().getWindow();
+                if (bitmap != null) {
+                    w.setStatusBarColor(Color.TRANSPARENT);
+                } else {
+                    w.setStatusBarColor(color);
+                }
             }
 
             setUIToBubbleColor(nameIcon, color);
@@ -600,19 +629,9 @@ public class ContentContactFragment extends Fragment {
             if (contact.getNAME().equals(name) && contact.getPHONE_NUMBER().equals(number) &&
                     contact.getPHONE().equals(phone) && contact.getHOME_ADDRESS().equals(address) &&
                     contact.getEMAIL().equals(email)) {
-                if (isOnPortraitMode) {
-                    if (!ContactOverview.FAVOURITE.equals(contact.getFAVOURITE())) {
-                        String scheduledDate = checkIsDate(date);
-                        ContactEntity c = getContact(false, name, number, phone, address, email, scheduledDate);
-                        isOkForUpdate(c);
-                    } else {
-                        String scheduledDate = checkIsDate(date);
-                        ContactEntity c = getContact(false, name, number, phone, address, email, scheduledDate);
-                        isOkForUpdate(c);
-                    }
-                } else {
-                    // TODO: Comparar FAV con el contact.getFAVOURITE
-                }
+                String scheduledDate = checkIsDate(date);
+                ContactEntity c = getContact(false, name, number, phone, address, email, scheduledDate);
+                isOkForUpdate(c);
             } else if (name.trim().isEmpty() && number.trim().isEmpty() && phone.trim().isEmpty() &&
                     address.trim().isEmpty() && email.trim().isEmpty()) {
                 if (MainActivity.sql.deleteContact(NUMBER) == -1) {
@@ -665,8 +684,8 @@ public class ContentContactFragment extends Fragment {
         }
     }
 
-    private ContactEntity getContact(boolean insertMode, String name, String number, String phone, String address, String email,
-                                     String scheduledDate) {
+    private ContactEntity getContact(boolean insertMode, String name, String number, String phone,
+                                     String address, String email, String scheduledDate) {
         if (isOnPortraitMode) {
             if (insertMode) {
                 Random r = new Random();
@@ -679,15 +698,11 @@ public class ContentContactFragment extends Fragment {
         } else {
             if (insertMode) {
                 Random r = new Random();
-                // TODO: Get del nuevo layout con el FAV
-                return null;
-                // return new ContactEntity(name, number, phone, address, email,
-                //        MainActivity.colors[r.nextInt(MainActivity.colors.length)], ContactOverview.FAVOURITE, scheduledDate);
+                return new ContactEntity(name, number, phone, address, email,
+                        MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE, scheduledDate);
             } else {
-                // TODO: Get del nuevo layout con el FAV
-                return null;
-                // return new ContactEntity(name, number, phone, address, email,
-                //        contact.getCOLOR_BUBBLE(), ContactOverview.FAVOURITE, scheduledDate);
+                return new ContactEntity(name, number, phone, address, email,
+                        contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
             }
         }
     }
@@ -806,8 +821,10 @@ public class ContentContactFragment extends Fragment {
             if (isOnPortraitMode) {
                 getActivity().finish();
             } else {
+                resetView();
                 makeToast(getString(R.string.frag_contact_saved));
             }
+            listener.onUpdateContactToList();
         } else {
             createDialog(getString(R.string.insertion_failed));
         }
@@ -818,8 +835,10 @@ public class ContentContactFragment extends Fragment {
             if (isOnPortraitMode) {
                 getActivity().finish();
             } else {
+                resetView();
                 makeToast(getString(R.string.frag_contact_saved));
             }
+            listener.onUpdateContactToList();
         } else {
             makeToast(getString(R.string.update_failed));
         }
@@ -912,5 +931,37 @@ public class ContentContactFragment extends Fragment {
         }
         cursor.close();
         return res;
+    }
+
+    /**
+     * dpToPx: Conversión de DP a Píxeles
+     * @return Pixeles convertidos
+     * */
+    private int dpToPx(int dp) {
+        return (int) (dp * ctx.getResources().getDisplayMetrics().density);
+    }
+
+    /**
+     * resetView: Reset de los campos y redibujado de los iconos y demás botones
+     * */
+    private void resetView() {
+        final int color = ContextCompat.getColor(ctx, R.color.colorPrimary);
+        inputName.setText("");
+        inputNumber.setText("");
+        inputPhone.setText("");
+        inputEmail.setText("");
+        inputHome.setText("");
+        setUIToBubbleColor(nameIcon, color);
+        setUIToBubbleColor(numberIcon, color);
+        setUIToBubbleColor(phoneIcon, color);
+        setUIToBubbleColor(homeIcon, color);
+        setUIToBubbleColor(emailIcon, color);
+        setUIToBubbleColor(bookmarkIcon, color);
+        inputDate.setText(getString(R.string.schedule_day));
+        favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
+        FAVOURITE = "1";
+        isLikedPressed = false;
+        imgLandscape.setBackground(ContextCompat.getDrawable(ctx, R.drawable.background_circle));
+        iconPhoto.setVisibility(View.VISIBLE);
     }
 }

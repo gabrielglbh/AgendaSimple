@@ -31,7 +31,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ContactOverview extends AppCompatActivity {
+public class ContactOverview extends AppCompatActivity implements ContentContactFragment.onUpdateList {
 
     private FloatingActionButton checkContact;
     public static AppBarLayout appbar;
@@ -50,6 +50,8 @@ public class ContactOverview extends AppCompatActivity {
 
     private ContentContactFragment frag;
 
+    // TODO: Al rotar el dispositivo en esta actividad, ir a la primera
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,7 +67,7 @@ public class ContactOverview extends AppCompatActivity {
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
             // ID del contendor del layout de la actividad
-            frag = new ContentContactFragment(ContactOverview.this, NUMBER, mode);
+            frag = new ContentContactFragment(ContactOverview.this, this, NUMBER, mode);
             fragmentTransaction.add(R.id.nested_scroll_view, frag);
             fragmentTransaction.commit();
             setViews();
@@ -74,7 +76,7 @@ public class ContactOverview extends AppCompatActivity {
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-            frag = new ContentContactFragment(ContactOverview.this, NUMBER, mode);
+            frag = new ContentContactFragment(ContactOverview.this, this, NUMBER, mode);
             fragmentTransaction.add(R.id.nested_scroll_view, frag);
             fragmentTransaction.commit();
             setViews();
@@ -169,6 +171,9 @@ public class ContactOverview extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onUpdateContactToList() { }
+
     /**
      * setViews: Busca y configura los elementos de la vista actual
      */
@@ -211,7 +216,10 @@ public class ContactOverview extends AppCompatActivity {
                     isShow = true;
                     if (Build.VERSION.SDK_INT >= 21) {
                         Window w = getWindow();
-                        w.setStatusBarColor(Color.parseColor(contact.getCOLOR_BUBBLE()));
+                        if (contact == null) {
+                            w.setStatusBarColor(ContextCompat.getColor(getApplicationContext(), R.color.colorPrimary));
+                        }
+                        else w.setStatusBarColor(Color.parseColor(contact.getCOLOR_BUBBLE()));
                     }
                 } else if (isShow) {
                     isShow = false;

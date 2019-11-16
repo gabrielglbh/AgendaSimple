@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,6 +35,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -60,7 +62,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener {
+public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener,
+    ContentContactFragment.onUpdateList {
 
     private RecyclerView rv;
     private AgendaAdapter adapter;
@@ -131,18 +134,24 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         setRecyclerView();
         setFloatingActionButton();
 
+        // TODO: ¿Por qué se llama al fragmento al rotar el dispositivo de nuevo?
+        //  He tenido que hacer un apaño y hacer una verificación de si los campos
+        //  del constructor son null. Pero me parece una ñapa.
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
+        fragContact = new ContentContactFragment(this, this, "", 1);
 
         int orientation = getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            fragContact = new ContentContactFragment(this, "", 1);
+            for (int x = 0; x < fragmentManager.getFragments().size(); x++) {
+                transaction.remove(fragmentManager.getFragments().get(x));
+            }
             transaction.add(R.id.container_fragment_content_contact, fragContact);
-            transaction.commit();
             isOnPortraitMode = false;
         } else {
             isOnPortraitMode = true;
         }
+        transaction.commit();
     }
 
     /**
@@ -204,11 +213,14 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * */
     @Override
     public void onContactClicked(String num) {
-        // TODO: Evento para que el fragmento ponga los campos con mode 0
-        Intent goTo = new Intent(this, ContactOverview.class);
-        goTo.putExtra(OVERVIEW_MODE, MODE);
-        goTo.putExtra(NUMBER_OF_CONTACTS, num);
-        startActivity(goTo);
+        if (isOnPortraitMode) {
+            Intent goTo = new Intent(this, ContactOverview.class);
+            goTo.putExtra(OVERVIEW_MODE, MODE);
+            goTo.putExtra(NUMBER_OF_CONTACTS, num);
+            startActivity(goTo);
+        } else {
+            fragContact.populateFragment(0, num);
+        }
     }
 
     /**
@@ -348,6 +360,17 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     }
 
     /**
+     * onUpdateContactToList: Toma de contacto con el fragmento para cuando se hace update de
+     * un contacto, notificarselo al adapter para actualizar el RecyclerView
+     * */
+    // TODO: notifyDataSetChanged()
+    @Override
+    public void onUpdateContactToList() {
+        contacts = sql.getAllContacts();
+        adapter.setContactList(contacts);
+    }
+
+    /**
      * checkPermits: Método que verifica si se han permitido los permisos necesarios.
      **/
     private boolean checkPermits(String permission){
@@ -470,7 +493,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                             Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
                             startActivity(goTo);
                         } else {
-                            // TODO: Poner los campos en el fragmento con mode 1
+                            fragContact.populateFragment(1, null);
                         }
                     }
                 } else {
@@ -478,7 +501,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
                         startActivity(goTo);
                     } else {
-                        // TODO: Poner los campos en el fragmento con mode 1
+                        fragContact.populateFragment(1, null);
                     }
                 }
             }
