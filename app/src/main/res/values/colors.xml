@@ -15,7 +15,7 @@
     <color name="text">#242424</color>
     <color name="textSecondary">#636363</color>
 
-    <color name="separator">#949494</color>
+    <color name="separator">#CACACA</color>
     <color name="title">#FAFAFA</color>
     <color name="bottom_sheet">#89ABE2</color>
 </resources>

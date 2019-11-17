@@ -80,7 +80,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         holder.number_contact.setText(c.getPHONE_NUMBER());
         holder.initial_contact.setText(c.getNAME().substring(0, 1));
 
-        if (c.getFAVOURITE().equals("0")) {
+        if (c.getFAVOURITE() == 0) {
             holder.fav.setVisibility(View.VISIBLE);
         } else {
             holder.fav.setVisibility(View.GONE);
@@ -223,7 +223,8 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         void onContactClicked(String number);
         void onLongContactClicked(String number, String name, String phone,
                                   String home, String email, String bubble,
-                                  String favorite, String date, int position);
+                                  int favorite, String date, long eventId,
+                                  int position);
     }
 
     class Contact extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
@@ -257,10 +258,12 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             String phone = contacts.get(getAdapterPosition()).getPHONE();
             String home = contacts.get(getAdapterPosition()).getHOME_ADDRESS();
             String email = contacts.get(getAdapterPosition()).getEMAIL();
-            String favorite = contacts.get(getAdapterPosition()).getFAVOURITE();
+            int favorite = contacts.get(getAdapterPosition()).getFAVOURITE();
             String bubble = contacts.get(getAdapterPosition()).getCOLOR_BUBBLE();
             String date = contacts.get(getAdapterPosition()).getDATE();
-            listener.onLongContactClicked(num, name, phone, home, email, bubble, favorite, date, getAdapterPosition());
+            long eventId = contacts.get(getAdapterPosition()).getCALENDAR_ID();
+            listener.onLongContactClicked(num, name, phone, home, email, bubble, favorite, date, eventId,
+                    getAdapterPosition());
             return true;
         }
     }

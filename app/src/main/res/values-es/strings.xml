@@ -68,4 +68,9 @@
     <string name="frag_contact_discarded">Contacto descartado</string>
     <string name="frag_contact_saved">Contacto guardado</string>
     <string name="menu_add_contact">Añadir Contacto</string>
+    <string name="birthday_lunch_meeting">Nombre del Evento</string>
+    <string name="dialog_err_large">Evento demasiado largo</string>
+    <string name="dialog_event_name">Debes escribir un nombre</string>
+    <string name="calendar_err">No se pudo añadir el evento al calendario</string>
+    <string name="calendar_with">con</string>
 </resources>

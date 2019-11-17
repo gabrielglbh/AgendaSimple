@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -16,16 +17,45 @@
         android:gravity="center"
         android:layout_marginBottom="15dp"/>
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tiet_event"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:hint="@string/birthday_lunch_meeting"
+        android:maxLines="1"
+        app:counterEnabled="true"
+        app:counterMaxLength="12"
+        app:errorEnabled="true"
+        app:hintEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/dialog_event"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text|textCapSentences" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/select_date"
-        android:textSize="18sp"
-        android:layout_marginStart="15dp"
+        android:textSize="15sp"
+        android:layout_marginStart="20dp"
         android:layout_marginBottom="6dp"
         android:textColor="@color/text"
         android:layout_gravity="start"
         android:gravity="start"/>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/separator"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginBottom="18dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -38,7 +68,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:id="@+id/et_show_date"
-            android:layout_marginStart="15dp"
+            android:layout_marginStart="20dp"
             android:hint="@string/date_format"
             android:textSize="18sp"
             android:layout_weight="2" />
@@ -58,12 +88,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/select_time"
-        android:textSize="18sp"
-        android:layout_marginStart="15dp"
+        android:textSize="15sp"
+        android:layout_marginStart="20dp"
         android:layout_marginBottom="6dp"
         android:textColor="@color/text"
         android:layout_gravity="start"
         android:gravity="start"/>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/separator"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginBottom="18dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -76,7 +114,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:id="@+id/et_show_time"
-            android:layout_marginStart="15dp"
+            android:layout_marginStart="20dp"
             android:hint="@string/format_time"
             android:textSize="18sp"
             android:layout_weight="2"/>
@@ -121,6 +159,5 @@
             android:layout_gravity="center" />
 
     </LinearLayout>
-
 
 </LinearLayout>

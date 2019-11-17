@@ -14,14 +14,18 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.CalendarContract;
 import android.provider.ContactsContract;
 import android.text.InputType;
 import android.util.Log;
@@ -234,13 +238,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * @param email: EMAIL del contacto en la posición clickada del RecyclerView
      * @param bubble: COLOR_BUBBLE del contacto en la posición clickada del RecyclerView
      * @param favorite: FAVOURITE del contacto en la posición clickada del RecyclerView
+     * @param eventId: CALENDAR_ID del contacto en la posición clickada del RecyclerView
      * @param position: Posición del contacto en el RecyclerView
      * */
     @Override
     // TODO: notifyDataSetChanged()
     public void onLongContactClicked(final String number, final String name, final String phone,
                                      final String home, final String email, final String bubble,
-                                     final String favorite, final String date, final int position) {
+                                     final int favorite, final String date, final long eventId,
+                                     final int position) {
         Button view_button, fav_button, del_button;
         TextView title_bottom_sheet, date_bottom_sheet;
 
@@ -255,7 +261,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         date_bottom_sheet = view.findViewById(R.id.has_date_bottom_sheet);
 
         title_bottom_sheet.setText(name);
-        if (favorite.equals("1")) {
+        if (favorite == 1) {
             fav_button.setText(getString(R.string.favourite_sheet));
         } else {
             fav_button.setText(getString(R.string.delete_fav_sheet));
@@ -263,8 +269,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
         if (!date.equals(getString(R.string.schedule_day))) {
             date_bottom_sheet.setVisibility(View.VISIBLE);
-            String text = getString(R.string.date_sheet) + ": " + date;
-            date_bottom_sheet.setText(text);
+            String dateText = date.replace("\n", " ");
+            date_bottom_sheet.setText(dateText);
         } else {
             date_bottom_sheet.setVisibility(View.GONE);
         }
@@ -281,10 +287,10 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             public void onClick(View view) {
                 dialog.dismiss();
                 final ContactEntity c;
-                if (favorite.equals("1")) {
-                    c = new ContactEntity(name, number, phone, home, email, bubble, "0", date);
+                if (favorite == 1) {
+                    c = new ContactEntity(name, number, phone, home, email, bubble, 0, date, eventId);
                 } else {
-                    c = new ContactEntity(name, number, phone, home, email, bubble, "1", date);
+                    c = new ContactEntity(name, number, phone, home, email, bubble, 1, date, eventId);
                 }
                 sql.updateContact(c);
                 contacts = sql.getAllContacts();
@@ -295,6 +301,11 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             @Override
             public void onClick(View view) {
                 dialog.dismiss();
+                if (eventId != 0) {
+                    ContentResolver cr = getContentResolver();
+                    Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId);
+                    cr.delete(deleteUri, null, null);
+                }
                 sql.deleteContact(number);
                 contacts.remove(position);
                 adapter.notifyItemRemoved(position);
@@ -561,6 +572,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * Además se parsea el String devuelto.
      * */
     private void importFromSD() {
+        for (int c = 0; c < this.contacts.size(); c++) {
+            if (this.contacts.get(c).getCALENDAR_ID() != 0) {
+                ContentResolver cr = getContentResolver();
+                Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
+                        this.contacts.get(c).getCALENDAR_ID());
+                cr.delete(deleteUri, null, null);
+            }
+        }
+
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
@@ -607,9 +627,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                 String address = info.getString(addressJSON);
                 String email = info.getString(emailJSON);
                 String bubble = colors[r.nextInt(colors.length)];
-                String favourite = info.getString(favouriteJSON);
+                int favourite = info.getInt(favouriteJSON);
 
-                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite, getString(R.string.schedule_day));
+                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite, getString(R.string.schedule_day), 0);
                 contacts.add(c);
                 sql.insertContact(c);
             }
@@ -720,6 +740,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private void importFromContacts() {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
 
+        for (int c = 0; c < this.contacts.size(); c++) {
+            if (this.contacts.get(c).getCALENDAR_ID() != 0) {
+                ContentResolver cr = getContentResolver();
+                Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
+                        this.contacts.get(c).getCALENDAR_ID());
+                cr.delete(deleteUri, null, null);
+            }
+        }
+
         Cursor cursor = getContentResolver().query(
                 ContactsContract.Contacts.CONTENT_URI,
                 new String[]{
@@ -762,8 +791,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         "",
                         "",
                         colors[r.nextInt(colors.length)],
-                        "1",
-                        getString(R.string.schedule_day)
+                        1,
+                        getString(R.string.schedule_day),
+                        0
                 );
                 contacts.add(c);
                 try {

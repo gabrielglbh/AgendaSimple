@@ -1,11 +1,15 @@
 package com.example.android.agendasimple.utils;
 
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Environment;
+import android.provider.CalendarContract;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -13,6 +17,7 @@ import android.widget.Toast;
 import com.example.android.agendasimple.AgendaAdapter;
 import com.example.android.agendasimple.MainActivity;
 import com.example.android.agendasimple.R;
+import com.example.android.agendasimple.fragments.ContentContactFragment;
 import com.example.android.agendasimple.sql.ContactEntity;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
@@ -68,6 +73,11 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
             Toast.makeText(ctx, ctx.getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
         } else {
             removeImageStorage(contact.getPHONE_NUMBER(), contact.getNAME());
+            if (contact.getCALENDAR_ID() != 0) {
+                ContentResolver cr = ctx.getContentResolver();
+                Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, contact.getCALENDAR_ID());
+                cr.delete(deleteUri, null, null);
+            }
             contacts.remove(position);
             adapter.notifyItemRemoved(position);
         }

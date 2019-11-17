@@ -1,11 +1,16 @@
 package com.example.android.agendasimple.fragments;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -17,16 +22,19 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 
 import android.os.Environment;
+import android.provider.CalendarContract.Events;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -57,6 +65,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Random;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 import static android.app.Activity.RESULT_OK;
@@ -68,6 +77,8 @@ public class ContentContactFragment extends Fragment {
                         dateDialog, timeDialog, favoriteLandscape, imgLandscape, iconPhoto,
                         checkContact;
     private CardView cardLandscape;
+    private TextInputLayout tietEvent;
+    private TextInputEditText eventDialog;
     private TextView inputDate, date_display, time_display, title_dialog;
     private Button add_scheduled, cancel_scheduled;
     private Toast mToast;
@@ -77,14 +88,17 @@ public class ContentContactFragment extends Fragment {
 
     private ContactEntity contact;
 
-    private String NUMBER, FAVOURITE = "0";
+    private String NUMBER;
+    private int FAVOURITE = 0;
     private boolean isOverflown = false;
-    private String timeToDisplay, dateToDisplay;
+    private String timeToDisplay, dateToDisplay, eventToDisplay;
     private int mode; // Especifica si se ha de llenar los campos del contacto o no
     private boolean isOnPortraitMode;
     private boolean isLikedPressed = false;
+    private boolean toBeCancelled = false;
+    private long eventID = 0;
 
-    private Pattern namePattern = Pattern.compile("[A-Za-zñáéíóúÑÁÉÍÓÚ A-Za-z]+");
+    private Pattern namePattern = Pattern.compile("[A-Za-zñáéíóúÑÁÉÍÓÚ A-Za-z()/0-9]+");
     private Context ctx;
 
     private final int RESULT_LOAD_IMG = 123;
@@ -158,6 +172,34 @@ public class ContentContactFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 123) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (!toBeCancelled) {
+                    addDateToGoogleCalendar(dateToDisplay, timeToDisplay, eventToDisplay, inputName.getText().toString());
+                } else {
+                    cancelDateOnGoogleCalendar();
+                }
+            }
+        }
+    }
+
+    /**
+     * checkPermits: Método que verifica si se han permitido los permisos necesarios.
+     **/
+    private boolean checkPermits(String permission){
+        if (Build.VERSION.SDK_INT >= 6) {
+            if (ActivityCompat.checkSelfPermission(ctx, permission) != PackageManager.PERMISSION_GRANTED) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+        return false;
+    }
+
     /**
      * setViews: Crea las views del fragmento y crea los listeners necesarios
      * */
@@ -192,11 +234,11 @@ public class ContentContactFragment extends Fragment {
             public void onClick(View view) {
                 if (!isLikedPressed) {
                     favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_filled));
-                    FAVOURITE = "0";
+                    FAVOURITE = 0;
                     isLikedPressed = true;
                 } else {
                     favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
-                    FAVOURITE = "1";
+                    FAVOURITE = 1;
                     isLikedPressed = false;
                 }
             }
@@ -254,7 +296,7 @@ public class ContentContactFragment extends Fragment {
                 ContactOverview.collapsingToolbar.setTitle(getString(R.string.contact_overview_label));
             } else {
                 favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
-                FAVOURITE = "1";
+                FAVOURITE = 1;
                 isLikedPressed = false;
             }
             final int color = ContextCompat.getColor(ctx, R.color.colorPrimary);
@@ -274,17 +316,18 @@ public class ContentContactFragment extends Fragment {
     private void setContact() {
         final int color = Color.parseColor(contact.getCOLOR_BUBBLE());
         final Bitmap bitmap = getImageFromStorage();
+        eventID = contact.getCALENDAR_ID();
 
         if (isOnPortraitMode) {
             ContactOverview.collapsingToolbar.setTitle(getString(R.string.modify_contact_title));
         } else {
-            if (contact.getFAVOURITE().equals("0")) {
+            if (contact.getFAVOURITE() == 0) {
                 favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_filled));
-                FAVOURITE = "0";
+                FAVOURITE = 0;
                 isLikedPressed = true;
             } else {
                 favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
-                FAVOURITE = "1";
+                FAVOURITE = 1;
                 isLikedPressed = false;
             }
         }
@@ -333,8 +376,10 @@ public class ContentContactFragment extends Fragment {
         inputEmail.setText(contact.getEMAIL());
         inputDate.setText(contact.getDATE());
         if (!inputDate.getText().toString().equals(getString(R.string.schedule_day))) {
-            timeToDisplay = contact.getDATE().substring(inputDate.getText().length() - 5);
-            dateToDisplay = contact.getDATE().substring(0, inputDate.getText().length() - 7);
+            eventToDisplay = contact.getDATE().substring(0, contact.getDATE().indexOf("\n"));
+            dateToDisplay = contact.getDATE().substring(contact.getDATE().indexOf("\n") + 1,
+                    inputDate.getText().length() - 7);
+            timeToDisplay = contact.getDATE().substring(inputDate.getText().length() - 6);
         }
     }
 
@@ -421,6 +466,7 @@ public class ContentContactFragment extends Fragment {
                 dateDialog.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
+                        hideKeyboard();
                         openDatePickerDialog();
                     }
                 });
@@ -429,11 +475,31 @@ public class ContentContactFragment extends Fragment {
                 timeDialog.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
+                        hideKeyboard();
                         openTimePickerDialog();
                     }
                 });
 
-                if (timeToDisplay != null && dateToDisplay != null) {
+                tietEvent = customView.findViewById(R.id.tiet_event);
+                eventDialog = customView.findViewById(R.id.dialog_event);
+                eventDialog.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                    @Override
+                    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                        if (charSequence.length() > tietEvent.getCounterMaxLength()) {
+                            eventDialog.setError(getString(R.string.dialog_err_large));
+                        } else if (charSequence.length() == 0){
+                            eventDialog.setError(getString(R.string.dialog_event_name));
+                        }
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable editable) {}
+                });
+
+                if (timeToDisplay != null && dateToDisplay != null && eventToDisplay != null) {
                     title_dialog.setText(getString(R.string.modify_date));
                     add_scheduled.setText(getString(R.string.modify_scheduled_date));
                     cancel_scheduled.setVisibility(View.VISIBLE);
@@ -441,6 +507,7 @@ public class ContentContactFragment extends Fragment {
                     time_display.setTextColor(Color.BLACK);
                     date_display.setText(dateToDisplay);
                     date_display.setTextColor(Color.BLACK);
+                    eventDialog.setText(eventToDisplay);
                 } else {
                     title_dialog.setText(getString(R.string.add_date));
                     add_scheduled.setText(getString(R.string.finish_scheduled_date));
@@ -516,10 +583,19 @@ public class ContentContactFragment extends Fragment {
      * addDate: Añade o modifica la cita rellenada
      * */
     private void addDate() {
-        if (timeToDisplay != null && dateToDisplay != null) {
+        if (timeToDisplay != null && dateToDisplay != null && eventDialog.getError() == null) {
+            eventToDisplay = eventDialog.getText().toString();
             alarmBuilder.dismiss();
-            String schedule = dateToDisplay + " " + getString(R.string.at_time) + " " + timeToDisplay;
+            String schedule = eventToDisplay + "\n" + dateToDisplay.trim() + " " + getString(R.string.at_time) + " " + timeToDisplay.trim();
             inputDate.setText(schedule);
+
+            if (checkPermits(Manifest.permission.WRITE_CALENDAR)) {
+                toBeCancelled = false;
+                ActivityCompat.requestPermissions(getActivity(), new String[] {
+                        Manifest.permission.WRITE_CALENDAR }, 123);
+            } else {
+                addDateToGoogleCalendar(dateToDisplay.trim(), timeToDisplay.trim(), eventToDisplay, inputName.getText().toString());
+            }
         } else {
             makeToast(getString(R.string.error_field));
         }
@@ -533,6 +609,79 @@ public class ContentContactFragment extends Fragment {
         timeToDisplay = null;
         dateToDisplay = null;
         inputDate.setText(getString(R.string.schedule_day));
+
+        if (checkPermits(Manifest.permission.WRITE_CALENDAR)) {
+            toBeCancelled = true;
+            ActivityCompat.requestPermissions(getActivity(), new String[] {
+                    Manifest.permission.WRITE_CALENDAR }, 123);
+        } else {
+            cancelDateOnGoogleCalendar();
+        }
+    }
+
+    /**
+     * addDateToGoogleCalendar: Adición y modificación del evento en Google Calendar
+     * */
+    private void addDateToGoogleCalendar(final String date, final String time, final String title,
+                                         final String name) {
+        if (name.trim().isEmpty()) {
+            makeToast(getString(R.string.calendar_err));
+        }
+        else {
+            long calID = 1;
+            ContentResolver cr = ctx.getContentResolver();
+            ContentValues values = new ContentValues();
+
+            Calendar beginTime = Calendar.getInstance();
+            beginTime.set(Integer.parseInt(date.substring(6)),
+                    Integer.parseInt(date.substring(3, 5)) - 1,
+                    Integer.parseInt(date.substring(0, 2)),
+                    (time.charAt(0) == '0' ?
+                            Integer.parseInt(time.substring(1, 2)) :
+                            Integer.parseInt(time.substring(0, 2))) - 1,
+                    Integer.parseInt(time.substring(3)));
+            final long startMillis = beginTime.getTimeInMillis();
+            Calendar endTime = Calendar.getInstance();
+
+            endTime.set(Integer.parseInt(date.substring(6)),
+                    Integer.parseInt(date.substring(3, 5)) - 1,
+                    Integer.parseInt(date.substring(0, 2)),
+                    (time.charAt(0) == '0' ?
+                            Integer.parseInt(time.substring(1, 2)) :
+                            Integer.parseInt(time.substring(0, 2))),
+                    Integer.parseInt(time.substring(3)));
+            final long endMillis = endTime.getTimeInMillis();
+
+            if (cancel_scheduled.getVisibility() == View.GONE) {
+                values.put(Events.DTSTART, startMillis);
+                values.put(Events.DTEND, endMillis);
+                values.put(Events.TITLE, title + " " +  getString(R.string.calendar_with) + " " + name);
+                values.put(Events.CALENDAR_ID, calID);
+                values.put(Events.HAS_ALARM, true);
+                values.put(Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
+                if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_CALENDAR)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                Uri uri = cr.insert(Events.CONTENT_URI, values);
+                eventID = Long.parseLong(uri.getLastPathSegment());
+            } else {
+                values.put(Events.DTSTART, startMillis);
+                values.put(Events.DTEND, endMillis);
+                values.put(Events.TITLE, title + " " + getString(R.string.calendar_with) + " " + name);
+                Uri updateUri = ContentUris.withAppendedId(Events.CONTENT_URI, eventID);
+                cr.update(updateUri, values, null, null);
+            }
+        }
+    }
+
+    /**
+     * cancelDateGoogleCalendar: Cancela el evento asociado a la cita en Google Calendar
+     * */
+    private void cancelDateOnGoogleCalendar() {
+        ContentResolver cr = ctx.getContentResolver();
+        Uri deleteUri = ContentUris.withAppendedId(Events.CONTENT_URI, eventID);
+        cr.delete(deleteUri, null, null);
     }
 
     /**
@@ -704,19 +853,20 @@ public class ContentContactFragment extends Fragment {
             if (insertMode) {
                 Random r = new Random();
                 return new ContactEntity(name, number, phone, address, email,
-                        MainActivity.colors[r.nextInt(MainActivity.colors.length)], ContactOverview.FAVOURITE, scheduledDate);
+                        MainActivity.colors[r.nextInt(MainActivity.colors.length)], ContactOverview.FAVOURITE
+                        , scheduledDate, eventID);
             } else {
                 return new ContactEntity(name, number, phone, address, email,
-                        contact.getCOLOR_BUBBLE(), ContactOverview.FAVOURITE, scheduledDate);
+                        contact.getCOLOR_BUBBLE(), ContactOverview.FAVOURITE, scheduledDate, eventID);
             }
         } else {
             if (insertMode) {
                 Random r = new Random();
                 return new ContactEntity(name, number, phone, address, email,
-                        MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE, scheduledDate);
+                        MainActivity.colors[r.nextInt(MainActivity.colors.length)], FAVOURITE, scheduledDate, eventID);
             } else {
                 return new ContactEntity(name, number, phone, address, email,
-                        contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate);
+                        contact.getCOLOR_BUBBLE(), FAVOURITE, scheduledDate, eventID);
             }
         }
     }
@@ -891,6 +1041,9 @@ public class ContentContactFragment extends Fragment {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 if (isOnPortraitMode) {
+                    if (eventID != 0) {
+                        cancelDateOnGoogleCalendar();
+                    }
                     getActivity().finish();
                 }
             }
@@ -973,7 +1126,7 @@ public class ContentContactFragment extends Fragment {
         setUIToBubbleColor(bookmarkIcon, color);
         inputDate.setText(getString(R.string.schedule_day));
         favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
-        FAVOURITE = "1";
+        FAVOURITE = 1;
         isLikedPressed = false;
         imgLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.background_circle));
         DrawableCompat.setTint(imgLandscape.getDrawable(), ContextCompat.getColor(ctx, R.color.colorAccent));

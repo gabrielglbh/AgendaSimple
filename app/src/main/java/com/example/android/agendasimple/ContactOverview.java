@@ -43,7 +43,8 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
 
     private ContactEntity contact;
     private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
-    public static String NUMBER, FAVOURITE = "1";
+    public static String NUMBER;
+    public static int FAVOURITE = 1;
     private final int RESULT_LOAD_IMG = 123;
 
     private boolean isLikedPressed = false;
@@ -98,13 +99,13 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
         getMenuInflater().inflate(R.menu.contact_overview_menu, menu);
         this.menu = menu;
         if (mode == 0) {
-            if (contact.getFAVOURITE().equals("0")) {
+            if (contact.getFAVOURITE() == 0) {
                 menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
-                FAVOURITE = "0";
+                FAVOURITE = 0;
                 isLikedPressed = true;
             } else {
                 menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
-                FAVOURITE = "1";
+                FAVOURITE = 1;
             }
         }
 
@@ -130,11 +131,11 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
             case R.id.menu_fav:
                 if (!isLikedPressed) {
                     menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart_filled));
-                    FAVOURITE = "0";
+                    FAVOURITE = 0;
                     isLikedPressed = true;
                 } else {
                     menu.getItem(1).setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_heart));
-                    FAVOURITE = "1";
+                    FAVOURITE = 1;
                     isLikedPressed = false;
                 }
                 break;
