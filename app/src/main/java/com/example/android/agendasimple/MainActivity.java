@@ -148,7 +148,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             }
             transaction.add(R.id.container_fragment_content_contact, fragContact);
             isOnPortraitMode = false;
+            addContact.hide();
         } else {
+            addContact.show();
             isOnPortraitMode = true;
         }
         transaction.commit();
@@ -313,6 +315,12 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_activity_menu, menu);
 
+        if (isOnPortraitMode) {
+            menu.findItem(R.id.add_contact).setVisible(false);
+        } else {
+            menu.findItem(R.id.add_contact).setVisible(true);
+        }
+
         final MenuItem m = menu.findItem(R.id.search_contact);
         m.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
             @Override
@@ -355,6 +363,18 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             }
             getDatesContacts = !getDatesContacts;
             adapter.setContactList(contacts);
+        } else if (item.getItemId() == R.id.add_contact) {
+            fromFAB = true;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (checkPermits(permissions[0])) {
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{permissions[0]}, CODE_WRITE_ES);
+                } else {
+                    fragContact.populateFragment(1, null);
+                }
+            } else {
+                fragContact.populateFragment(1, null);
+            }
         }
         return true;
     }
@@ -489,20 +509,12 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         ActivityCompat.requestPermissions(MainActivity.this,
                                 new String[]{permissions[0]}, CODE_WRITE_ES);
                     } else {
-                        if (isOnPortraitMode) {
-                            Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                            startActivity(goTo);
-                        } else {
-                            fragContact.populateFragment(1, null);
-                        }
-                    }
-                } else {
-                    if (isOnPortraitMode) {
                         Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
                         startActivity(goTo);
-                    } else {
-                        fragContact.populateFragment(1, null);
                     }
+                } else {
+                    Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                    startActivity(goTo);
                 }
             }
         });

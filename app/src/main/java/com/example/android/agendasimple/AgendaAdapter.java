@@ -181,7 +181,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
         } else {
             Intent intent = new Intent(Intent.ACTION_SENDTO);
             intent.setData(Uri.parse("mailto:"));
-            intent.putExtra(Intent.EXTRA_EMAIL, contacts.get(position).getEMAIL());
+            intent.putExtra(Intent.EXTRA_EMAIL, new String[] { contacts.get(position).getEMAIL() });
             if (intent.resolveActivity(c.getPackageManager()) != null) {
                 c.startActivity(Intent.createChooser(intent, ctx.getString(R.string.chooser_email)));
             }

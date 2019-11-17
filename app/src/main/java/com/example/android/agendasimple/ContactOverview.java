@@ -50,7 +50,9 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
 
     private ContentContactFragment frag;
 
-    // TODO: Al rotar el dispositivo en esta actividad, ir a la primera
+    // TODO: Al rotar el dispositivo en esta actividad, ir a la primera.
+    //  Ahora mismo para arreglar esto, screenOrientation = portrait en el manisfest en la
+    //  sección de la actividad.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

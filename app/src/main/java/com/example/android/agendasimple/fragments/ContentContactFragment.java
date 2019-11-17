@@ -386,7 +386,21 @@ public class ContentContactFragment extends Fragment {
                 View customView = getLayoutInflater().inflate(R.layout.create_alert_dialog, null);
                 title_dialog = customView.findViewById(R.id.title_dialog);
                 time_display = customView.findViewById(R.id.et_show_time);
+                time_display.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        openTimePickerDialog();
+                    }
+                });
+
                 date_display = customView.findViewById(R.id.et_show_date);
+                date_display.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        openDatePickerDialog();
+                    }
+                });
+
                 add_scheduled = customView.findViewById(R.id.add_button);
                 add_scheduled.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -961,7 +975,8 @@ public class ContentContactFragment extends Fragment {
         favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
         FAVOURITE = "1";
         isLikedPressed = false;
-        imgLandscape.setBackground(ContextCompat.getDrawable(ctx, R.drawable.background_circle));
+        imgLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.background_circle));
+        DrawableCompat.setTint(imgLandscape.getDrawable(), ContextCompat.getColor(ctx, R.color.colorAccent));
         iconPhoto.setVisibility(View.VISIBLE);
     }
 }

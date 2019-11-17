@@ -67,4 +67,5 @@
 
     <string name="frag_contact_discarded">Contacto descartado</string>
     <string name="frag_contact_saved">Contacto guardado</string>
+    <string name="menu_add_contact">Añadir Contacto</string>
 </resources>
