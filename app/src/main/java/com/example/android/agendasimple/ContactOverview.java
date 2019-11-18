@@ -1,13 +1,17 @@
 package com.example.android.agendasimple;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -46,14 +50,11 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
     public static String NUMBER;
     public static int FAVOURITE = 1;
     private final int RESULT_LOAD_IMG = 123;
+    private final int WRITE_EXTERNAL_STORAGE_CODE = 13452;
 
     private boolean isLikedPressed = false;
 
     private ContentContactFragment frag;
-
-    // TODO: Al rotar el dispositivo en esta actividad, ir a la primera.
-    //  Ahora mismo para arreglar esto, screenOrientation = portrait en el manisfest en la
-    //  sección de la actividad.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -175,7 +176,34 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == WRITE_EXTERNAL_STORAGE_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                frag.hideKeyboard();
+                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                photoPickerIntent.setType("image/*");
+                startActivityForResult(photoPickerIntent, RESULT_LOAD_IMG);
+            }
+        }
+    }
+
+    @Override
     public void onUpdateContactToList() { }
+
+    /**
+     * checkPermits: Método que verifica si se han permitido los permisos necesarios.
+     **/
+    private boolean checkPermits(String permission){
+        if (Build.VERSION.SDK_INT >= 6) {
+            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+        return false;
+    }
 
     /**
      * setViews: Busca y configura los elementos de la vista actual
@@ -255,10 +283,16 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
         checkContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                frag.hideKeyboard();
-                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
-                photoPickerIntent.setType("image/*");
-                startActivityForResult(photoPickerIntent, RESULT_LOAD_IMG);
+                if (checkPermits(Manifest.permission.WRITE_EXTERNAL_STORAGE) ||
+                        checkPermits(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    ActivityCompat.requestPermissions(ContactOverview.this, new String[] {
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE }, WRITE_EXTERNAL_STORAGE_CODE);
+                } else {
+                    frag.hideKeyboard();
+                    Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                    photoPickerIntent.setType("image/*");
+                    startActivityForResult(photoPickerIntent, RESULT_LOAD_IMG);
+                }
             }
         });
     }

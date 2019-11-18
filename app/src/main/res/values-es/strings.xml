@@ -73,4 +73,7 @@
     <string name="dialog_event_name">Debes escribir un nombre</string>
     <string name="calendar_err">No se pudo añadir el evento al calendario</string>
     <string name="calendar_with">con</string>
+    <string name="dialog_event_added_calendar">Evento añadido a Google Calendar</string>
+    <string name="dialog_set_alarm">Añadir alarma</string>
+    <string name="dialog_disclaimer_minutes">(30 minutos antes)</string>
 </resources>

@@ -82,6 +82,9 @@
     <string name="birthday_lunch_meeting" translatable="true">Name of Event</string>
     <string name="dialog_err_large" translatable="true">Event too large</string>
     <string name="dialog_event_name" translatable="true">Must name the date</string>
-    <string name="calendar_err">Could not add event to calendar</string>
-    <string name="calendar_with">with</string>
+    <string name="calendar_err" translatable="true">Could not add event to calendar</string>
+    <string name="calendar_with" translatable="true">with</string>
+    <string name="dialog_event_added_calendar" translatable="true">Event added to Google Calendar</string>
+    <string name="dialog_set_alarm">Set alarm</string>
+    <string name="dialog_disclaimer_minutes">(30 minutes prior)</string>
 </resources>

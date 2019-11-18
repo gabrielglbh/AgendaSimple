@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener,
     ContentContactFragment.onUpdateList {
@@ -88,7 +89,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     // contacto seleccionado
     public static final String NUMBER_OF_CONTACTS = "NUMBER_CONTACT";
     public final int MODE = 0;
-    private boolean fromFAB = false;
     private boolean getDatesContacts = false;
     private boolean isOnPortraitMode;
 
@@ -114,6 +114,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
     private ContentContactFragment fragContact;
 
+    private Pattern namePattern = Pattern.compile("[A-Za-zñáéíóúÑÁÉÍÓÚ A-Za-z()/0-9]+");
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -138,18 +140,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         setRecyclerView();
         setFloatingActionButton();
 
-        // TODO: ¿Por qué se llama al fragmento al rotar el dispositivo de nuevo?
-        //  He tenido que hacer un apaño y hacer una verificación de si los campos
-        //  del constructor son null. Pero me parece una ñapa.
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-        fragContact = new ContentContactFragment(this, this, "", 1);
 
         int orientation = getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
             for (int x = 0; x < fragmentManager.getFragments().size(); x++) {
                 transaction.remove(fragmentManager.getFragments().get(x));
             }
+            fragContact = new ContentContactFragment(this, this, "", 1);
             transaction.add(R.id.container_fragment_content_contact, fragContact);
             isOnPortraitMode = false;
             addContact.hide();
@@ -169,7 +168,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     protected void onResume() {
         contacts = sql.getAllContacts();
         adapter.setContactList(contacts);
-        fromFAB = false;
         super.onResume();
     }
 
@@ -188,11 +186,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         switch (requestCode) {
             case CODE_WRITE_ES: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (fromFAB) {
-                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                        startActivity(goTo);
-                    }
-                    else exportToSD();
+                    exportToSD();
                 }
                 break;
             }
@@ -375,17 +369,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             getDatesContacts = !getDatesContacts;
             adapter.setContactList(contacts);
         } else if (item.getItemId() == R.id.add_contact) {
-            fromFAB = true;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (checkPermits(permissions[0])) {
-                    ActivityCompat.requestPermissions(MainActivity.this,
-                            new String[]{permissions[0]}, CODE_WRITE_ES);
-                } else {
-                    fragContact.populateFragment(1, null);
-                }
-            } else {
-                fragContact.populateFragment(1, null);
-            }
+            fragContact.populateFragment(1, null);
         }
         return true;
     }
@@ -514,19 +498,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         addContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                fromFAB = true;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[0])) {
-                        ActivityCompat.requestPermissions(MainActivity.this,
-                                new String[]{permissions[0]}, CODE_WRITE_ES);
-                    } else {
-                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                        startActivity(goTo);
-                    }
-                } else {
-                    Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                    startActivity(goTo);
-                }
+                Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                startActivity(goTo);
             }
         });
     }
@@ -572,12 +545,14 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * Además se parsea el String devuelto.
      * */
     private void importFromSD() {
-        for (int c = 0; c < this.contacts.size(); c++) {
-            if (this.contacts.get(c).getCALENDAR_ID() != 0) {
-                ContentResolver cr = getContentResolver();
-                Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
-                        this.contacts.get(c).getCALENDAR_ID());
-                cr.delete(deleteUri, null, null);
+        if (contacts != null) {
+            for (int c = 0; c < this.contacts.size(); c++) {
+                if (this.contacts.get(c).getCALENDAR_ID() != 0) {
+                    ContentResolver cr = getContentResolver();
+                    Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
+                            this.contacts.get(c).getCALENDAR_ID());
+                    cr.delete(deleteUri, null, null);
+                }
             }
         }
 
@@ -740,12 +715,14 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private void importFromContacts() {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
 
-        for (int c = 0; c < this.contacts.size(); c++) {
-            if (this.contacts.get(c).getCALENDAR_ID() != 0) {
-                ContentResolver cr = getContentResolver();
-                Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
-                        this.contacts.get(c).getCALENDAR_ID());
-                cr.delete(deleteUri, null, null);
+        if (this.contacts != null) {
+            for (int c = 0; c < this.contacts.size(); c++) {
+                if (this.contacts.get(c).getCALENDAR_ID() != 0) {
+                    ContentResolver cr = getContentResolver();
+                    Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
+                            this.contacts.get(c).getCALENDAR_ID());
+                    cr.delete(deleteUri, null, null);
+                }
             }
         }
 
@@ -795,11 +772,13 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         getString(R.string.schedule_day),
                         0
                 );
-                contacts.add(c);
-                try {
-                    sql.insertContact(c);
-                } catch (Exception err) {
-                    Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
+                if (!name.trim().isEmpty() && namePattern.matcher(name).matches()) {
+                    contacts.add(c);
+                    try {
+                        sql.insertContact(c);
+                    } catch (Exception err) {
+                        Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }

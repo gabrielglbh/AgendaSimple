@@ -34,6 +34,7 @@ import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 
 import android.os.Environment;
+import android.provider.CalendarContract.Reminders;
 import android.provider.CalendarContract.Events;
 import android.provider.MediaStore;
 import android.text.Editable;
@@ -46,8 +47,10 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -72,6 +75,7 @@ import static android.app.Activity.RESULT_OK;
 
 public class ContentContactFragment extends Fragment {
 
+    private Switch addAlarm;
     private TextInputEditText inputName, inputNumber, inputPhone, inputHome, inputEmail;
     private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon, bookmarkIcon,
                         dateDialog, timeDialog, favoriteLandscape, imgLandscape, iconPhoto,
@@ -95,13 +99,15 @@ public class ContentContactFragment extends Fragment {
     private int mode; // Especifica si se ha de llenar los campos del contacto o no
     private boolean isOnPortraitMode;
     private boolean isLikedPressed = false;
-    private boolean toBeCancelled = false;
+    private boolean isAlarmSet = true;
     private long eventID = 0;
 
     private Pattern namePattern = Pattern.compile("[A-Za-zñáéíóúÑÁÉÍÓÚ A-Za-z()/0-9]+");
     private Context ctx;
 
     private final int RESULT_LOAD_IMG = 123;
+    private final int WRITE_CALENDAR_CODE = 12342;
+    private final int WRITE_EXTERNAL_STORAGE_CODE = 46345;
 
     public ContentContactFragment() { }
 
@@ -126,7 +132,6 @@ public class ContentContactFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.d("long", "ContentContactFragment: IS CALLED");
         View content = inflater.inflate(R.layout.content_contact_overview, container, false);
 
         if (ctx != null) {
@@ -163,11 +168,27 @@ public class ContentContactFragment extends Fragment {
                 iconPhoto.setVisibility(View.GONE);
             } catch (NullPointerException | IOException e) {
                 e.printStackTrace();
-                iconPhoto.setVisibility(View.VISIBLE);
+                if (contact != null) {
+                    if (getImageFromStorage() != null) {
+                        iconPhoto.setVisibility(View.GONE);
+                    } else {
+                        iconPhoto.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    iconPhoto.setVisibility(View.VISIBLE);
+                }
                 makeToast(getString(R.string.insertion_image_error));
             }
         } else {
-            iconPhoto.setVisibility(View.VISIBLE);
+            if (contact != null) {
+                if (getImageFromStorage() != null) {
+                    iconPhoto.setVisibility(View.GONE);
+                } else {
+                    iconPhoto.setVisibility(View.VISIBLE);
+                }
+            } else {
+                iconPhoto.setVisibility(View.VISIBLE);
+            }
             makeToast(getString(R.string.insertion_image_error));
         }
     }
@@ -175,13 +196,16 @@ public class ContentContactFragment extends Fragment {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 123) {
+        if (requestCode == WRITE_CALENDAR_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (!toBeCancelled) {
-                    addDateToGoogleCalendar(dateToDisplay, timeToDisplay, eventToDisplay, inputName.getText().toString());
-                } else {
-                    cancelDateOnGoogleCalendar();
-                }
+                initializeViewsFromDialog();
+            }
+        } else if (requestCode == WRITE_EXTERNAL_STORAGE_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                hideKeyboard();
+                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                photoPickerIntent.setType("image/*");
+                startActivityForResult(photoPickerIntent, RESULT_LOAD_IMG);
             }
         }
     }
@@ -248,10 +272,16 @@ public class ContentContactFragment extends Fragment {
         cardLandscape.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                hideKeyboard();
-                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
-                photoPickerIntent.setType("image/*");
-                startActivityForResult(photoPickerIntent, RESULT_LOAD_IMG);
+                if (checkPermits(Manifest.permission.WRITE_EXTERNAL_STORAGE) ||
+                        checkPermits(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    requestPermissions(new String[] {
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE }, WRITE_EXTERNAL_STORAGE_CODE);
+                } else {
+                    hideKeyboard();
+                    Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                    photoPickerIntent.setType("image/*");
+                    startActivityForResult(photoPickerIntent, RESULT_LOAD_IMG);
+                }
             }
         });
 
@@ -426,101 +456,123 @@ public class ContentContactFragment extends Fragment {
         inputDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                hideKeyboard();
-
-                View customView = getLayoutInflater().inflate(R.layout.create_alert_dialog, null);
-                title_dialog = customView.findViewById(R.id.title_dialog);
-                time_display = customView.findViewById(R.id.et_show_time);
-                time_display.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        openTimePickerDialog();
-                    }
-                });
-
-                date_display = customView.findViewById(R.id.et_show_date);
-                date_display.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        openDatePickerDialog();
-                    }
-                });
-
-                add_scheduled = customView.findViewById(R.id.add_button);
-                add_scheduled.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        addDate();
-                    }
-                });
-
-                cancel_scheduled = customView.findViewById(R.id.button_cancel);
-                cancel_scheduled.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        cancelDate();
-                    }
-                });
-
-                dateDialog = customView.findViewById(R.id.date_dialog);
-                dateDialog.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        hideKeyboard();
-                        openDatePickerDialog();
-                    }
-                });
-
-                timeDialog = customView.findViewById(R.id.time_dialog);
-                timeDialog.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        hideKeyboard();
-                        openTimePickerDialog();
-                    }
-                });
-
-                tietEvent = customView.findViewById(R.id.tiet_event);
-                eventDialog = customView.findViewById(R.id.dialog_event);
-                eventDialog.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
-
-                    @Override
-                    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                        if (charSequence.length() > tietEvent.getCounterMaxLength()) {
-                            eventDialog.setError(getString(R.string.dialog_err_large));
-                        } else if (charSequence.length() == 0){
-                            eventDialog.setError(getString(R.string.dialog_event_name));
-                        }
-                    }
-
-                    @Override
-                    public void afterTextChanged(Editable editable) {}
-                });
-
-                if (timeToDisplay != null && dateToDisplay != null && eventToDisplay != null) {
-                    title_dialog.setText(getString(R.string.modify_date));
-                    add_scheduled.setText(getString(R.string.modify_scheduled_date));
-                    cancel_scheduled.setVisibility(View.VISIBLE);
-                    time_display.setText(timeToDisplay);
-                    time_display.setTextColor(Color.BLACK);
-                    date_display.setText(dateToDisplay);
-                    date_display.setTextColor(Color.BLACK);
-                    eventDialog.setText(eventToDisplay);
+                if (checkPermits(Manifest.permission.WRITE_CALENDAR)) {
+                    requestPermissions(new String[]{
+                            Manifest.permission.WRITE_CALENDAR}, WRITE_CALENDAR_CODE);
                 } else {
-                    title_dialog.setText(getString(R.string.add_date));
-                    add_scheduled.setText(getString(R.string.finish_scheduled_date));
-                    cancel_scheduled.setVisibility(View.GONE);
+                    initializeViewsFromDialog();
                 }
-
-                AlertDialog.Builder alarm = new AlertDialog.Builder(ctx)
-                        .setView(customView);
-                alarmBuilder = alarm.create();
-                alarmBuilder.show();
             }
         });
     }
+
+    /**
+     * initializeViewsFromDialog: Creación de los listeners y populación del dialogo
+     * */
+    private void initializeViewsFromDialog() {
+            hideKeyboard();
+
+            View customView = getLayoutInflater().inflate(R.layout.create_alert_dialog, null);
+            title_dialog = customView.findViewById(R.id.title_dialog);
+            time_display = customView.findViewById(R.id.et_show_time);
+            time_display.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    openTimePickerDialog();
+                }
+            });
+
+            date_display = customView.findViewById(R.id.et_show_date);
+            date_display.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    openDatePickerDialog();
+                }
+            });
+
+            add_scheduled = customView.findViewById(R.id.add_button);
+            add_scheduled.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    addDate();
+                }
+            });
+
+            cancel_scheduled = customView.findViewById(R.id.button_cancel);
+            cancel_scheduled.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    cancelDate();
+                }
+            });
+
+            dateDialog = customView.findViewById(R.id.date_dialog);
+            dateDialog.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    hideKeyboard();
+                    openDatePickerDialog();
+                }
+            });
+
+            timeDialog = customView.findViewById(R.id.time_dialog);
+            timeDialog.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    hideKeyboard();
+                    openTimePickerDialog();
+                }
+            });
+
+            tietEvent = customView.findViewById(R.id.tiet_event);
+            eventDialog = customView.findViewById(R.id.dialog_event);
+            eventDialog.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    if (charSequence.length() > tietEvent.getCounterMaxLength()) {
+                        eventDialog.setError(getString(R.string.dialog_err_large));
+                    } else if (charSequence.length() == 0) {
+                        eventDialog.setError(getString(R.string.dialog_event_name));
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                }
+            });
+
+            addAlarm = customView.findViewById(R.id.switch_alarm_on_calendar);
+            addAlarm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    isAlarmSet = b;
+                }
+            });
+
+            if (timeToDisplay != null && dateToDisplay != null && eventToDisplay != null) {
+                title_dialog.setText(getString(R.string.modify_date));
+                add_scheduled.setText(getString(R.string.modify_scheduled_date));
+                cancel_scheduled.setVisibility(View.VISIBLE);
+                time_display.setText(timeToDisplay);
+                time_display.setTextColor(Color.BLACK);
+                date_display.setText(dateToDisplay);
+                date_display.setTextColor(Color.BLACK);
+                eventDialog.setText(eventToDisplay);
+            } else {
+                title_dialog.setText(getString(R.string.add_date));
+                add_scheduled.setText(getString(R.string.finish_scheduled_date));
+                cancel_scheduled.setVisibility(View.GONE);
+            }
+
+            AlertDialog.Builder alarm = new AlertDialog.Builder(ctx)
+                    .setView(customView);
+            alarmBuilder = alarm.create();
+            alarmBuilder.show();
+        }
 
     /**
      * openDatePickerDialog: Abre el DatePicker con la fecha actual y guarda la fecha seleccionada
@@ -589,13 +641,7 @@ public class ContentContactFragment extends Fragment {
             String schedule = eventToDisplay + "\n" + dateToDisplay.trim() + " " + getString(R.string.at_time) + " " + timeToDisplay.trim();
             inputDate.setText(schedule);
 
-            if (checkPermits(Manifest.permission.WRITE_CALENDAR)) {
-                toBeCancelled = false;
-                ActivityCompat.requestPermissions(getActivity(), new String[] {
-                        Manifest.permission.WRITE_CALENDAR }, 123);
-            } else {
-                addDateToGoogleCalendar(dateToDisplay.trim(), timeToDisplay.trim(), eventToDisplay, inputName.getText().toString());
-            }
+            addDateToGoogleCalendar(dateToDisplay.trim(), timeToDisplay.trim(), eventToDisplay, inputName.getText().toString());
         } else {
             makeToast(getString(R.string.error_field));
         }
@@ -610,17 +656,12 @@ public class ContentContactFragment extends Fragment {
         dateToDisplay = null;
         inputDate.setText(getString(R.string.schedule_day));
 
-        if (checkPermits(Manifest.permission.WRITE_CALENDAR)) {
-            toBeCancelled = true;
-            ActivityCompat.requestPermissions(getActivity(), new String[] {
-                    Manifest.permission.WRITE_CALENDAR }, 123);
-        } else {
-            cancelDateOnGoogleCalendar();
-        }
+        cancelDateOnGoogleCalendar();
     }
 
     /**
-     * addDateToGoogleCalendar: Adición y modificación del evento en Google Calendar
+     * addDateToGoogleCalendar: Adición y modificación del evento en Google Calendar, además de
+     * la creación un reminder del mismo en base a un switch
      * */
     private void addDateToGoogleCalendar(final String date, final String time, final String title,
                                          final String name) {
@@ -657,7 +698,6 @@ public class ContentContactFragment extends Fragment {
                 values.put(Events.DTEND, endMillis);
                 values.put(Events.TITLE, title + " " +  getString(R.string.calendar_with) + " " + name);
                 values.put(Events.CALENDAR_ID, calID);
-                values.put(Events.HAS_ALARM, true);
                 values.put(Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
                 if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_CALENDAR)
                         != PackageManager.PERMISSION_GRANTED) {
@@ -672,6 +712,15 @@ public class ContentContactFragment extends Fragment {
                 Uri updateUri = ContentUris.withAppendedId(Events.CONTENT_URI, eventID);
                 cr.update(updateUri, values, null, null);
             }
+        }
+
+        if (isAlarmSet) {
+            ContentResolver cr = ctx.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(Reminders.MINUTES, 30);
+            values.put(Reminders.EVENT_ID, eventID);
+            values.put(Reminders.METHOD, Reminders.METHOD_ALERT);
+            cr.insert(Reminders.CONTENT_URI, values);
         }
     }
 
