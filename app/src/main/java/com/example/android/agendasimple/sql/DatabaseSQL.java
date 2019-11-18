@@ -16,18 +16,19 @@ import java.util.ArrayList;
 public class DatabaseSQL extends SQLiteOpenHelper {
 
     private static final String DB = "contacts";
-    private static final int VERSION = 15;
+    private static final int VERSION = 16;
 
-    public static final String TABLE_NAME = "contacts";
+    private static final String TABLE_NAME = "contacts";
 
-    public static final String COLUMN_1 = "NAME";
-    public static final String COLUMN_2 = "PHONE_NUMBER";
-    public static final String COLUMN_3 = "PHONE";
-    public static final String COLUMN_4 = "HOME_ADDRESS";
-    public static final String COLUMN_5 = "EMAIL";
-    public static final String COLUMN_6 = "COLOR_BUBBLE";
-    public static final String COLUMN_7 = "FAVOURITE";
-    public static final String COLUMN_8 = "DATE";
+    private static final String COLUMN_1 = "NAME";
+    private static final String COLUMN_2 = "PHONE_NUMBER";
+    private static final String COLUMN_3 = "PHONE";
+    private static final String COLUMN_4 = "HOME_ADDRESS";
+    private static final String COLUMN_5 = "EMAIL";
+    private static final String COLUMN_6 = "COLOR_BUBBLE";
+    private static final String COLUMN_7 = "FAVOURITE";
+    private static final String COLUMN_8 = "DATE";
+    private static final String COLUMN_9 = "CALENDAR_ID";
 
     private static DatabaseSQL sInstance;
     private Context context;
@@ -39,7 +40,8 @@ public class DatabaseSQL extends SQLiteOpenHelper {
             ContactEntry.COLUMN_5,
             ContactEntry.COLUMN_6,
             ContactEntry.COLUMN_7,
-            ContactEntry.COLUMN_8
+            ContactEntry.COLUMN_8,
+            ContactEntry.COLUMN_9
     };
 
     /**
@@ -71,8 +73,9 @@ public class DatabaseSQL extends SQLiteOpenHelper {
                 COLUMN_4 + " VARCHAR(40), " +
                 COLUMN_5 + " VARCHAR(30), " +
                 COLUMN_6 + " VARCHAR(7), " +
-                COLUMN_7 + " VARCHAR(1), " +
-                COLUMN_8 + " VARCHAR(23))");
+                COLUMN_7 + " NUMBER(1), " +
+                COLUMN_8 + " VARCHAR(23)," +
+                COLUMN_9 + " NUMBER(10))");
     }
 
     @Override
@@ -99,6 +102,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         contentValues.put(COLUMN_6, e.getCOLOR_BUBBLE());
         contentValues.put(COLUMN_7, e.getFAVOURITE());
         contentValues.put(COLUMN_8, e.getDATE());
+        contentValues.put(COLUMN_9, e.getCALENDAR_ID());
 
         return cr.insert(uri, contentValues);
     }
@@ -121,6 +125,7 @@ public class DatabaseSQL extends SQLiteOpenHelper {
         contentValues.put(COLUMN_6, e.getCOLOR_BUBBLE());
         contentValues.put(COLUMN_7, e.getFAVOURITE());
         contentValues.put(COLUMN_8, e.getDATE());
+        contentValues.put(COLUMN_9, e.getCALENDAR_ID());
 
         return cr.update(uri, contentValues, ContactEntry.COLUMN_2 + "=?", new String[] { e.getPHONE_NUMBER() });
     }
@@ -166,8 +171,9 @@ public class DatabaseSQL extends SQLiteOpenHelper {
                         c.getString(c.getColumnIndex(COLUMN_4)),
                         c.getString(c.getColumnIndex(COLUMN_5)),
                         c.getString(c.getColumnIndex(COLUMN_6)),
-                        c.getString(c.getColumnIndex(COLUMN_7)),
-                        c.getString(c.getColumnIndex(COLUMN_8)))
+                        c.getInt(c.getColumnIndex(COLUMN_7)),
+                        c.getString(c.getColumnIndex(COLUMN_8)),
+                        c.getLong(c.getColumnIndex(COLUMN_9)))
                 );
             }
             c.close();
@@ -196,8 +202,9 @@ public class DatabaseSQL extends SQLiteOpenHelper {
                     c.getString(c.getColumnIndex(COLUMN_4)),
                     c.getString(c.getColumnIndex(COLUMN_5)),
                     c.getString(c.getColumnIndex(COLUMN_6)),
-                    c.getString(c.getColumnIndex(COLUMN_7)),
-                    c.getString(c.getColumnIndex(COLUMN_8))
+                    c.getInt(c.getColumnIndex(COLUMN_7)),
+                    c.getString(c.getColumnIndex(COLUMN_8)),
+                    c.getLong(c.getColumnIndex(COLUMN_9))
             );
             c.close();
             return contact;
@@ -234,8 +241,9 @@ public class DatabaseSQL extends SQLiteOpenHelper {
                         c.getString(c.getColumnIndex(COLUMN_4)),
                         c.getString(c.getColumnIndex(COLUMN_5)),
                         c.getString(c.getColumnIndex(COLUMN_6)),
-                        c.getString(c.getColumnIndex(COLUMN_7)),
-                        c.getString(c.getColumnIndex(COLUMN_8))
+                        c.getInt(c.getColumnIndex(COLUMN_7)),
+                        c.getString(c.getColumnIndex(COLUMN_8)),
+                        c.getLong(c.getColumnIndex(COLUMN_9))
                 ));
             }
             c.close();
@@ -266,8 +274,9 @@ public class DatabaseSQL extends SQLiteOpenHelper {
                         c.getString(c.getColumnIndex(COLUMN_4)),
                         c.getString(c.getColumnIndex(COLUMN_5)),
                         c.getString(c.getColumnIndex(COLUMN_6)),
-                        c.getString(c.getColumnIndex(COLUMN_7)),
-                        c.getString(c.getColumnIndex(COLUMN_8))
+                        c.getInt(c.getColumnIndex(COLUMN_7)),
+                        c.getString(c.getColumnIndex(COLUMN_8)),
+                        c.getLong(c.getColumnIndex(COLUMN_9))
                 ));
             }
             c.close();

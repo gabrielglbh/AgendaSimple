@@ -7,20 +7,28 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.CalendarContract;
 import android.provider.ContactsContract;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,10 +39,12 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.android.agendasimple.fragments.ContentContactFragment;
 import com.example.android.agendasimple.sql.ContactEntity;
 import com.example.android.agendasimple.sql.DatabaseSQL;
 import com.example.android.agendasimple.utils.SwipeHandler;
@@ -55,8 +65,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.regex.Pattern;
 
-public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener {
+public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener,
+    ContentContactFragment.onUpdateList {
 
     private RecyclerView rv;
     private AgendaAdapter adapter;
@@ -77,8 +89,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     // contacto seleccionado
     public static final String NUMBER_OF_CONTACTS = "NUMBER_CONTACT";
     public final int MODE = 0;
-    private boolean fromFAB = false;
     private boolean getDatesContacts = false;
+    private boolean isOnPortraitMode;
 
     private final String nameJSON = "name";
     private final String numberJSON = "number";
@@ -100,6 +112,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public static String[] colors;
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
+    private ContentContactFragment fragContact;
+
+    private Pattern namePattern = Pattern.compile("[A-Za-zñáéíóúÑÁÉÍÓÚ A-Za-z()/0-9]+");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +139,24 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         setAppBarAndNavMenu();
         setRecyclerView();
         setFloatingActionButton();
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+        int orientation = getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            for (int x = 0; x < fragmentManager.getFragments().size(); x++) {
+                transaction.remove(fragmentManager.getFragments().get(x));
+            }
+            fragContact = new ContentContactFragment(this, this, "", 1);
+            transaction.add(R.id.container_fragment_content_contact, fragContact);
+            isOnPortraitMode = false;
+            addContact.hide();
+        } else {
+            addContact.show();
+            isOnPortraitMode = true;
+        }
+        transaction.commit();
     }
 
     /**
@@ -135,7 +168,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     protected void onResume() {
         contacts = sql.getAllContacts();
         adapter.setContactList(contacts);
-        fromFAB = false;
         super.onResume();
     }
 
@@ -154,11 +186,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         switch (requestCode) {
             case CODE_WRITE_ES: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (fromFAB) {
-                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                        startActivity(goTo);
-                    }
-                    else exportToSD();
+                    exportToSD();
                 }
                 break;
             }
@@ -185,10 +213,14 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * */
     @Override
     public void onContactClicked(String num) {
-        Intent goTo = new Intent(this, ContactOverview.class);
-        goTo.putExtra(OVERVIEW_MODE, MODE);
-        goTo.putExtra(NUMBER_OF_CONTACTS, num);
-        startActivity(goTo);
+        if (isOnPortraitMode) {
+            Intent goTo = new Intent(this, ContactOverview.class);
+            goTo.putExtra(OVERVIEW_MODE, MODE);
+            goTo.putExtra(NUMBER_OF_CONTACTS, num);
+            startActivity(goTo);
+        } else {
+            fragContact.populateFragment(0, num);
+        }
     }
 
     /**
@@ -200,13 +232,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * @param email: EMAIL del contacto en la posición clickada del RecyclerView
      * @param bubble: COLOR_BUBBLE del contacto en la posición clickada del RecyclerView
      * @param favorite: FAVOURITE del contacto en la posición clickada del RecyclerView
+     * @param eventId: CALENDAR_ID del contacto en la posición clickada del RecyclerView
      * @param position: Posición del contacto en el RecyclerView
      * */
     @Override
     // TODO: notifyDataSetChanged()
     public void onLongContactClicked(final String number, final String name, final String phone,
                                      final String home, final String email, final String bubble,
-                                     final String favorite, final String date, final int position) {
+                                     final int favorite, final String date, final long eventId,
+                                     final int position) {
         Button view_button, fav_button, del_button;
         TextView title_bottom_sheet, date_bottom_sheet;
 
@@ -221,7 +255,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         date_bottom_sheet = view.findViewById(R.id.has_date_bottom_sheet);
 
         title_bottom_sheet.setText(name);
-        if (favorite.equals("1")) {
+        if (favorite == 1) {
             fav_button.setText(getString(R.string.favourite_sheet));
         } else {
             fav_button.setText(getString(R.string.delete_fav_sheet));
@@ -229,8 +263,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
         if (!date.equals(getString(R.string.schedule_day))) {
             date_bottom_sheet.setVisibility(View.VISIBLE);
-            String text = getString(R.string.date_sheet) + ": " + date;
-            date_bottom_sheet.setText(text);
+            String dateText = date.replace("\n", " ");
+            date_bottom_sheet.setText(dateText);
         } else {
             date_bottom_sheet.setVisibility(View.GONE);
         }
@@ -247,10 +281,10 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             public void onClick(View view) {
                 dialog.dismiss();
                 final ContactEntity c;
-                if (favorite.equals("1")) {
-                    c = new ContactEntity(name, number, phone, home, email, bubble, "0", date);
+                if (favorite == 1) {
+                    c = new ContactEntity(name, number, phone, home, email, bubble, 0, date, eventId);
                 } else {
-                    c = new ContactEntity(name, number, phone, home, email, bubble, "1", date);
+                    c = new ContactEntity(name, number, phone, home, email, bubble, 1, date, eventId);
                 }
                 sql.updateContact(c);
                 contacts = sql.getAllContacts();
@@ -261,6 +295,11 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             @Override
             public void onClick(View view) {
                 dialog.dismiss();
+                if (eventId != 0) {
+                    ContentResolver cr = getContentResolver();
+                    Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId);
+                    cr.delete(deleteUri, null, null);
+                }
                 sql.deleteContact(number);
                 contacts.remove(position);
                 adapter.notifyItemRemoved(position);
@@ -280,6 +319,12 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_activity_menu, menu);
+
+        if (isOnPortraitMode) {
+            menu.findItem(R.id.add_contact).setVisible(false);
+        } else {
+            menu.findItem(R.id.add_contact).setVisible(true);
+        }
 
         final MenuItem m = menu.findItem(R.id.search_contact);
         m.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
@@ -323,8 +368,21 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             }
             getDatesContacts = !getDatesContacts;
             adapter.setContactList(contacts);
+        } else if (item.getItemId() == R.id.add_contact) {
+            fragContact.populateFragment(1, null);
         }
         return true;
+    }
+
+    /**
+     * onUpdateContactToList: Toma de contacto con el fragmento para cuando se hace update de
+     * un contacto, notificarselo al adapter para actualizar el RecyclerView
+     * */
+    // TODO: notifyDataSetChanged()
+    @Override
+    public void onUpdateContactToList() {
+        contacts = sql.getAllContacts();
+        adapter.setContactList(contacts);
     }
 
     /**
@@ -440,19 +498,8 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         addContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                fromFAB = true;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkPermits(permissions[0])) {
-                        ActivityCompat.requestPermissions(MainActivity.this,
-                                new String[]{permissions[0]}, CODE_WRITE_ES);
-                    } else {
-                        Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                        startActivity(goTo);
-                    }
-                } else {
-                    Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
-                    startActivity(goTo);
-                }
+                Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                startActivity(goTo);
             }
         });
     }
@@ -498,6 +545,17 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * Además se parsea el String devuelto.
      * */
     private void importFromSD() {
+        if (contacts != null) {
+            for (int c = 0; c < this.contacts.size(); c++) {
+                if (this.contacts.get(c).getCALENDAR_ID() != 0) {
+                    ContentResolver cr = getContentResolver();
+                    Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
+                            this.contacts.get(c).getCALENDAR_ID());
+                    cr.delete(deleteUri, null, null);
+                }
+            }
+        }
+
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
@@ -544,9 +602,9 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                 String address = info.getString(addressJSON);
                 String email = info.getString(emailJSON);
                 String bubble = colors[r.nextInt(colors.length)];
-                String favourite = info.getString(favouriteJSON);
+                int favourite = info.getInt(favouriteJSON);
 
-                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite, getString(R.string.schedule_day));
+                ContactEntity c = new ContactEntity(name, number, phone, address, email, bubble, favourite, getString(R.string.schedule_day), 0);
                 contacts.add(c);
                 sql.insertContact(c);
             }
@@ -657,6 +715,17 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     private void importFromContacts() {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
 
+        if (this.contacts != null) {
+            for (int c = 0; c < this.contacts.size(); c++) {
+                if (this.contacts.get(c).getCALENDAR_ID() != 0) {
+                    ContentResolver cr = getContentResolver();
+                    Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
+                            this.contacts.get(c).getCALENDAR_ID());
+                    cr.delete(deleteUri, null, null);
+                }
+            }
+        }
+
         Cursor cursor = getContentResolver().query(
                 ContactsContract.Contacts.CONTENT_URI,
                 new String[]{
@@ -699,14 +768,17 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                         "",
                         "",
                         colors[r.nextInt(colors.length)],
-                        "1",
-                        getString(R.string.schedule_day)
+                        1,
+                        getString(R.string.schedule_day),
+                        0
                 );
-                contacts.add(c);
-                try {
-                    sql.insertContact(c);
-                } catch (Exception err) {
-                    Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
+                if (!name.trim().isEmpty() && namePattern.matcher(name).matches()) {
+                    contacts.add(c);
+                    try {
+                        sql.insertContact(c);
+                    } catch (Exception err) {
+                        Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }

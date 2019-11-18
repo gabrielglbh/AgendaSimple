@@ -2,12 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:title="@string/author_label">
-        <menu>
-            <item android:title="@string/author"/>
-        </menu>
-    </item>
-
     <group>
         <item
             android:id="@+id/export_from_content_provider"
@@ -30,4 +24,11 @@
             app:showAsAction="never"
             android:orderInCategory="1"/>
     </group>
+
+    <item android:title="@string/author_label">
+        <menu>
+            <item android:title="@string/author"/>
+        </menu>
+    </item>
+
 </menu>

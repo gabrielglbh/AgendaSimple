@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/contact_content_fragment"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -7,11 +8,42 @@
     android:focusable="true"
     android:focusableInTouchMode="true">
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/icon_contact_landscape"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/img_contact_landscape"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scaleType="centerCrop"
+            android:background="@drawable/background_circle" />
+
+    </androidx.cardview.widget.CardView>
+
+    <ImageView
+        android:id="@+id/favorite_landscape"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_heart_filled"
+        app:layout_constraintBottom_toBottomOf="@+id/icon_contact_landscape"
+        app:layout_constraintEnd_toStartOf="@+id/check_contact"
+        app:layout_constraintTop_toTopOf="@+id/icon_contact_landscape" />
+
     <ImageView
         android:id="@+id/icon_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="58dp"
+        android:layout_marginTop="52dp"
         android:src="@drawable/ic_account"
         app:layout_constraintStart_toStartOf="@+id/icon_date"
         app:layout_constraintTop_toBottomOf="@+id/add_date" />
@@ -57,7 +89,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="112dp"
         android:src="@drawable/ic_calendar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -84,18 +116,11 @@
         app:layout_constraintStart_toEndOf="@+id/icon_date"
         app:layout_constraintTop_toTopOf="@+id/icon_date" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.66" />
-
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tiet_name_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginStart="16dp"
         android:hint="@string/name_contact_overview"
         android:maxLines="1"
@@ -120,7 +145,6 @@
         android:id="@+id/tiet_number_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
         android:layout_marginStart="16dp"
         android:hint="@string/number_contact_overview"
         android:maxLines="1"
@@ -129,7 +153,7 @@
         app:errorEnabled="true"
         app:hintEnabled="true"
         app:layout_constraintBottom_toBottomOf="@+id/icon_number"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/tiet_name_layout"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/icon_number"
         app:layout_constraintTop_toTopOf="@+id/icon_number"
@@ -147,13 +171,12 @@
         android:id="@+id/tiet_home_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
         android:layout_marginStart="16dp"
         android:hint="@string/address_contact_overview"
         android:maxLines="1"
         app:hintEnabled="true"
         app:layout_constraintBottom_toBottomOf="@+id/icon_home"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/tiet_home_phone_layout"
         app:layout_constraintStart_toEndOf="@+id/icon_home"
         app:layout_constraintTop_toTopOf="@+id/icon_home">
 
@@ -169,13 +192,12 @@
         android:id="@+id/tiet_mail_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
         android:layout_marginStart="16dp"
         android:hint="@string/email_contact_overview"
         android:maxLines="1"
         app:hintEnabled="true"
         app:layout_constraintBottom_toBottomOf="@+id/icon_mail"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/tiet_home_layout"
         app:layout_constraintStart_toEndOf="@+id/icon_mail"
         app:layout_constraintTop_toTopOf="@+id/icon_mail">
 
@@ -191,7 +213,6 @@
         android:id="@+id/tiet_home_phone_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
         android:layout_marginStart="16dp"
         android:hint="@string/phone_contact_overview"
         android:maxLines="1"
@@ -199,7 +220,7 @@
         app:counterMaxLength="12"
         app:hintEnabled="true"
         app:layout_constraintBottom_toBottomOf="@+id/icon_home_phone"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/tiet_number_layout"
         app:layout_constraintStart_toEndOf="@+id/icon_home_phone"
         app:layout_constraintTop_toTopOf="@+id/icon_home_phone">
 
@@ -210,5 +231,25 @@
             android:inputType="number|phone" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <ImageView
+        android:id="@+id/icon_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/ic_add_photo"
+        app:layout_constraintBottom_toBottomOf="@+id/icon_contact_landscape"
+        app:layout_constraintEnd_toEndOf="@+id/icon_contact_landscape"
+        app:layout_constraintStart_toStartOf="@+id/icon_contact_landscape"
+        app:layout_constraintTop_toTopOf="@+id/icon_contact_landscape" />
+
+    <ImageView
+        android:id="@+id/check_contact"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/ic_check_landscape"
+        app:layout_constraintBottom_toBottomOf="@+id/favorite_landscape"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/favorite_landscape" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

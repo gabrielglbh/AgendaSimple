@@ -41,6 +41,7 @@ public class ContactContract extends ContentProvider {
         public static final String COLUMN_6 = "COLOR_BUBBLE";
         public static final String COLUMN_7 = "FAVOURITE";
         public static final String COLUMN_8 = "DATE";
+        public static final String COLUMN_9 = "CALENDAR_ID";
 
     }
 

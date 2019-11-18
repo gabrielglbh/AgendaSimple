@@ -8,11 +8,13 @@ public class ContactEntity {
     private String HOME_ADDRESS;
     private String EMAIL;
     private String COLOR_BUBBLE;
-    private String FAVOURITE; // 0 si es favorito, 1 si no
+    private int FAVOURITE; // 0 si es favorito, 1 si no
     private String DATE; // Si no hay citas = getString(R.string.schedule_day)
+    private long CALENDAR_ID; // 0 si no hay evento
 
     public ContactEntity(String NAME, String PHONE_NUMBER, String PHONE, String HOME_ADDRESS,
-                         String EMAIL, String COLOR_BUBBLE, String FAVOURITE, String DATE) {
+                         String EMAIL, String COLOR_BUBBLE, int FAVOURITE, String DATE,
+                         long CALENDAR_ID) {
         setNAME(NAME);
         setPHONE_NUMBER(PHONE_NUMBER);
         setPHONE(PHONE);
@@ -21,6 +23,7 @@ public class ContactEntity {
         setCOLOR_BUBBLE(COLOR_BUBBLE);
         setFAVOURITE(FAVOURITE);
         setDATE(DATE);
+        setCALENDAR_ID(CALENDAR_ID);
     }
 
     public String getNAME() {
@@ -47,12 +50,16 @@ public class ContactEntity {
         return COLOR_BUBBLE;
     }
 
-    public String getFAVOURITE() {
+    public int getFAVOURITE() {
         return FAVOURITE;
     }
 
     public String getDATE() {
         return DATE;
+    }
+
+    public long getCALENDAR_ID() {
+        return CALENDAR_ID;
     }
 
     private void setNAME(String NAME) {
@@ -79,11 +86,15 @@ public class ContactEntity {
         this.COLOR_BUBBLE = COLOR_BUBBLE;
     }
 
-    private void setFAVOURITE(String FAVOURITE) {
+    private void setFAVOURITE(int FAVOURITE) {
         this.FAVOURITE = FAVOURITE;
     }
 
     public void setDATE(String DATE) {
         this.DATE = DATE;
+    }
+
+    public void setCALENDAR_ID(long CALENDAR_ID) {
+        this.CALENDAR_ID = CALENDAR_ID;
     }
 }

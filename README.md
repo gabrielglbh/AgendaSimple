@@ -7,7 +7,7 @@ Esta aplicación es capaz de añadir contactos, eliminarlos y modificarlos cuand
   - Borrado: En la vista completa de todos los contactos, se debe hacer SWIPE hacia derecha o izquierda para eliminar el contacto. Implementado con el ItemTouchHelper.Callback.
   - Modificación: Con darle al contacto que se quiera modificar en la lista de contactos, lleva al usuario a ContactOverview pero con los campos rellenados del contacto cuando se insertó.
 
-Se ha utilizado SQLiteOpenHelper para administrar los datos con las operaciones descritas, además de para implementar la búsqueda de contactos. Para la visualización de los contactos se ha utilizado RecyclerView con un Adapter básico.
+Se ha utilizado SQLiteOpenHelper para administrar los datos con las operaciones descritas, además de para implementar la búsqueda de contactos. Para la visualización de los contactos se ha utilizado RecyclerView con un Adapter básico. Como mejora adicional a la base de datos SQLite, se ha creado un ContentProvider para que las demás aplicaciones del dispositivo puedan utilizar los datos de esta aplicación.
 
 Además, la aplicación permite:
 
@@ -21,8 +21,4 @@ Además, la aplicación permite:
   - La utilización de la base de datos propia en aplicaciones de terceros mediante la creación de un ContentProvider propio.
   - Acceso al Correo Electrónico para mandar directamente un correo a un contacto si éste tiene un correo asociado.
   - Opción de añadir una foto de contacto de la galería y otras aplicaciones mediante el intent ACTION_PICK. Se hace uso de la librería Picasso para cargar las imágenes en el RecyclerView.
-  - Opción de añadir, modificar y cancelar citas con contactos con DatePickerView y TimePickerView.
-
-Para mejorar la UI, se ha decidido que, al crear un usuario, se guarde un color aleatorio entre 7 propuestos. Este color se pintará en la lista en cada contacto junto con un texto que representa la inicial del nombre del contacto. Esto se ha denominado Bubble.
-
-También, y, únicamente para dispositivos que tengan nivel de API mayor a 21, al modificar un contacto, el ActionBar, la StatusBar y todos los iconos de ContactOverview, se cambian al color del Bubble del contacto. Si se está por debajo de ese nivel de API, todos esos elementos se mantienen con el color predeterminado de la aplicación. 
+  - Opción de añadir, modificar y cancelar citas con contactos con DatePickerView y TimePickerView con exportación a Google Calendar, con opción a añadir recordatorios.

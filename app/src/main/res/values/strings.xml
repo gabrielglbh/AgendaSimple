@@ -75,4 +75,16 @@
     <string name="import_export_options" translatable="true">Import/Export</string>
     <string name="author" translatable="false">Gabriel García López</string>
     <string name="author_label" translatable="true">Developed by</string>
+
+    <string name="frag_contact_discarded" translatable="true">Contact discarded</string>
+    <string name="frag_contact_saved" translatable="true">Contact saved</string>
+    <string name="menu_add_contact" translatable="true">Add Contact</string>
+    <string name="birthday_lunch_meeting" translatable="true">Name of Event</string>
+    <string name="dialog_err_large" translatable="true">Event too large</string>
+    <string name="dialog_event_name" translatable="true">Must name the date</string>
+    <string name="calendar_err" translatable="true">Could not add event to calendar</string>
+    <string name="calendar_with" translatable="true">with</string>
+    <string name="dialog_event_added_calendar" translatable="true">Event added to Google Calendar</string>
+    <string name="dialog_set_alarm">Set alarm</string>
+    <string name="dialog_disclaimer_minutes">(30 minutes prior)</string>
 </resources>
