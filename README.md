@@ -21,4 +21,4 @@ Además, la aplicación permite:
   - La utilización de la base de datos propia en aplicaciones de terceros mediante la creación de un ContentProvider propio.
   - Acceso al Correo Electrónico para mandar directamente un correo a un contacto si éste tiene un correo asociado.
   - Opción de añadir una foto de contacto de la galería y otras aplicaciones mediante el intent ACTION_PICK. Se hace uso de la librería Picasso para cargar las imágenes en el RecyclerView.
-  - Opción de añadir, modificar y cancelar citas con contactos con DatePickerView y TimePickerView.
+  - Opción de añadir, modificar y cancelar citas con contactos con DatePickerView y TimePickerView con exportación a Google Calendar, con opción a añadir recordatorios.
