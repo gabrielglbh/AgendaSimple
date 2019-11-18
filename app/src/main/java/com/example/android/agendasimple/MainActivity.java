@@ -44,6 +44,7 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.android.agendasimple.fragments.ContactListFragment;
 import com.example.android.agendasimple.fragments.ContentContactFragment;
 import com.example.android.agendasimple.sql.ContactEntity;
 import com.example.android.agendasimple.sql.DatabaseSQL;
@@ -67,17 +68,14 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.regex.Pattern;
 
-public class MainActivity extends AppCompatActivity implements AgendaAdapter.ContactClickListener,
-    ContentContactFragment.onUpdateList {
+public class MainActivity extends AppCompatActivity implements ContentContactFragment.onUpdateList,
+        ContactListFragment.onContactClickedToFragment {
 
-    private RecyclerView rv;
-    private AgendaAdapter adapter;
     private FloatingActionButton addContact;
     private SearchView searchWidget;
     public static DatabaseSQL sql;
-    private ItemTouchHelper touchHelper;
     private Menu menu;
-    private BottomSheetDialog dialog;
+    private Toast mToast;
 
     private Toolbar toolbar;
     private DrawerLayout drawer;
@@ -88,7 +86,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     // Número de telefono que se pasa a ContactOverview para saber la PK de contacto con el buscar para cargar los campos del
     // contacto seleccionado
     public static final String NUMBER_OF_CONTACTS = "NUMBER_CONTACT";
-    public final int MODE = 0;
     private boolean getDatesContacts = false;
     private boolean isOnPortraitMode;
 
@@ -112,9 +109,42 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     public static String[] colors;
 
     private ArrayList<ContactEntity> contacts = new ArrayList<>();
+
     private ContentContactFragment fragContact;
+    private ContactListFragment fragList;
 
     private Pattern namePattern = Pattern.compile("[A-Za-zñáéíóúÑÁÉÍÓÚ A-Za-z()/0-9]+");
+
+    /**********************************************************************************************/
+
+    /******************************** Implementación de interfaces ********************************/
+
+    /**********************************************************************************************/
+
+    /**
+     * onUpdateContactToList (ContentContactFragment): Toma de contacto con el fragmento para
+     * cuando se hace update de un contacto, notificarselo al adapter para actualizar el RecyclerView
+     * */
+    @Override
+    public void onUpdateContactToList() {
+        contacts = sql.getAllContacts();
+        fragList.setContactsIntoAdapter(contacts);
+    }
+
+    /**
+     * passDataToFragment: Función del fragmento lista que llama al fragmento contacto
+     * para abrir los datos del contacto seleccionado
+     **/
+    @Override
+    public void passDataToFragment(String num) {
+        fragContact.populateFragment(0, num);
+    }
+
+    /**********************************************************************************************/
+
+    /****************************** Métodos de Control Sobreescritos ******************************/
+
+    /**********************************************************************************************/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,7 +167,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         navigation = findViewById(R.id.navigation_menu);
 
         setAppBarAndNavMenu();
-        setRecyclerView();
         setFloatingActionButton();
 
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -148,11 +177,19 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             for (int x = 0; x < fragmentManager.getFragments().size(); x++) {
                 transaction.remove(fragmentManager.getFragments().get(x));
             }
+
             fragContact = new ContentContactFragment(this, this, "", 1);
             transaction.add(R.id.container_fragment_content_contact, fragContact);
+
+            fragList = new ContactListFragment(this, this);
+            transaction.add(R.id.container_fragment_contact_list_land, fragList);
+
             isOnPortraitMode = false;
             addContact.hide();
         } else {
+            fragList = new ContactListFragment(this, this);
+            transaction.add(R.id.container_fragment_contact_list, fragList);
+
             addContact.show();
             isOnPortraitMode = true;
         }
@@ -163,11 +200,10 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * onResume: Se cargan todos los contactos con getAllContacts en el RecyclerView, añadiendo
      * los nuevos contactos posibles
      * */
-    // TODO: notifyDataSetChanged()
     @Override
     protected void onResume() {
         contacts = sql.getAllContacts();
-        adapter.setContactList(contacts);
+        fragList.setContactsIntoAdapter(contacts);
         super.onResume();
     }
 
@@ -208,108 +244,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
     }
 
     /**
-     * onContactClicked: Handler para el click de un contacto para pasar a ContactOverview
-     * @param num: PHONE_NUMBER del contacto en la posición clickada del RecyclerView
-     * */
-    @Override
-    public void onContactClicked(String num) {
-        if (isOnPortraitMode) {
-            Intent goTo = new Intent(this, ContactOverview.class);
-            goTo.putExtra(OVERVIEW_MODE, MODE);
-            goTo.putExtra(NUMBER_OF_CONTACTS, num);
-            startActivity(goTo);
-        } else {
-            fragContact.populateFragment(0, num);
-        }
-    }
-
-    /**
-     * onLongContactClicked: Expande el bottom sheet para acciones recurrentes con los contactos
-     * @param number: PHONE_NUMBER del contacto en la posición clickada del RecyclerView
-     * @param name: NAME del contacto en la posición clickada del RecyclerView
-     * @param phone: PHONE del contacto en la posición clickada del RecyclerView
-     * @param home: HOME_ADDRESS del contacto en la posición clickada del RecyclerView
-     * @param email: EMAIL del contacto en la posición clickada del RecyclerView
-     * @param bubble: COLOR_BUBBLE del contacto en la posición clickada del RecyclerView
-     * @param favorite: FAVOURITE del contacto en la posición clickada del RecyclerView
-     * @param eventId: CALENDAR_ID del contacto en la posición clickada del RecyclerView
-     * @param position: Posición del contacto en el RecyclerView
-     * */
-    @Override
-    // TODO: notifyDataSetChanged()
-    public void onLongContactClicked(final String number, final String name, final String phone,
-                                     final String home, final String email, final String bubble,
-                                     final int favorite, final String date, final long eventId,
-                                     final int position) {
-        Button view_button, fav_button, del_button;
-        TextView title_bottom_sheet, date_bottom_sheet;
-
-        View view = getLayoutInflater().inflate(R.layout.bottom_sheet, null);
-        dialog = new BottomSheetDialog(this);
-        dialog.setContentView(view);
-
-        title_bottom_sheet = view.findViewById(R.id.title_bottom_sheet);
-        view_button = view.findViewById(R.id.button_see);
-        fav_button = view.findViewById(R.id.button_favourite);
-        del_button = view.findViewById(R.id.button_delete);
-        date_bottom_sheet = view.findViewById(R.id.has_date_bottom_sheet);
-
-        title_bottom_sheet.setText(name);
-        if (favorite == 1) {
-            fav_button.setText(getString(R.string.favourite_sheet));
-        } else {
-            fav_button.setText(getString(R.string.delete_fav_sheet));
-        }
-
-        if (!date.equals(getString(R.string.schedule_day))) {
-            date_bottom_sheet.setVisibility(View.VISIBLE);
-            String dateText = date.replace("\n", " ");
-            date_bottom_sheet.setText(dateText);
-        } else {
-            date_bottom_sheet.setVisibility(View.GONE);
-        }
-
-        view_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.dismiss();
-                onContactClicked(number);
-            }
-        });
-        fav_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.dismiss();
-                final ContactEntity c;
-                if (favorite == 1) {
-                    c = new ContactEntity(name, number, phone, home, email, bubble, 0, date, eventId);
-                } else {
-                    c = new ContactEntity(name, number, phone, home, email, bubble, 1, date, eventId);
-                }
-                sql.updateContact(c);
-                contacts = sql.getAllContacts();
-                adapter.setContactList(contacts);
-            }
-        });
-        del_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.dismiss();
-                if (eventId != 0) {
-                    ContentResolver cr = getContentResolver();
-                    Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId);
-                    cr.delete(deleteUri, null, null);
-                }
-                sql.deleteContact(number);
-                contacts.remove(position);
-                adapter.notifyItemRemoved(position);
-            }
-        });
-
-        dialog.show();
-    }
-
-    /**
      * onCreateOptionsMenu: Se crea e infla el menu de MainActivity junto con la configuración
      * del widget de búsqueda de contacto searchWidget
      * Cuando se cierra el widget collapsable de búsqueda, se vuelven a cargar todos los contactos
@@ -336,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
 
             @Override
             public boolean onMenuItemActionCollapse(MenuItem menuItem) {
-                adapter.setContactList(sql.getAllContacts());
+                fragList.setContactsIntoAdapter(sql.getAllContacts());
                 closeKeyboard();
                 return true;
             }
@@ -355,7 +289,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      *
      * @param item: item seleccionado del menu
      * */
-    // TODO: notifyDataSetChanged()
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.get_date_contacts){
@@ -367,23 +300,18 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                 contacts = sql.getDatesWithContacts();
             }
             getDatesContacts = !getDatesContacts;
-            adapter.setContactList(contacts);
+            fragList.setContactsIntoAdapter(contacts);
         } else if (item.getItemId() == R.id.add_contact) {
             fragContact.populateFragment(1, null);
         }
         return true;
     }
 
-    /**
-     * onUpdateContactToList: Toma de contacto con el fragmento para cuando se hace update de
-     * un contacto, notificarselo al adapter para actualizar el RecyclerView
-     * */
-    // TODO: notifyDataSetChanged()
-    @Override
-    public void onUpdateContactToList() {
-        contacts = sql.getAllContacts();
-        adapter.setContactList(contacts);
-    }
+    /**********************************************************************************************/
+
+    /********************************** Métodos de Inicialización *********************************/
+
+    /**********************************************************************************************/
 
     /**
      * checkPermits: Método que verifica si se han permitido los permisos necesarios.
@@ -460,26 +388,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         });
     }
 
-    /**
-     * setRecyclerView: Se cargan todos los contactos con getAllContacts en el RecyclerView, y se
-     * ancla el itemTouchHelper para la eliminación de contactos al RecyclerView
-     * */
-    private void setRecyclerView() {
-        rv = findViewById(R.id.recycler_view_contacts);
-        contacts = sql.getAllContacts();
-
-        adapter = new AgendaAdapter(this, getApplicationContext());
-        adapter.setContactList(contacts);
-
-        LinearLayoutManager lm = new LinearLayoutManager(this);
-        rv.setLayoutManager(lm);
-        rv.setHasFixedSize(false);
-        rv.setAdapter(adapter);
-
-        touchHelper = new ItemTouchHelper(new SwipeHandler(this, adapter));
-        touchHelper.attachToRecyclerView(rv);
-    }
-
     private void setFloatingActionButton() {
         addContact = findViewById(R.id.fab_add_contact);
         addContact.setScaleX(0);
@@ -508,7 +416,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * setSearchWidget: Se configura el SearchView encargado de la búsqueda de contactos
      * Si no hay texto que parsear, se cargan todos los contactos
      * */
-    // TODO: notifyDataSetChanged()
     private void setSearchWidget() {
         searchWidget.setQueryHint(getString(R.string.search_contact_hint));
         searchWidget.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -520,25 +427,31 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             @Override
             public boolean onQueryTextSubmit(String query) {
                 searchWidget.clearFocus();
-                adapter.setContactList(sql.getSearchedContacts(query, getDatesContacts));
+                fragList.setContactsIntoAdapter(sql.getSearchedContacts(query, getDatesContacts));
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (!newText.trim().isEmpty()) {
-                    adapter.setContactList(sql.getSearchedContacts(newText, getDatesContacts));
+                    fragList.setContactsIntoAdapter(sql.getSearchedContacts(newText, getDatesContacts));
                 } else {
                     if (!getDatesContacts) {
-                        adapter.setContactList(sql.getAllContacts());
+                        fragList.setContactsIntoAdapter(sql.getAllContacts());
                     } else {
-                        adapter.setContactList(sql.getDatesWithContacts());
+                        fragList.setContactsIntoAdapter(sql.getDatesWithContacts());
                     }
                 }
                 return true;
             }
         });
     }
+
+    /**********************************************************************************************/
+
+    /***************************** Métodos de Importación/Exportación *****************************/
+
+    /**********************************************************************************************/
 
     /**
      * importFromSD: Recoge el PATH al archivo contacts.cnt de la SD del teléfono y se lee el archivo.
@@ -568,13 +481,13 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                     parseJsonAndPopulateRecyclerView(jsonObj);
                     fd.close();
                 } catch (IOException err) {
-                    Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+                    makeToast(getString(R.string.import_to_SD));
                 }
             } else {
-                Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+                makeToast(getString(R.string.import_to_SD));
             }
         } else {
-            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+            makeToast(getString(R.string.import_to_SD));
         }
     }
 
@@ -584,7 +497,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * Se elimna la tabla de CONTACTS y se popula de nuevo con cada contacto importado.
      * No se importan las citas.
      * */
-    // TODO: notifyDataSetChanged()
     private void parseJsonAndPopulateRecyclerView(String jsonObj) {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
         try {
@@ -610,10 +522,10 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
             }
 
             this.contacts = contacts;
-            adapter.setContactList(contacts);
-            Toast.makeText(this, getString(R.string.success_import_to), Toast.LENGTH_SHORT).show();
+            fragList.setContactsIntoAdapter(contacts);
+            makeToast(getString(R.string.success_import_to));
         } catch (JSONException err) {
-            Toast.makeText(this, getString(R.string.import_to_SD), Toast.LENGTH_SHORT).show();
+            makeToast(getString(R.string.import_to_SD));
         }
     }
 
@@ -636,13 +548,13 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                     fd.write(json.toString());
                     fd.close();
                 } catch (IOException err) {
-                    Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+                    makeToast(getString(R.string.export_to_SD));
                 }
             } else {
-                Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+                makeToast(getString(R.string.export_to_SD));
             }
         } else {
-            Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+            makeToast(getString(R.string.export_to_SD));
         }
     }
 
@@ -694,13 +606,13 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                                         .put(favouriteJSON, contacts.get(x).getFAVOURITE())
                                 ));
                     }
-                    Toast.makeText(this, getString(R.string.success_export_to), Toast.LENGTH_SHORT).show();
+                    makeToast(getString(R.string.success_export_to));
                 } catch (JSONException err) {
-                    Toast.makeText(this, getString(R.string.export_to_SD), Toast.LENGTH_SHORT).show();
+                    makeToast(getString(R.string.export_to_SD));
                 }
             }
         } else {
-            Toast.makeText(this, getString(R.string.no_cont_to_export), Toast.LENGTH_SHORT).show();
+            makeToast(getString(R.string.no_cont_to_export));
         }
 
         return contactFormatted;
@@ -711,7 +623,6 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
      * para sacar todos los contactos del teléfono y por cada uno de ellos se guarda en el fromato
      * adecuado para su importación a la aplicación de MiAgenda.
      * */
-    // TODO: notifyDataSetChanged()
     private void importFromContacts() {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
 
@@ -777,15 +688,15 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
                     try {
                         sql.insertContact(c);
                     } catch (Exception err) {
-                        Toast.makeText(this, getString(R.string.insertion_failed), Toast.LENGTH_SHORT).show();
+                        makeToast(getString(R.string.insertion_failed));
                     }
                 }
             }
         }
         cursor.close();
         this.contacts = contacts;
-        adapter.setContactList(contacts);
-        Toast.makeText(this, getString(R.string.success_import_to), Toast.LENGTH_SHORT).show();
+        fragList.setContactsIntoAdapter(contacts);
+        makeToast(getString(R.string.success_import_to));
     }
 
     private void openKeyboard() {
@@ -802,17 +713,11 @@ public class MainActivity extends AppCompatActivity implements AgendaAdapter.Con
         }
     }
 
-    /**
-     * getNewPositionOfContact: Método para calcular la nueva posicion del contacto en la lista.
-     * @param id: Clave identificativa del contacto
-     * @return: posición nueva
-     * */
-    private int getNewPositionOfContact(String id) {
-        for (int x = 0; x < contacts.size(); x++) {
-            if (contacts.get(x).getPHONE_NUMBER().equals(id)) {
-                return x;
-            }
+    public void makeToast(String msg) {
+        if (mToast != null) {
+            mToast.cancel();
         }
-        return -1;
+        mToast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
+        mToast.show();
     }
 }

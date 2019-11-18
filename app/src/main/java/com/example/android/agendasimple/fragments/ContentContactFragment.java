@@ -129,6 +129,12 @@ public class ContentContactFragment extends Fragment {
         void onUpdateContactToList();
     }
 
+    /**********************************************************************************************/
+
+    /****************************** Métodos de Control Sobreescritos ******************************/
+
+    /**********************************************************************************************/
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -209,6 +215,12 @@ public class ContentContactFragment extends Fragment {
             }
         }
     }
+
+    /**********************************************************************************************/
+
+    /********************************** Métodos de Inicialización *********************************/
+
+    /**********************************************************************************************/
 
     /**
      * checkPermits: Método que verifica si se han permitido los permisos necesarios.
@@ -448,6 +460,37 @@ public class ContentContactFragment extends Fragment {
             public void afterTextChanged(Editable editable) { }
         });
     }
+
+    /**
+     * resetView: Reset de los campos y redibujado de los iconos y demás botones
+     * */
+    private void resetView() {
+        final int color = ContextCompat.getColor(ctx, R.color.colorPrimary);
+        inputName.setText("");
+        inputNumber.setText("");
+        inputPhone.setText("");
+        inputEmail.setText("");
+        inputHome.setText("");
+        setUIToBubbleColor(nameIcon, color);
+        setUIToBubbleColor(numberIcon, color);
+        setUIToBubbleColor(phoneIcon, color);
+        setUIToBubbleColor(homeIcon, color);
+        setUIToBubbleColor(emailIcon, color);
+        setUIToBubbleColor(bookmarkIcon, color);
+        inputDate.setText(getString(R.string.schedule_day));
+        favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
+        FAVOURITE = 1;
+        isLikedPressed = false;
+        imgLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.background_circle));
+        DrawableCompat.setTint(imgLandscape.getDrawable(), ContextCompat.getColor(ctx, R.color.colorAccent));
+        iconPhoto.setVisibility(View.VISIBLE);
+    }
+
+    /**********************************************************************************************/
+
+    /****************** Métodos de creación y manejo de eventos del AlertDialog *******************/
+
+    /**********************************************************************************************/
 
     /**
      * createScheduledDateDialog: Creación del custom dialog para la adición de una cita con un contacto
@@ -733,6 +776,12 @@ public class ContentContactFragment extends Fragment {
         cr.delete(deleteUri, null, null);
     }
 
+    /**********************************************************************************************/
+
+    /****************************** Métodos de Validación del Contacto ****************************/
+
+    /**********************************************************************************************/
+
     /**
      * validateTextFields: Validación de los campos de NAME, EMAIL y NUMBER. NAME y NUMBER son los únicos
      * obligatorios.
@@ -896,6 +945,53 @@ public class ContentContactFragment extends Fragment {
         }
     }
 
+    /**
+     * checkErrors: Validación de errores en base a los textWatchers y Patterns.
+     * */
+    public void checkErrors() {
+        if (inputName.getError() != null || inputNumber.getError() != null) {
+            createDialog(getString(R.string.error_on_back));
+        } else {
+            if (mode == 1) {
+                validateAndInsertContact();
+            } else {
+                validateAndUpdateContact();
+            }
+        }
+    }
+
+    /**
+     * checkIsDate: Verificador de si hay una nueva cita o no
+     * @param date: Fecha y hora de la cita
+     * */
+    private String checkIsDate(String date) {
+        String s = getString(R.string.schedule_day);
+        if (!date.equals(getString(R.string.schedule_day))) {
+            s = date;
+        }
+        return s;
+    }
+
+    /**
+     * isOkForUpdate: Update de un contacto con su imagen de contacto
+     * @param c: Contacto completo modificado
+     * */
+    private void isOkForUpdate(ContactEntity c) {
+        try {
+            Bitmap bitmap;
+            if (isOnPortraitMode) {
+                bitmap = ((BitmapDrawable) ContactOverview.headerImage.getDrawable()).getBitmap();
+            } else {
+                bitmap = ((BitmapDrawable) imgLandscape.getDrawable()).getBitmap();
+            }
+            saveImageToStorage(bitmap);
+            update(c);
+        } catch (Exception e) {
+            removeImageStorage();
+            update(c);
+        }
+    }
+
     private ContactEntity getContact(boolean insertMode, String name, String number, String phone,
                                      String address, String email, String scheduledDate) {
         if (isOnPortraitMode) {
@@ -919,6 +1015,12 @@ public class ContentContactFragment extends Fragment {
             }
         }
     }
+
+    /**********************************************************************************************/
+
+    /********* Métodos de Administración del External Storage y Acceso a Base de Datos ************/
+
+    /**********************************************************************************************/
 
     /**
      * Métodos para guardar, recoger y eliminar la imagen del storage
@@ -982,53 +1084,6 @@ public class ContentContactFragment extends Fragment {
         return false;
     }
 
-    /**
-     * checkErrors: Validación de errores en base a los textWatchers y Patterns.
-     * */
-    public void checkErrors() {
-        if (inputName.getError() != null || inputNumber.getError() != null) {
-            createDialog(getString(R.string.error_on_back));
-        } else {
-            if (mode == 1) {
-                validateAndInsertContact();
-            } else {
-                validateAndUpdateContact();
-            }
-        }
-    }
-
-    /**
-     * checkIsDate: Verificador de si hay una nueva cita o no
-     * @param date: Fecha y hora de la cita
-     * */
-    private String checkIsDate(String date) {
-        String s = getString(R.string.schedule_day);
-        if (!date.equals(getString(R.string.schedule_day))) {
-            s = date;
-        }
-        return s;
-    }
-
-    /**
-     * isOkForUpdate: Update de un contacto con su imagen de contacto
-     * @param c: Contacto completo modificado
-     * */
-    private void isOkForUpdate(ContactEntity c) {
-        try {
-            Bitmap bitmap;
-            if (isOnPortraitMode) {
-                bitmap = ((BitmapDrawable) ContactOverview.headerImage.getDrawable()).getBitmap();
-            } else {
-                bitmap = ((BitmapDrawable) imgLandscape.getDrawable()).getBitmap();
-            }
-            saveImageToStorage(bitmap);
-            update(c);
-        } catch (Exception e) {
-            removeImageStorage();
-            update(c);
-        }
-    }
-
     private void insert(ContactEntity c) {
         if (MainActivity.sql.insertContact(c) != null) {
             if (isOnPortraitMode) {
@@ -1056,6 +1111,12 @@ public class ContentContactFragment extends Fragment {
             makeToast(getString(R.string.update_failed));
         }
     }
+
+    /**********************************************************************************************/
+
+    /************************************ Métodos de Utilidad *************************************/
+
+    /**********************************************************************************************/
 
     public void hideKeyboard() {
         inputName.clearFocus();
@@ -1155,30 +1216,5 @@ public class ContentContactFragment extends Fragment {
      * */
     private int dpToPx(int dp) {
         return (int) (dp * ctx.getResources().getDisplayMetrics().density);
-    }
-
-    /**
-     * resetView: Reset de los campos y redibujado de los iconos y demás botones
-     * */
-    private void resetView() {
-        final int color = ContextCompat.getColor(ctx, R.color.colorPrimary);
-        inputName.setText("");
-        inputNumber.setText("");
-        inputPhone.setText("");
-        inputEmail.setText("");
-        inputHome.setText("");
-        setUIToBubbleColor(nameIcon, color);
-        setUIToBubbleColor(numberIcon, color);
-        setUIToBubbleColor(phoneIcon, color);
-        setUIToBubbleColor(homeIcon, color);
-        setUIToBubbleColor(emailIcon, color);
-        setUIToBubbleColor(bookmarkIcon, color);
-        inputDate.setText(getString(R.string.schedule_day));
-        favoriteLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.ic_heart_landscape));
-        FAVOURITE = 1;
-        isLikedPressed = false;
-        imgLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.background_circle));
-        DrawableCompat.setTint(imgLandscape.getDrawable(), ContextCompat.getColor(ctx, R.color.colorAccent));
-        iconPhoto.setVisibility(View.VISIBLE);
     }
 }
