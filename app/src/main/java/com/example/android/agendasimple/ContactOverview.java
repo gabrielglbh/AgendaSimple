@@ -56,6 +56,12 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
 
     private ContentContactFragment frag;
 
+    /**********************************************************************************************/
+
+    /****************************** Métodos de Control Sobreescritos ******************************/
+
+    /**********************************************************************************************/
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -190,6 +196,12 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
 
     @Override
     public void onUpdateContactToList() { }
+
+    /**********************************************************************************************/
+
+    /********************************** Métodos de Inicialización *********************************/
+
+    /**********************************************************************************************/
 
     /**
      * checkPermits: Método que verifica si se han permitido los permisos necesarios.

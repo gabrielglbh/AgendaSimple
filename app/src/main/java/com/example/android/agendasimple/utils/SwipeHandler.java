@@ -4,22 +4,18 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.CalendarContract;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import com.example.android.agendasimple.AgendaAdapter;
 import com.example.android.agendasimple.MainActivity;
 import com.example.android.agendasimple.R;
-import com.example.android.agendasimple.fragments.ContentContactFragment;
 import com.example.android.agendasimple.sql.ContactEntity;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.io.File;
 import java.util.ArrayList;
