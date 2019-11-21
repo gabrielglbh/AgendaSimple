@@ -76,4 +76,7 @@
     <string name="dialog_event_added_calendar">Evento añadido a Google Calendar</string>
     <string name="dialog_set_alarm">Añadir alarma</string>
     <string name="dialog_disclaimer_minutes">(30 minutos antes)</string>
+    <string name="import_dialog_disclaimer"> contacto(s) no han sido añadidos debido a un formato no aceptado. Por favor, cambia el nombre de dichos contactos.</string>
+    <string name="dialog_event_last_label">¿Cuánto dura el evento?</string>
+    <string name="dialog_hours_label">(Horas)</string>
 </resources>

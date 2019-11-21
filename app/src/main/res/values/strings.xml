@@ -1,4 +1,13 @@
 <resources>
+    <string-array name="entries">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
+
     <string name="app_name" translatable="false">Agenda</string>
     <string name="file_path_contact_images" translatable="false">Agenda/Contact_Images</string>
     <string name="search_menu" translatable="true">Search</string>
@@ -85,6 +94,9 @@
     <string name="calendar_err" translatable="true">Could not add event to calendar</string>
     <string name="calendar_with" translatable="true">with</string>
     <string name="dialog_event_added_calendar" translatable="true">Event added to Google Calendar</string>
-    <string name="dialog_set_alarm">Set alarm</string>
-    <string name="dialog_disclaimer_minutes">(30 minutes prior)</string>
+    <string name="dialog_set_alarm" translatable="true">Set alarm</string>
+    <string name="dialog_disclaimer_minutes" translatable="true">(30 minutes prior)</string>
+    <string name="import_dialog_disclaimer" translatable="true">contact(s) were not imported because of bad format. Please change the name of those contacts.</string>
+    <string name="dialog_event_last_label">How much the event lasts?</string>
+    <string name="dialog_hours_label">(Hours)</string>
 </resources>

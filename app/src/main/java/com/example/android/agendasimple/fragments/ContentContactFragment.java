@@ -46,10 +46,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -84,6 +88,7 @@ public class ContentContactFragment extends Fragment {
     private TextInputLayout tietEvent;
     private TextInputEditText eventDialog;
     private TextView inputDate, date_display, time_display, title_dialog;
+    private Spinner hours;
     private Button add_scheduled, cancel_scheduled;
     private Toast mToast;
     private AlertDialog alert, alarmBuilder;
@@ -95,7 +100,7 @@ public class ContentContactFragment extends Fragment {
     private String NUMBER;
     private int FAVOURITE = 0;
     private boolean isOverflown = false;
-    private String timeToDisplay, dateToDisplay, eventToDisplay;
+    private String timeToDisplay, dateToDisplay, eventToDisplay, untilTimeToDisplay;
     private int mode; // Especifica si se ha de llenar los campos del contacto o no
     private boolean isOnPortraitMode;
     private boolean isLikedPressed = false;
@@ -418,10 +423,15 @@ public class ContentContactFragment extends Fragment {
         inputEmail.setText(contact.getEMAIL());
         inputDate.setText(contact.getDATE());
         if (!inputDate.getText().toString().equals(getString(R.string.schedule_day))) {
-            eventToDisplay = contact.getDATE().substring(0, contact.getDATE().indexOf("\n"));
-            dateToDisplay = contact.getDATE().substring(contact.getDATE().indexOf("\n") + 1,
-                    inputDate.getText().length() - 7);
-            timeToDisplay = contact.getDATE().substring(inputDate.getText().length() - 6);
+            String d = contact.getDATE();
+            int idl = inputDate.getText().length();
+
+            eventToDisplay = d.substring(0, d.indexOf("\n"));
+            dateToDisplay = d.substring(d.indexOf("\n") + 1, idl - 15);
+            timeToDisplay = d.substring(idl - 13, idl - 7);
+            final int a = Integer.parseInt(d.substring(idl - 13, idl - 11));
+            final int b = Integer.parseInt(d.substring(idl - 5, idl - 3));
+            untilTimeToDisplay = Integer.toString(b > a ? (b-a) : ((24-a)+b));
         }
     }
 
@@ -588,6 +598,8 @@ public class ContentContactFragment extends Fragment {
                 }
             });
 
+            hours = customView.findViewById(R.id.hours_edit);
+
             addAlarm = customView.findViewById(R.id.switch_alarm_on_calendar);
             addAlarm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -605,6 +617,7 @@ public class ContentContactFragment extends Fragment {
                 date_display.setText(dateToDisplay);
                 date_display.setTextColor(Color.BLACK);
                 eventDialog.setText(eventToDisplay);
+                hours.setSelection(Integer.parseInt(untilTimeToDisplay) - 1);
             } else {
                 title_dialog.setText(getString(R.string.add_date));
                 add_scheduled.setText(getString(R.string.finish_scheduled_date));
@@ -681,8 +694,6 @@ public class ContentContactFragment extends Fragment {
         if (timeToDisplay != null && dateToDisplay != null && eventDialog.getError() == null) {
             eventToDisplay = eventDialog.getText().toString();
             alarmBuilder.dismiss();
-            String schedule = eventToDisplay + "\n" + dateToDisplay.trim() + " " + getString(R.string.at_time) + " " + timeToDisplay.trim();
-            inputDate.setText(schedule);
 
             addDateToGoogleCalendar(dateToDisplay.trim(), timeToDisplay.trim(), eventToDisplay, inputName.getText().toString());
         } else {
@@ -722,17 +733,28 @@ public class ContentContactFragment extends Fragment {
                     Integer.parseInt(date.substring(0, 2)),
                     (time.charAt(0) == '0' ?
                             Integer.parseInt(time.substring(1, 2)) :
-                            Integer.parseInt(time.substring(0, 2))) - 1,
+                            Integer.parseInt(time.substring(0, 2))),
                     Integer.parseInt(time.substring(3)));
             final long startMillis = beginTime.getTimeInMillis();
             Calendar endTime = Calendar.getInstance();
 
+            int duration = Integer.parseInt(hours.getSelectedItem().toString());
+            int totalHoursDuration = (time.charAt(0) == '0' ?
+                    Integer.parseInt(time.substring(1, 2)) :
+                    Integer.parseInt(time.substring(0, 2))) + duration;
+            int overflowDay = 0;
+            if (totalHoursDuration >= 24) {
+                totalHoursDuration -= 24;
+                overflowDay++;
+            }
+            final String a = Integer.toString(totalHoursDuration);
+            final String until = (a.length() == 1 ? "0".concat(a) : a)
+                    + ":" + time.substring(3);
+
             endTime.set(Integer.parseInt(date.substring(6)),
                     Integer.parseInt(date.substring(3, 5)) - 1,
-                    Integer.parseInt(date.substring(0, 2)),
-                    (time.charAt(0) == '0' ?
-                            Integer.parseInt(time.substring(1, 2)) :
-                            Integer.parseInt(time.substring(0, 2))),
+                    Integer.parseInt(date.substring(0, 2)) + overflowDay,
+                    totalHoursDuration,
                     Integer.parseInt(time.substring(3)));
             final long endMillis = endTime.getTimeInMillis();
 
@@ -755,6 +777,9 @@ public class ContentContactFragment extends Fragment {
                 Uri updateUri = ContentUris.withAppendedId(Events.CONTENT_URI, eventID);
                 cr.update(updateUri, values, null, null);
             }
+
+            String schedule = title + "\n" + date + " " + getString(R.string.at_time) + " " + time + " - " + until;
+            inputDate.setText(schedule);
         }
 
         if (isAlarmSet) {

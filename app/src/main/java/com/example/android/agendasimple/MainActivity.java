@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements ContentContactFra
     /**********************************************************************************************/
 
     /**
-     * onUpdateContactToList (ContentContactFragment): Toma de contacto con el fragmento para
+     * onUpdateContactToList: Toma de contacto con el fragmento para
      * cuando se hace update de un contacto, notificarselo al adapter para actualizar el RecyclerView
      * */
     @Override
@@ -171,13 +171,12 @@ public class MainActivity extends AppCompatActivity implements ContentContactFra
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
+        for (int x = 0; x < fragmentManager.getFragments().size(); x++) {
+            transaction.remove(fragmentManager.getFragments().get(x));
+        }
 
         int orientation = getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            for (int x = 0; x < fragmentManager.getFragments().size(); x++) {
-                transaction.remove(fragmentManager.getFragments().get(x));
-            }
-
             fragContact = new ContentContactFragment(this, this, "", 1);
             transaction.add(R.id.container_fragment_content_contact, fragContact);
 
@@ -625,6 +624,7 @@ public class MainActivity extends AppCompatActivity implements ContentContactFra
      * */
     private void importFromContacts() {
         ArrayList<ContactEntity> contacts = new ArrayList<>();
+        int countNotImported = 0;
 
         if (this.contacts != null) {
             for (int c = 0; c < this.contacts.size(); c++) {
@@ -683,6 +683,7 @@ public class MainActivity extends AppCompatActivity implements ContentContactFra
                         getString(R.string.schedule_day),
                         0
                 );
+
                 if (!name.trim().isEmpty() && namePattern.matcher(name).matches()) {
                     contacts.add(c);
                     try {
@@ -690,13 +691,22 @@ public class MainActivity extends AppCompatActivity implements ContentContactFra
                     } catch (Exception err) {
                         makeToast(getString(R.string.insertion_failed));
                     }
+                } else {
+                    countNotImported++;
                 }
             }
         }
+
         cursor.close();
         this.contacts = contacts;
         fragList.setContactsIntoAdapter(contacts);
-        makeToast(getString(R.string.success_import_to));
+        if (countNotImported > 0) {
+            mToast = Toast.makeText(this, countNotImported + " " +
+                    getString(R.string.import_dialog_disclaimer), Toast.LENGTH_LONG);
+            mToast.show();
+        } else {
+            makeToast(getString(R.string.success_import_to));
+        }
     }
 
     private void openKeyboard() {

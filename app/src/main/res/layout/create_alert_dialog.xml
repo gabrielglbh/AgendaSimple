@@ -31,7 +31,7 @@
             android:hint="@string/birthday_lunch_meeting"
             android:maxLines="1"
             app:counterEnabled="true"
-            app:counterMaxLength="12"
+            app:counterMaxLength="25"
             app:errorEnabled="true"
             app:hintEnabled="true">
 
@@ -53,14 +53,6 @@
             android:textColor="@color/text"
             android:layout_gravity="start"
             android:gravity="start"/>
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/separator"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="18dp"
-            android:layout_marginBottom="18dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -100,14 +92,6 @@
             android:layout_gravity="start"
             android:gravity="start"/>
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/separator"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="18dp"
-            android:layout_marginBottom="18dp"/>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -131,6 +115,48 @@
                 android:src="@drawable/ic_time"
                 android:layout_marginEnd="15dp"
                 android:layout_marginStart="10dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="15dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="15sp"
+                android:layout_marginStart="20dp"
+                android:layout_marginBottom="6dp"
+                android:textColor="@color/text"
+                android:gravity="start"
+                android:layout_gravity="center"
+                android:text="@string/dialog_event_last_label"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginBottom="6dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="5dp"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="@string/dialog_hours_label"
+                android:textColor="@color/separator"
+                android:textSize="12sp" />
+
+            <Spinner
+                android:id="@+id/hours_edit"
+                android:layout_gravity="center"
+                android:layout_width="100dp"
+                android:layout_marginStart="20dp"
+                android:layout_height="wrap_content"
+                android:entries="@array/entries" />
+
         </LinearLayout>
 
         <LinearLayout
