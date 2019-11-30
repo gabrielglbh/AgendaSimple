@@ -35,8 +35,19 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:src="@drawable/ic_heart_filled"
-        app:layout_constraintBottom_toBottomOf="@+id/icon_contact_landscape"
+        app:layout_constraintBottom_toBottomOf="@+id/remove_img_landscape"
         app:layout_constraintEnd_toStartOf="@+id/check_contact"
+        app:layout_constraintTop_toTopOf="@+id/remove_img_landscape" />
+
+    <ImageView
+        android:id="@+id/remove_img_landscape"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_remove_img"
+        android:tint="@color/textSecondary"
+        app:layout_constraintBottom_toBottomOf="@+id/icon_contact_landscape"
+        app:layout_constraintEnd_toStartOf="@+id/favorite_landscape"
         app:layout_constraintTop_toTopOf="@+id/icon_contact_landscape" />
 
     <ImageView

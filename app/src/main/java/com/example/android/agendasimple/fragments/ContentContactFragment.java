@@ -39,19 +39,15 @@ import android.provider.CalendarContract.Events;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -83,7 +79,7 @@ public class ContentContactFragment extends Fragment {
     private TextInputEditText inputName, inputNumber, inputPhone, inputHome, inputEmail;
     private ImageView nameIcon, numberIcon, phoneIcon, homeIcon, emailIcon, bookmarkIcon,
                         dateDialog, timeDialog, favoriteLandscape, imgLandscape, iconPhoto,
-                        checkContact;
+                        checkContact, removeImage;
     private CardView cardLandscape;
     private TextInputLayout tietEvent;
     private TextInputEditText eventDialog;
@@ -177,6 +173,7 @@ public class ContentContactFragment extends Fragment {
                 final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
                 imgLandscape.setImageBitmap(rotate(selectedImage, getRealPathFromURI(imageUri)));
                 iconPhoto.setVisibility(View.GONE);
+                removeImage.setVisibility(View.VISIBLE);
             } catch (NullPointerException | IOException e) {
                 e.printStackTrace();
                 if (contact != null) {
@@ -310,6 +307,16 @@ public class ContentContactFragment extends Fragment {
             }
         });
 
+        removeImage = content.findViewById(R.id.remove_img_landscape);
+        removeImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                removeImageStorage();
+                removeImage.setVisibility(View.GONE);
+            }
+        });
+        removeImage.setVisibility(View.GONE);
+
         imgLandscape = content.findViewById(R.id.img_contact_landscape);
         iconPhoto = content.findViewById(R.id.icon_photo);
 
@@ -409,9 +416,11 @@ public class ContentContactFragment extends Fragment {
             }
         } else {
             if (bitmap != null) {
+                removeImage.setVisibility(View.VISIBLE);
                 imgLandscape.setImageBitmap(bitmap);
                 iconPhoto.setVisibility(View.GONE);
             } else {
+                removeImage.setVisibility(View.GONE);
                 iconPhoto.setVisibility(View.VISIBLE);
             }
         }
@@ -474,7 +483,7 @@ public class ContentContactFragment extends Fragment {
     /**
      * resetView: Reset de los campos y redibujado de los iconos y demás botones
      * */
-    private void resetView() {
+    public void resetView() {
         final int color = ContextCompat.getColor(ctx, R.color.colorPrimary);
         inputName.setText("");
         inputNumber.setText("");
@@ -494,6 +503,7 @@ public class ContentContactFragment extends Fragment {
         imgLandscape.setImageDrawable(ContextCompat.getDrawable(ctx, R.drawable.background_circle));
         DrawableCompat.setTint(imgLandscape.getDrawable(), ContextCompat.getColor(ctx, R.color.colorAccent));
         iconPhoto.setVisibility(View.VISIBLE);
+        removeImage.setVisibility(View.GONE);
     }
 
     /**********************************************************************************************/
@@ -738,10 +748,10 @@ public class ContentContactFragment extends Fragment {
             final long startMillis = beginTime.getTimeInMillis();
             Calendar endTime = Calendar.getInstance();
 
-            int duration = Integer.parseInt(hours.getSelectedItem().toString());
+            untilTimeToDisplay = hours.getSelectedItem().toString();
             int totalHoursDuration = (time.charAt(0) == '0' ?
                     Integer.parseInt(time.substring(1, 2)) :
-                    Integer.parseInt(time.substring(0, 2))) + duration;
+                    Integer.parseInt(time.substring(0, 2))) + Integer.parseInt(untilTimeToDisplay);
             int overflowDay = 0;
             if (totalHoursDuration >= 24) {
                 totalHoursDuration -= 24;
@@ -1116,8 +1126,8 @@ public class ContentContactFragment extends Fragment {
             } else {
                 resetView();
                 makeToast(getString(R.string.frag_contact_saved));
+                listener.onUpdateContactToList();
             }
-            listener.onUpdateContactToList();
         } else {
             createDialog(getString(R.string.insertion_failed));
         }
@@ -1130,8 +1140,8 @@ public class ContentContactFragment extends Fragment {
             } else {
                 resetView();
                 makeToast(getString(R.string.frag_contact_saved));
+                listener.onUpdateContactToList();
             }
-            listener.onUpdateContactToList();
         } else {
             makeToast(getString(R.string.update_failed));
         }

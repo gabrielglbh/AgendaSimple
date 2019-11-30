@@ -52,12 +52,6 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!--<fragment
-            android:id="@+id/fragment_contact_overview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:name="com.example.android.agendasimple.fragments.ContentContactFragment"/>-->
-
     </androidx.core.widget.NestedScrollView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

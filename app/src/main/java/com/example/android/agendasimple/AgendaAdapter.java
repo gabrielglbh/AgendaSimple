@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Environment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -18,7 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.agendasimple.sql.ContactEntity;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.squareup.picasso.MemoryPolicy;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -64,6 +63,9 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
             Picasso.get()
                     .load("file://" + pathToBitmap)
                     .config(Bitmap.Config.ARGB_8888)
+                    .memoryPolicy(MemoryPolicy.NO_CACHE)
+                    .noPlaceholder()
+                    .fit()
                     .into(holder.icon_contact);
             holder.initial_contact.setVisibility(View.GONE);
         } else {

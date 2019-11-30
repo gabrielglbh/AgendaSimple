@@ -35,7 +35,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ContactOverview extends AppCompatActivity implements ContentContactFragment.onUpdateList {
+public class ContactOverview extends AppCompatActivity {
 
     private FloatingActionButton checkContact;
     public static AppBarLayout appbar;
@@ -49,7 +49,7 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
     private int mode = 1; // Especifica si se ha de llenar los campos del contacto o no
     public static String NUMBER;
     public static int FAVOURITE = 1;
-    private final int RESULT_LOAD_IMG = 123;
+    private final int RESULT_LOAD_IMG = 124;
     private final int WRITE_EXTERNAL_STORAGE_CODE = 13452;
 
     private boolean isLikedPressed = false;
@@ -73,24 +73,15 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
             if (i.hasExtra(MainActivity.NUMBER_OF_CONTACTS)) {
                 NUMBER = i.getStringExtra(MainActivity.NUMBER_OF_CONTACTS);
             }
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-
-            // ID del contendor del layout de la actividad
-            frag = new ContentContactFragment(ContactOverview.this, this, NUMBER, mode);
-            fragmentTransaction.add(R.id.nested_scroll_view, frag);
-            fragmentTransaction.commit();
-            setViews();
         }
-        else {
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-            frag = new ContentContactFragment(ContactOverview.this, this, NUMBER, mode);
-            fragmentTransaction.add(R.id.nested_scroll_view, frag);
-            fragmentTransaction.commit();
-            setViews();
-        }
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        frag = new ContentContactFragment(ContactOverview.this, null, NUMBER, mode);
+        fragmentTransaction.add(R.id.nested_scroll_view, frag);
+        fragmentTransaction.commit();
+        setViews();
     }
 
     /**
@@ -193,9 +184,6 @@ public class ContactOverview extends AppCompatActivity implements ContentContact
             }
         }
     }
-
-    @Override
-    public void onUpdateContactToList() { }
 
     /**********************************************************************************************/
 

@@ -7,8 +7,8 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.CalendarContract;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +23,7 @@ import com.example.android.agendasimple.sql.ContactEntity;
 import com.example.android.agendasimple.utils.SwipeHandler;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
@@ -121,7 +122,6 @@ public class ContactListFragment extends Fragment implements AgendaAdapter.Conta
      * @param position: Posición del contacto en el RecyclerView
      * */
     @Override
-    // TODO: notifyDataSetChanged()
     public void onLongContactClicked(final String number, final String name, final String phone,
                                      final String home, final String email, final String bubble,
                                      final int favorite, final String date, final long eventId,
@@ -184,11 +184,24 @@ public class ContactListFragment extends Fragment implements AgendaAdapter.Conta
                     Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId);
                     cr.delete(deleteUri, null, null);
                 }
+                removeImageStorage(number);
                 MainActivity.sql.deleteContact(number);
                 adapter.setContactList(MainActivity.sql.getAllContacts());
             }
         });
 
         dialog.show();
+    }
+
+    private boolean removeImageStorage(String number) {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), ctx.getString(R.string.file_path_contact_images));
+            if (dir.exists()) {
+                File file = new File(dir, number + ".png");
+                return file.delete();
+            }
+        }
+        return false;
     }
 }

@@ -15,6 +15,7 @@ import android.widget.Toast;
 import com.example.android.agendasimple.AgendaAdapter;
 import com.example.android.agendasimple.MainActivity;
 import com.example.android.agendasimple.R;
+import com.example.android.agendasimple.fragments.ContentContactFragment;
 import com.example.android.agendasimple.sql.ContactEntity;
 
 import java.io.File;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -68,7 +70,7 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
         if (MainActivity.sql.deleteContact(contact.getPHONE_NUMBER()) == -1) {
             Toast.makeText(ctx, ctx.getString(R.string.deletion_failed), Toast.LENGTH_SHORT).show();
         } else {
-            removeImageStorage(contact.getPHONE_NUMBER(), contact.getNAME());
+            removeImageStorage(contact.getPHONE_NUMBER());
             if (contact.getCALENDAR_ID() != 0) {
                 ContentResolver cr = ctx.getContentResolver();
                 Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, contact.getCALENDAR_ID());
@@ -76,6 +78,12 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
             }
             contacts.remove(position);
             adapter.notifyItemRemoved(position);
+
+            try {
+                FragmentManager fragmentManager = ((MainActivity) ctx).getSupportFragmentManager();
+                ContentContactFragment f = (ContentContactFragment) fragmentManager.getFragments().get(0);
+                f.resetView();
+            } catch (Exception err) {}
         }
     }
 
@@ -121,12 +129,12 @@ public class SwipeHandler extends ItemTouchHelper.Callback {
         icon.draw(c);
     }
 
-    private boolean removeImageStorage(String number, String name) {
+    private boolean removeImageStorage(String number) {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), ctx.getString(R.string.app_name));
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), ctx.getString(R.string.file_path_contact_images));
             if (dir.exists()) {
-                File file = new File(dir, number + "_" + name + ".png");
+                File file = new File(dir, number + ".png");
                 return file.delete();
             }
         }
