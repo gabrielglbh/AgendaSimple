@@ -65,7 +65,8 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
                     .config(Bitmap.Config.ARGB_8888)
                     .memoryPolicy(MemoryPolicy.NO_CACHE)
                     .noPlaceholder()
-                    .fit()
+                    .resize(1080, 1080)
+                    .centerCrop()
                     .into(holder.icon_contact);
             holder.initial_contact.setVisibility(View.GONE);
         } else {
@@ -81,7 +82,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
 
         holder.name_contact.setText(c.getNAME());
         holder.number_contact.setText(c.getPHONE_NUMBER());
-        holder.initial_contact.setText(c.getNAME().substring(0, 1));
+        if (c.getNAME() != null) holder.initial_contact.setText(c.getNAME().substring(0, 1));
 
         if (c.getFAVOURITE() == 0) {
             holder.fav.setVisibility(View.VISIBLE);

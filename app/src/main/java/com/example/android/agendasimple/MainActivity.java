@@ -672,12 +672,16 @@ public class MainActivity extends AppCompatActivity implements ContentContactFra
                         0
                 );
 
-                if (!name.trim().isEmpty() && namePattern.matcher(name).matches()) {
-                    contacts.add(c);
-                    try {
-                        sql.insertContact(c);
-                    } catch (Exception err) {
-                        makeToast(getString(R.string.insertion_failed));
+                if (name != null && number != null) {
+                    if (!name.trim().isEmpty() && namePattern.matcher(name).matches()) {
+                        contacts.add(c);
+                        try {
+                            sql.insertContact(c);
+                        } catch (Exception err) {
+                            makeToast(getString(R.string.insertion_failed));
+                        }
+                    } else {
+                        countNotImported++;
                     }
                 } else {
                     countNotImported++;

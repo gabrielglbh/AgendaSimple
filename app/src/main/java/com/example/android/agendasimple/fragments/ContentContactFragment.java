@@ -171,7 +171,7 @@ public class ContentContactFragment extends Fragment {
                 final Uri imageUri = data.getData();
                 final InputStream imageStream = ctx.getContentResolver().openInputStream(imageUri);
                 final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
-                imgLandscape.setImageBitmap(rotate(selectedImage, getRealPathFromURI(imageUri)));
+                imgLandscape.setImageBitmap(cropCenterBitmap(rotate(selectedImage, getRealPathFromURI(imageUri))));
                 iconPhoto.setVisibility(View.GONE);
                 removeImage.setVisibility(View.VISIBLE);
             } catch (NullPointerException | IOException e) {
@@ -1063,6 +1063,8 @@ public class ContentContactFragment extends Fragment {
     private void saveImageToStorage(final Bitmap bitmap) {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File root = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
+            if (!root.exists()) root.mkdir();
             File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.file_path_contact_images));
             boolean isDirCreated = dir.mkdir();
             if (dir.exists() || isDirCreated) {
@@ -1243,6 +1245,32 @@ public class ContentContactFragment extends Fragment {
         }
         cursor.close();
         return res;
+    }
+
+    /**
+     * cropCenterBitmap: Recorta la imagen para obtener un recorte con Width = Height para el
+     * thumbnail del contacto
+     * @param bitmap: Imagen cargada
+     * @return Nuevo bitmap recortado del original
+     * */
+    private Bitmap cropCenterBitmap(Bitmap bitmap) {
+        if (bitmap.getWidth() >= bitmap.getHeight()){
+            return Bitmap.createBitmap(
+                    bitmap,
+                    bitmap.getWidth() / 2 - bitmap.getHeight() / 2,
+                    0,
+                    bitmap.getHeight(),
+                    bitmap.getHeight()
+            );
+        } else {
+            return Bitmap.createBitmap(
+                    bitmap,
+                    0,
+                    bitmap.getHeight() / 2 - bitmap.getWidth() / 2,
+                    bitmap.getWidth(),
+                    bitmap.getWidth()
+            );
+        }
     }
 
     /**
