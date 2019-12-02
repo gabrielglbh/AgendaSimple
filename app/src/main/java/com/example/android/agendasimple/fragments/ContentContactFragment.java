@@ -61,6 +61,7 @@ import com.example.android.agendasimple.R;
 import com.example.android.agendasimple.sql.ContactEntity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -171,7 +172,9 @@ public class ContentContactFragment extends Fragment {
                 final Uri imageUri = data.getData();
                 final InputStream imageStream = ctx.getContentResolver().openInputStream(imageUri);
                 final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
-                imgLandscape.setImageBitmap(cropCenterBitmap(rotate(selectedImage, getRealPathFromURI(imageUri))));
+                final Bitmap rotatedImage = rotate(selectedImage, getRealPathFromURI(imageUri));
+                final Bitmap polishedBitmap = cropCenterBitmap(rotatedImage);
+                imgLandscape.setImageBitmap(polishedBitmap);
                 iconPhoto.setVisibility(View.GONE);
                 removeImage.setVisibility(View.VISIBLE);
             } catch (NullPointerException | IOException e) {
@@ -409,7 +412,12 @@ public class ContentContactFragment extends Fragment {
             ContactOverview.collapsingToolbar.setContentScrimColor(color);
 
             if (bitmap != null) {
-                ContactOverview.headerImage.setImageBitmap(bitmap);
+                Picasso.get().load("file://" + getPathImageFromStorage())
+                        .resize(bitmap.getWidth(), bitmap.getHeight())
+                        .centerCrop()
+                        .config(Bitmap.Config.ARGB_8888)
+                        .noPlaceholder()
+                        .into(ContactOverview.headerImage);
                 ContactOverview.toolbar.setBackgroundColor(Color.TRANSPARENT);
             } else {
                 ContactOverview.toolbar.setBackgroundColor(color);
@@ -417,7 +425,11 @@ public class ContentContactFragment extends Fragment {
         } else {
             if (bitmap != null) {
                 removeImage.setVisibility(View.VISIBLE);
-                imgLandscape.setImageBitmap(bitmap);
+                Picasso.get().load("file://" + getPathImageFromStorage())
+                        .fit()
+                        .config(Bitmap.Config.ARGB_8888)
+                        .noPlaceholder()
+                        .into(imgLandscape);
                 iconPhoto.setVisibility(View.GONE);
             } else {
                 removeImage.setVisibility(View.GONE);
@@ -490,6 +502,15 @@ public class ContentContactFragment extends Fragment {
         inputPhone.setText("");
         inputEmail.setText("");
         inputHome.setText("");
+        if (inputName.getError() != null) inputName.setError(null);
+        if (inputNumber.getError() != null) inputNumber.setError(null);
+        if (inputPhone.getError() != null) inputPhone.setError(null);
+        if (inputEmail.getError() != null) inputEmail.setError(null);
+        inputName.clearFocus();
+        inputNumber.clearFocus();
+        inputPhone.clearFocus();
+        inputEmail.clearFocus();
+        inputHome.clearFocus();
         setUIToBubbleColor(nameIcon, color);
         setUIToBubbleColor(numberIcon, color);
         setUIToBubbleColor(phoneIcon, color);
@@ -1060,7 +1081,8 @@ public class ContentContactFragment extends Fragment {
     /**
      * Métodos para guardar, recoger y eliminar la imagen del storage
      * */
-    private void saveImageToStorage(final Bitmap bitmap) {
+    private void saveImageToStorage(Bitmap bitmap) {
+        if (bitmap.getWidth() != bitmap.getHeight()) bitmap = cropCenterBitmap(bitmap);
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             File root = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.app_name));
@@ -1092,6 +1114,22 @@ public class ContentContactFragment extends Fragment {
             if (dir.exists()) {
                 File file = new File(dir, contact.getPHONE_NUMBER() + ".png");
                 if (file.exists()) return BitmapFactory.decodeFile(file.getPath());
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+        return null;
+    }
+
+    private String getPathImageFromStorage() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), getString(R.string.file_path_contact_images));
+            if (dir.exists()) {
+                File file = new File(dir, contact.getPHONE_NUMBER() + ".png");
+                if (file.exists()) return file.getPath();
             } else {
                 return null;
             }
@@ -1253,7 +1291,7 @@ public class ContentContactFragment extends Fragment {
      * @param bitmap: Imagen cargada
      * @return Nuevo bitmap recortado del original
      * */
-    private Bitmap cropCenterBitmap(Bitmap bitmap) {
+    public Bitmap cropCenterBitmap(Bitmap bitmap) {
         if (bitmap.getWidth() >= bitmap.getHeight()){
             return Bitmap.createBitmap(
                     bitmap,

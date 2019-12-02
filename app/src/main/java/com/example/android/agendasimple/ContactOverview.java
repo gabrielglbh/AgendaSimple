@@ -156,7 +156,9 @@ public class ContactOverview extends AppCompatActivity {
                 final Uri imageUri = data.getData();
                 final InputStream imageStream = getContentResolver().openInputStream(imageUri);
                 final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
-                headerImage.setImageBitmap(frag.rotate(selectedImage, frag.getRealPathFromURI(imageUri)));
+                final Bitmap rotatedImage = frag.rotate(selectedImage, frag.getRealPathFromURI(imageUri));
+                final Bitmap polishedImage = frag.cropCenterBitmap(rotatedImage);
+                headerImage.setImageBitmap(polishedImage);
                 toolbar.setBackgroundColor(Color.TRANSPARENT);
                 menu.getItem(0).setVisible(true);
                 if (Build.VERSION.SDK_INT >= 21) {

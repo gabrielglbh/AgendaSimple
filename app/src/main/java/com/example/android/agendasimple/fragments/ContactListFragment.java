@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -186,6 +187,12 @@ public class ContactListFragment extends Fragment implements AgendaAdapter.Conta
                 }
                 removeImageStorage(number);
                 MainActivity.sql.deleteContact(number);
+                try {
+                    FragmentManager fragmentManager = ((MainActivity) ctx).getSupportFragmentManager();
+                    ContentContactFragment f = (ContentContactFragment) fragmentManager.getFragments().get(0);
+                    f.resetView();
+                } catch (Exception err) {}
+
                 adapter.setContactList(MainActivity.sql.getAllContacts());
             }
         });

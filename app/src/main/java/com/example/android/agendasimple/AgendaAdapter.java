@@ -65,8 +65,7 @@ public class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.Contact> {
                     .config(Bitmap.Config.ARGB_8888)
                     .memoryPolicy(MemoryPolicy.NO_CACHE)
                     .noPlaceholder()
-                    .resize(1080, 1080)
-                    .centerCrop()
+                    .fit()
                     .into(holder.icon_contact);
             holder.initial_contact.setVisibility(View.GONE);
         } else {
