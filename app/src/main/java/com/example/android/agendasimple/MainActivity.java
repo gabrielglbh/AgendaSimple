@@ -242,7 +242,11 @@ public class MainActivity extends AppCompatActivity implements ContentContactFra
         getMenuInflater().inflate(R.menu.main_activity_menu, menu);
 
         if (isOnPortraitMode) {
-            menu.findItem(R.id.add_contact).setVisible(false);
+            if (Build.VERSION.SDK_INT != 19) {
+                menu.findItem(R.id.add_contact).setVisible(false);
+            } else {
+                menu.findItem(R.id.add_contact).setVisible(true);
+            }
         } else {
             menu.findItem(R.id.add_contact).setVisible(true);
         }
@@ -289,7 +293,12 @@ public class MainActivity extends AppCompatActivity implements ContentContactFra
             getDatesContacts = !getDatesContacts;
             fragList.setContactsIntoAdapter(contacts);
         } else if (item.getItemId() == R.id.add_contact) {
-            fragContact.populateFragment(1, null);
+            if (isOnPortraitMode) {
+                Intent goTo = new Intent(getApplicationContext(), ContactOverview.class);
+                startActivity(goTo);
+            } else {
+                fragContact.populateFragment(1, null);
+            }
         }
         return true;
     }
