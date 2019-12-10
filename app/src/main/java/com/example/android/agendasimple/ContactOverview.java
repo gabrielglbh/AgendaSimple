@@ -138,7 +138,11 @@ public class ContactOverview extends AppCompatActivity {
                 }
                 break;
             case R.id.menu_remove_img:
-                frag.removeImageStorage();
+                if (contact == null) {
+                    headerImage.setImageDrawable(null);
+                } else {
+                    frag.removeImageStorage();
+                }
                 break;
         }
         return true;

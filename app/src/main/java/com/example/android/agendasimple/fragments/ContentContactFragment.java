@@ -314,7 +314,12 @@ public class ContentContactFragment extends Fragment {
         removeImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                removeImageStorage();
+                if (contact == null) {
+                    imgLandscape.setImageDrawable(null);
+                    iconPhoto.setVisibility(View.VISIBLE);
+                } else {
+                    removeImageStorage();
+                }
                 removeImage.setVisibility(View.GONE);
             }
         });
